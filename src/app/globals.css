@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --card: #141414;
+  --card-foreground: #f5f5f5;
+  --popover: #141414;
+  --popover-foreground: #f5f5f5;
+  --primary: #6366f1;
+  --primary-foreground: #f5f5f5;
+  --secondary: #141414;
+  --secondary-foreground: #f5f5f5;
+  --muted: #141414;
+  --muted-foreground: #737373;
+  --accent: #141414;
+  --accent-foreground: #f5f5f5;
+  --destructive: #ef4444;
+  --border: #242424;
+  --input: #242424;
+  --ring: #6366f1;
+
+  /* Nova design tokens */
+  --nova-bg: #0a0a0a;
+  --nova-surface: #141414;
+  --nova-border: #242424;
+  --nova-accent: #6366f1;
+  --nova-accent-hover: #4f46e5;
+  --nova-success: #22c55e;
+  --nova-warning: #f59e0b;
+  --nova-danger: #ef4444;
+  --nova-text: #f5f5f5;
+  --nova-muted: #737373;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-nova-bg: var(--nova-bg);
+  --color-nova-surface: var(--nova-surface);
+  --color-nova-border: var(--nova-border);
+  --color-nova-accent: var(--nova-accent);
+  --color-nova-accent-hover: var(--nova-accent-hover);
+  --color-nova-success: var(--nova-success);
+  --color-nova-warning: var(--nova-warning);
+  --color-nova-danger: var(--nova-danger);
+  --color-nova-text: var(--nova-text);
+  --color-nova-muted: var(--nova-muted);
+
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--nova-bg);
+  color: var(--nova-text);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+}

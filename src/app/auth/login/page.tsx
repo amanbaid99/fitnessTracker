@@ -7,19 +7,9 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const SHORTHAND_EMAILS: Record<string, string> = {
-  admin: "admin@nova.local",
-  coach: "coach@nova.local",
-};
-
-function resolveEmail(input: string) {
-  const trimmed = input.trim();
-  return SHORTHAND_EMAILS[trimmed.toLowerCase()] ?? trimmed;
-}
-
 export default function LoginPage() {
   const router = useRouter();
-  const [emailInput, setEmailInput] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +20,7 @@ export default function LoginPage() {
     setSubmitting(true);
 
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: resolveEmail(emailInput),
+      email,
       password,
     });
 
@@ -42,24 +32,18 @@ export default function LoginPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, active")
+      .select("active")
       .eq("id", data.session.user.id)
       .single();
 
-    if (profile && profile.active === false) {
+    if (profile?.active === false) {
       await supabase.auth.signOut();
       setError("This account has been deactivated.");
       setSubmitting(false);
       return;
     }
 
-    if (profile?.role === "admin") {
-      router.push("/admin");
-    } else if (profile?.role === "coach") {
-      router.push("/coach");
-    } else {
-      router.push("/dashboard");
-    }
+    router.push("/dashboard");
   }
 
   return (
@@ -80,9 +64,10 @@ export default function LoginPage() {
           </label>
           <Input
             id="email"
+            type="email"
             required
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
           />
         </div>

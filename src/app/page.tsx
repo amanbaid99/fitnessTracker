@@ -80,7 +80,10 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-nova-border px-6 py-8 text-center text-xs text-nova-muted">
-        Nova — AI-assisted fitness coaching.
+        Nova — AI-assisted fitness coaching. ·{" "}
+        <Link href="/admin" className="hover:text-nova-text hover:underline">
+          Staff login
+        </Link>
       </footer>
     </div>
   );

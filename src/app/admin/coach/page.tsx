@@ -52,7 +52,7 @@ export default function CoachDashboardPage() {
     async function load() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
-        router.replace("/auth/login");
+        router.replace("/admin");
         return;
       }
 
@@ -64,14 +64,15 @@ export default function CoachDashboardPage() {
 
       if (!active) return;
 
-      if (!profile || (profile.role !== "coach" && profile.role !== "admin")) {
-        router.replace("/dashboard");
+      if (!profile || profile.role !== "coach") {
+        await supabase.auth.signOut();
+        router.replace("/admin");
         return;
       }
 
       if (profile.active === false) {
         await supabase.auth.signOut();
-        router.replace("/");
+        router.replace("/admin");
         return;
       }
 
@@ -144,7 +145,7 @@ export default function CoachDashboardPage() {
                   {pending.map((plan) => (
                     <Link
                       key={plan.id}
-                      href={`/coach/review?id=${plan.id}`}
+                      href={`/admin/coach/review?id=${plan.id}`}
                       className="flex items-center justify-between rounded-2xl border-l-4 border-nova-warning bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors hover:bg-nova-accent/[0.03]"
                     >
                       <div>

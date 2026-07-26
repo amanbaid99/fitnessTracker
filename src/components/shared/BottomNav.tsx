@@ -20,10 +20,10 @@ const clientTabs = [
 ];
 
 const coachTabs = [
-  { href: "/coach", label: "Clients", icon: Users },
-  { href: "/coach/check-ins", label: "Check-ins", icon: ClipboardList },
-  { href: "/coach/messages", label: "Messages", icon: MessageCircle },
-  { href: "/coach/settings", label: "Settings", icon: Settings },
+  { href: "/admin/coach", label: "Clients", icon: Users },
+  { href: "/admin/coach/check-ins", label: "Check-ins", icon: ClipboardList },
+  { href: "/admin/coach/messages", label: "Messages", icon: MessageCircle },
+  { href: "/admin/coach/settings", label: "Settings", icon: Settings },
 ];
 
 export function BottomNav({

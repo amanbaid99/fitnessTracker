@@ -42,11 +42,11 @@ function CoachReviewContent() {
     async function load() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
-        router.replace("/auth/login");
+        router.replace("/admin");
         return;
       }
       if (!planId) {
-        router.replace("/coach");
+        router.replace("/admin/coach");
         return;
       }
 
@@ -59,7 +59,7 @@ function CoachReviewContent() {
       if (!active) return;
 
       if (!data) {
-        router.replace("/coach");
+        router.replace("/admin/coach");
         return;
       }
 
@@ -87,7 +87,7 @@ function CoachReviewContent() {
 
     setSaving(false);
     if (!error) {
-      router.push("/coach");
+      router.push("/admin/coach");
     }
   }
 
@@ -105,7 +105,12 @@ function CoachReviewContent() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-24 md:max-w-2xl">
       <header className="flex items-center gap-3 px-5 pt-6 md:px-0 md:pt-10">
-        <Button variant="ghost" size="icon" aria-label="Back" onClick={() => router.push("/coach")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Back"
+          onClick={() => router.push("/admin/coach")}
+        >
           <ArrowLeft className="size-5" />
         </Button>
         <h1 className="text-lg font-semibold text-nova-text md:text-xl">Review Plan</h1>

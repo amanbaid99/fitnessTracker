@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy } from "lucide-react";
+import { Copy, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +20,31 @@ interface StaffProfile {
   assigned_coach_id: string | null;
 }
 
+interface PlanRow {
+  id: string;
+  client_id: string;
+  full_name: string;
+  goal: string;
+  status: string;
+  created_at: string;
+}
+
+const GOAL_LABEL: Record<string, string> = {
+  "build-muscle": "Build muscle",
+  "fat-loss": "Fat loss",
+  "general-fitness": "General fitness",
+};
+
 function generatePassword() {
   const suffix = Math.random().toString(36).slice(2, 8);
   return `Coach-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function timeAgo(iso: string) {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
 }
 
 export default function AdminPage() {
@@ -48,6 +71,7 @@ export default function AdminPage() {
 
   const [coaches, setCoaches] = useState<StaffProfile[]>([]);
   const [clients, setClients] = useState<StaffProfile[]>([]);
+  const [plans, setPlans] = useState<PlanRow[]>([]);
   const [panelError, setPanelError] = useState<string | null>(null);
 
   // New-coach form.
@@ -79,12 +103,14 @@ export default function AdminPage() {
   }, [isAdmin]);
 
   async function refreshLists() {
-    const [{ data: coachRows }, { data: clientRows }] = await Promise.all([
+    const [{ data: coachRows }, { data: clientRows }, { data: planRows }] = await Promise.all([
       supabase.rpc("admin_list_profiles", { p_role: "coach" }),
       supabase.rpc("admin_list_profiles", { p_role: "client" }),
+      supabase.rpc("admin_list_plans"),
     ]);
     setCoaches((coachRows as StaffProfile[]) ?? []);
     setClients((clientRows as StaffProfile[]) ?? []);
+    setPlans((planRows as PlanRow[]) ?? []);
   }
 
   function handleAdminSubmit(e: FormEvent) {
@@ -437,7 +463,80 @@ export default function AdminPage() {
       </header>
 
       <main className="px-5 md:px-0">
-        <section className="mt-6">
+        {clients.filter((c) => !c.assigned_coach_id && c.active).length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-semibold text-nova-text">New Signups</h2>
+            <p className="mt-0.5 text-xs text-nova-muted">
+              These clients don&apos;t have a coach yet.
+            </p>
+            <div className="mt-3 space-y-2">
+              {clients
+                .filter((c) => !c.assigned_coach_id && c.active)
+                .map((client) => (
+                  <div
+                    key={client.id}
+                    className="flex flex-col gap-2 rounded-2xl border-l-4 border-nova-accent bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-nova-text">
+                        {client.full_name || "(no name)"} just joined
+                      </p>
+                      <p className="text-xs text-nova-muted">Assign them a coach to get started.</p>
+                    </div>
+                    <select
+                      defaultValue=""
+                      onChange={(e) => e.target.value && handleAssignCoach(client.id, e.target.value)}
+                      className="h-9 rounded-md border border-nova-accent bg-nova-surface px-2 text-sm font-medium text-nova-accent outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                    >
+                      <option value="" disabled>
+                        Assign a coach
+                      </option>
+                      {coaches
+                        .filter((coach) => coach.active)
+                        .map((coach) => (
+                          <option key={coach.id} value={coach.id}>
+                            {coach.full_name || coach.id}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                ))}
+            </div>
+          </section>
+        )}
+
+        {plans.filter((p) => p.status === "pending").length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-sm font-semibold text-nova-text">Pending Plans</h2>
+            <p className="mt-0.5 text-xs text-nova-muted">
+              You can review and approve these yourself if needed, instead of waiting on a coach.
+            </p>
+            <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+              {plans
+                .filter((p) => p.status === "pending")
+                .map((plan) => (
+                  <Link
+                    key={plan.id}
+                    href={`/admin/review?id=${plan.id}`}
+                    className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-nova-accent/[0.03]"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-nova-text">{plan.full_name}</p>
+                      <p className="mt-0.5 text-xs text-nova-muted">
+                        {GOAL_LABEL[plan.goal] ?? plan.goal} · Submitted {timeAgo(plan.created_at)}
+                      </p>
+                    </div>
+                    <span className="flex items-center gap-1 text-sm font-medium text-nova-accent">
+                      Review
+                      <ChevronRight className="size-4" />
+                    </span>
+                  </Link>
+                ))}
+            </div>
+          </section>
+        )}
+
+        <section className="mt-8">
           <h2 className="text-sm font-semibold text-nova-text">Add a coach</h2>
 
           <form

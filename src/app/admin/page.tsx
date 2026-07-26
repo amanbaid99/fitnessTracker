@@ -1,25 +1,34 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, ChevronRight } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardCheck,
+  LayoutGrid,
+  Link2,
+  Plus,
+  Search,
+  ShieldCheck,
+  UserPlus,
+  Users,
+  Wand2,
+  X,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { generatePlan, type Goal } from "@/lib/planTemplates";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { StatTile } from "@/components/admin/StatTile";
+import { AccountCreator, type StaffProfile } from "@/components/admin/AccountCreator";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";
 const ADMIN_SESSION_KEY = "nova_admin_session";
-
-interface StaffProfile {
-  id: string;
-  full_name: string;
-  active: boolean;
-  assigned_coach_id: string | null;
-}
 
 interface PlanRow {
   id: string;
@@ -36,9 +45,35 @@ const GOAL_LABEL: Record<string, string> = {
   "general-fitness": "General fitness",
 };
 
-function generatePassword() {
-  const suffix = Math.random().toString(36).slice(2, 8);
-  return `Coach-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
+const STATUS_STYLE: Record<string, string> = {
+  pending: "bg-nova-warning/10 text-nova-warning",
+  approved: "bg-nova-success/10 text-nova-success",
+  changes_requested: "bg-nova-danger/10 text-nova-danger",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Awaiting review",
+  approved: "Active",
+  changes_requested: "Changes requested",
+};
+
+type Section = "overview" | "members" | "coaches" | "assignments" | "plans";
+
+const SECTIONS: { id: Section; label: string; icon: typeof Users }[] = [
+  { id: "overview", label: "Overview", icon: LayoutGrid },
+  { id: "members", label: "Members", icon: Users },
+  { id: "coaches", label: "Coaches", icon: ShieldCheck },
+  { id: "assignments", label: "Assignments", icon: Link2 },
+  { id: "plans", label: "Plans", icon: ClipboardCheck },
+];
+
+function initials(name: string) {
+  return (name || "?")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 function timeAgo(iso: string) {
@@ -48,21 +83,62 @@ function timeAgo(iso: string) {
   return `${days} days ago`;
 }
 
+function Avatar({ name }: { name: string }) {
+  return (
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+      {initials(name)}
+    </span>
+  );
+}
+
+function SectionCard({
+  title,
+  description,
+  action,
+  children,
+}: {
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-nova-border/70 px-4 py-3.5">
+        <div>
+          <h2 className="text-sm font-semibold text-nova-text">{title}</h2>
+          {description && <p className="mt-0.5 text-xs text-nova-muted">{description}</p>}
+        </div>
+        {action}
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
+  );
+}
+
+function EmptyState({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-xl border border-dashed border-nova-border px-4 py-6 text-center text-sm text-nova-muted">
+      {children}
+    </p>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [section, setSection] = useState<Section>("overview");
 
+  // Staff login (admin is a hardcoded local session; coaches use Supabase).
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState<string | null>(null);
-
   const [coachEmail, setCoachEmail] = useState("");
   const [coachPassword, setCoachPassword] = useState("");
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachSubmitting, setCoachSubmitting] = useState(false);
 
-  // Forced password change on a coach's first login.
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
   const [previousPassword, setPreviousPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -70,31 +146,24 @@ export default function AdminPage() {
   const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
   const [passwordChangeSubmitting, setPasswordChangeSubmitting] = useState(false);
 
+  // Console data.
   const [coaches, setCoaches] = useState<StaffProfile[]>([]);
   const [clients, setClients] = useState<StaffProfile[]>([]);
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [panelError, setPanelError] = useState<string | null>(null);
-
-  // New-coach form.
-  const [newCoachName, setNewCoachName] = useState("");
-  const [newCoachEmail, setNewCoachEmail] = useState("");
-  const [newCoachPassword, setNewCoachPassword] = useState(() => generatePassword());
-  const [creatingCoach, setCreatingCoach] = useState(false);
-  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
-
-  // New-user (client) form.
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserPassword, setNewUserPassword] = useState(() => generatePassword());
-  const [creatingUser, setCreatingUser] = useState(false);
-  const [createdUser, setCreatedUser] = useState<{ email: string; password: string } | null>(
-    null,
-  );
   const [creatingDummy, setCreatingDummy] = useState(false);
 
+  const [showMemberForm, setShowMemberForm] = useState(false);
+  const [showCoachForm, setShowCoachForm] = useState(false);
+  const [memberQuery, setMemberQuery] = useState("");
+  const [memberFilter, setMemberFilter] = useState<"all" | "unassigned" | "removed">("all");
+  const [planFilter, setPlanFilter] = useState<"pending" | "approved" | "all">("pending");
+  const [selectedForAssign, setSelectedForAssign] = useState<string[]>([]);
+  const [bulkCoachId, setBulkCoachId] = useState("");
+
   useEffect(() => {
-    // Reading localStorage only after mount avoids a server/client
-    // hydration mismatch, since it doesn't exist during static prerendering.
+    // localStorage only exists after mount — reading it during the static
+    // prerender would cause a hydration mismatch.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsAdmin(localStorage.getItem(ADMIN_SESSION_KEY) === "true");
     setCheckingSession(false);
@@ -203,109 +272,16 @@ export default function AdminPage() {
     router.push("/admin/coach");
   }
 
-  async function handleCreateCoach(e: FormEvent) {
-    e.preventDefault();
-    setPanelError(null);
-    setCreated(null);
-
-    if (newCoachPassword.length < 6) {
-      setPanelError("Password must be at least 6 characters.");
-      return;
-    }
-
-    setCreatingCoach(true);
-
-    const email = newCoachEmail.trim();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: newCoachPassword,
-      options: { data: { full_name: newCoachName.trim() } },
-    });
-
-    if (error || !data.user) {
-      setPanelError(error?.message ?? "Could not create the coach account.");
-      setCreatingCoach(false);
-      return;
-    }
-
-    const { error: promoteError } = await supabase.rpc("admin_promote_to_coach", {
-      p_id: data.user.id,
-    });
-
-    // signUp() logs this browser in as the newly created coach — sign back
-    // out immediately so the admin session isn't quietly replaced by it.
-    await supabase.auth.signOut();
-    setCreatingCoach(false);
-
-    if (promoteError) {
-      setPanelError(promoteError.message);
-      return;
-    }
-
-    setCreated({ email, password: newCoachPassword });
-    setNewCoachName("");
-    setNewCoachEmail("");
-    setNewCoachPassword(generatePassword());
-    refreshLists();
-  }
-
-  async function handleCreateUser(e: FormEvent) {
-    e.preventDefault();
-    setPanelError(null);
-    setCreatedUser(null);
-
-    if (newUserPassword.length < 6) {
-      setPanelError("Password must be at least 6 characters.");
-      return;
-    }
-
-    setCreatingUser(true);
-
-    const email = newUserEmail.trim();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: newUserPassword,
-      options: { data: { full_name: newUserName.trim() } },
-    });
-
-    if (error || !data.user) {
-      setPanelError(error?.message ?? "Could not create the user account.");
-      setCreatingUser(false);
-      return;
-    }
-
-    const { error: flagError } = await supabase.rpc("admin_flag_password_change", {
-      p_id: data.user.id,
-    });
-
-    // signUp() logs this browser in as the newly created user — sign back
-    // out immediately so the admin session isn't quietly replaced by it.
-    await supabase.auth.signOut();
-    setCreatingUser(false);
-
-    if (flagError) {
-      setPanelError(flagError.message);
-      return;
-    }
-
-    setCreatedUser({ email, password: newUserPassword });
-    setNewUserName("");
-    setNewUserEmail("");
-    setNewUserPassword(generatePassword());
-    refreshLists();
-  }
-
-  // Quick way to spin up a fake client + a submitted plan for testing the
-  // assign-coach / review flow without filling out the onboarding form.
+  // Spins up a fake member with a submitted plan, for trying the assign and
+  // review flows without filling in the intake form by hand.
   async function handleCreateDummyUser() {
     setPanelError(null);
-    setCreatedUser(null);
     setCreatingDummy(true);
 
     const suffix = Math.random().toString(36).slice(2, 8);
     const name = `Test User ${suffix}`;
     const email = `test-${suffix}@nova.local`;
-    const dummyPassword = generatePassword();
+    const dummyPassword = `Nova-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
     const goals: Goal[] = ["build-muscle", "fat-loss", "general-fitness"];
     const goal = goals[Math.floor(Math.random() * goals.length)];
 
@@ -321,7 +297,6 @@ export default function AdminPage() {
       return;
     }
 
-    const days = generatePlan(goal, [], "intermediate");
     const { error: insertError } = await supabase.from("plans").insert({
       client_id: data.user.id,
       full_name: name,
@@ -332,7 +307,7 @@ export default function AdminPage() {
       goal,
       medical_conditions: [],
       medical_notes: null,
-      days,
+      days: generatePlan(goal, [], "intermediate"),
       status: "pending",
     });
 
@@ -344,7 +319,6 @@ export default function AdminPage() {
       return;
     }
 
-    setCreatedUser({ email, password: dummyPassword });
     refreshLists();
   }
 
@@ -358,6 +332,27 @@ export default function AdminPage() {
       setPanelError(error.message);
       return;
     }
+    refreshLists();
+  }
+
+  async function handleBulkAssign() {
+    if (!bulkCoachId || selectedForAssign.length === 0) return;
+    setPanelError(null);
+
+    const results = await Promise.all(
+      selectedForAssign.map((clientId) =>
+        supabase.rpc("admin_assign_coach", {
+          p_client_id: clientId,
+          p_coach_id: bulkCoachId,
+        }),
+      ),
+    );
+
+    const failed = results.find((r) => r.error);
+    if (failed?.error) setPanelError(failed.error.message);
+
+    setSelectedForAssign([]);
+    setBulkCoachId("");
     refreshLists();
   }
 
@@ -376,6 +371,41 @@ export default function AdminPage() {
     setIsAdmin(false);
   }
 
+  const coachById = useMemo(
+    () => new Map(coaches.map((coach) => [coach.id, coach])),
+    [coaches],
+  );
+
+  /** Newest plan per member — that's the one worth showing and reviewing. */
+  const planByClient = useMemo(() => {
+    const map = new Map<string, PlanRow>();
+    for (const plan of plans) {
+      if (!map.has(plan.client_id)) map.set(plan.client_id, plan);
+    }
+    return map;
+  }, [plans]);
+
+  const activeCoaches = coaches.filter((coach) => coach.active);
+  const activeClients = clients.filter((client) => client.active);
+  const unassigned = activeClients.filter((client) => !client.assigned_coach_id);
+  const pendingPlans = plans.filter((plan) => plan.status === "pending");
+
+  const visibleMembers = useMemo(() => {
+    const query = memberQuery.trim().toLowerCase();
+    return clients
+      .filter((client) => {
+        if (memberFilter === "removed") return !client.active;
+        if (memberFilter === "unassigned") return client.active && !client.assigned_coach_id;
+        return client.active;
+      })
+      .filter((client) => !query || (client.full_name || "").toLowerCase().includes(query));
+  }, [clients, memberFilter, memberQuery]);
+
+  const visiblePlans = useMemo(
+    () => (planFilter === "all" ? plans : plans.filter((plan) => plan.status === planFilter)),
+    [plans, planFilter],
+  );
+
   if (checkingSession) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
@@ -387,40 +417,34 @@ export default function AdminPage() {
   if (forcePasswordChange) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-          Nova Staff
-        </span>
+        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">Nova Staff</span>
         <h1 className="text-2xl font-semibold text-nova-text">Set a new password</h1>
         <p className="mt-2 text-sm text-nova-muted">
           This is your first time logging in — choose a new password before continuing.
         </p>
 
         <form onSubmit={handleSetNewPassword} className="mt-8 space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-nova-text">
-              New password
-            </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-nova-text">New password</span>
             <Input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-nova-text">
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-nova-text">
               Confirm new password
-            </label>
+            </span>
             <Input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-          </div>
-          {passwordChangeError && (
-            <p className="text-sm text-nova-danger">{passwordChangeError}</p>
-          )}
+          </label>
+          {passwordChangeError && <p className="text-sm text-nova-danger">{passwordChangeError}</p>}
           <Button type="submit" className="w-full" disabled={passwordChangeSubmitting}>
             {passwordChangeSubmitting ? "Saving…" : "Set password & continue"}
           </Button>
@@ -432,9 +456,7 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-          Nova Staff
-        </span>
+        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">Nova Staff</span>
 
         <Tabs defaultValue="admin">
           <TabsList>
@@ -444,24 +466,24 @@ export default function AdminPage() {
 
           <TabsContent value="admin" className="mt-6">
             <form onSubmit={handleAdminSubmit} className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-nova-text">ID</label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">ID</span>
                 <Input
                   value={adminUsername}
                   onChange={(e) => setAdminUsername(e.target.value)}
                   placeholder="admin"
                   required
                 />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-nova-text">Password</label>
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">Password</span>
                 <Input
                   type="password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   required
                 />
-              </div>
+              </label>
               {adminError && <p className="text-sm text-nova-danger">{adminError}</p>}
               <Button type="submit" className="w-full">
                 Log in as admin
@@ -471,26 +493,24 @@ export default function AdminPage() {
 
           <TabsContent value="coach" className="mt-6">
             <form onSubmit={handleCoachSubmit} className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-nova-text">
-                  Coach ID
-                </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">Coach ID</span>
                 <Input
                   value={coachEmail}
                   onChange={(e) => setCoachEmail(e.target.value)}
                   placeholder="Given to you by your admin"
                   required
                 />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-nova-text">Password</label>
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">Password</span>
                 <Input
                   type="password"
                   value={coachPassword}
                   onChange={(e) => setCoachPassword(e.target.value)}
                   required
                 />
-              </div>
+              </label>
               {coachError && <p className="text-sm text-nova-danger">{coachError}</p>}
               <Button type="submit" className="w-full" disabled={coachSubmitting}>
                 {coachSubmitting ? "Logging in…" : "Log in as coach"}
@@ -503,330 +523,609 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-16 md:max-w-3xl">
-      <header className="flex items-start justify-between px-5 pt-6 md:px-0 md:pt-10">
-        <div>
-          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Admin</h1>
-          <p className="mt-1 text-sm text-nova-muted">Manage coaches and clients.</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <button
-            onClick={handleAdminSignOut}
-            className="text-sm font-medium text-nova-muted hover:text-nova-text"
-          >
-            Sign out
-          </button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCreateDummyUser}
-            disabled={creatingDummy}
-          >
-            {creatingDummy ? "Creating…" : "+ Dummy test user"}
-          </Button>
+    <div className="min-h-dvh bg-nova-bg">
+      <header className="sticky top-0 z-40 border-b border-nova-border bg-nova-surface/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 py-3.5">
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold tracking-tight text-nova-text">
+              Nova Admin
+            </p>
+            <p className="truncate text-xs text-nova-muted">
+              {activeClients.length} member{activeClients.length === 1 ? "" : "s"} ·{" "}
+              {activeCoaches.length} coach{activeCoaches.length === 1 ? "" : "es"}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/coach">Coach view</Link>
+            </Button>
+            <button
+              onClick={handleAdminSignOut}
+              className="text-sm font-medium text-nova-muted hover:text-nova-text"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="px-5 md:px-0">
-        {clients.filter((c) => !c.assigned_coach_id && c.active).length > 0 && (
-          <section className="mt-6">
-            <h2 className="text-sm font-semibold text-nova-text">New Signups</h2>
-            <p className="mt-0.5 text-xs text-nova-muted">
-              These clients don&apos;t have a coach yet.
-            </p>
-            <div className="mt-3 space-y-2">
-              {clients
-                .filter((c) => !c.assigned_coach_id && c.active)
-                .map((client) => (
-                  <div
-                    key={client.id}
-                    className="flex flex-col gap-2 rounded-2xl border-l-4 border-nova-accent bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] sm:flex-row sm:items-center sm:justify-between"
+      <div className="mx-auto w-full max-w-5xl px-5 py-6 md:grid md:grid-cols-[188px_1fr] md:gap-8">
+        {/* Section nav: sidebar on desktop, scrollable pills on mobile. */}
+        <nav className="-mx-5 mb-5 overflow-x-auto px-5 md:mx-0 md:mb-0 md:overflow-visible md:px-0">
+          <ul className="flex gap-1.5 md:sticky md:top-24 md:flex-col">
+            {SECTIONS.map(({ id, label, icon: Icon }) => {
+              const active = section === id;
+              const badge =
+                id === "plans"
+                  ? pendingPlans.length
+                  : id === "assignments"
+                    ? unassigned.length
+                    : 0;
+              return (
+                <li key={id} className="shrink-0 md:w-full">
+                  <button
+                    type="button"
+                    onClick={() => setSection(id)}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-nova-accent/10 text-nova-accent"
+                        : "text-nova-muted hover:bg-nova-surface hover:text-nova-text",
+                    )}
                   >
-                    <div>
-                      <p className="text-sm font-medium text-nova-text">
-                        {client.full_name || "(no name)"} just joined
-                      </p>
-                      <p className="text-xs text-nova-muted">Assign them a coach to get started.</p>
-                    </div>
-                    <select
-                      defaultValue=""
-                      onChange={(e) => e.target.value && handleAssignCoach(client.id, e.target.value)}
-                      className="h-9 rounded-md border border-nova-accent bg-nova-surface px-2 text-sm font-medium text-nova-accent outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                    <Icon className="size-4 shrink-0" />
+                    {label}
+                    {badge > 0 && (
+                      <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-nova-warning/15 px-1.5 text-xs font-semibold text-nova-warning">
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <main className="space-y-5">
+          {panelError && (
+            <p className="rounded-xl border border-nova-danger/30 bg-nova-danger/[0.05] px-4 py-2.5 text-sm text-nova-danger">
+              {panelError}
+            </p>
+          )}
+
+          {section === "overview" && (
+            <>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <StatTile
+                  icon={Users}
+                  label="Members"
+                  value={activeClients.length}
+                  hint="Members"
+                  onClick={() => setSection("members")}
+                />
+                <StatTile
+                  icon={ShieldCheck}
+                  label="Coaches"
+                  value={activeCoaches.length}
+                  hint="Coaches"
+                  onClick={() => setSection("coaches")}
+                />
+                <StatTile
+                  icon={ClipboardCheck}
+                  label="Awaiting review"
+                  value={pendingPlans.length}
+                  hint="To review"
+                  tone={pendingPlans.length > 0 ? "warning" : "success"}
+                  onClick={() => setSection("plans")}
+                />
+                <StatTile
+                  icon={Link2}
+                  label="Unassigned"
+                  value={unassigned.length}
+                  hint="No coach yet"
+                  tone={unassigned.length > 0 ? "warning" : "success"}
+                  onClick={() => setSection("assignments")}
+                />
+              </div>
+
+              <SectionCard
+                title="Needs attention"
+                description="Everything waiting on you, in one place."
+              >
+                {unassigned.length === 0 && pendingPlans.length === 0 ? (
+                  <p className="flex items-center gap-2 rounded-xl bg-nova-success/[0.06] px-4 py-4 text-sm text-nova-success">
+                    <CheckCircle2 className="size-4" />
+                    All clear — nothing needs your attention.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {unassigned.map((client) => (
+                      <li
+                        key={client.id}
+                        className="flex flex-col gap-2 rounded-xl border border-nova-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <Avatar name={client.full_name} />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-nova-text">
+                              {client.full_name || "(no name)"}
+                            </p>
+                            <p className="text-xs text-nova-muted">Needs a coach</p>
+                          </div>
+                        </div>
+                        <select
+                          defaultValue=""
+                          onChange={(e) =>
+                            e.target.value && handleAssignCoach(client.id, e.target.value)
+                          }
+                          className="h-9 shrink-0 rounded-md border border-nova-accent bg-nova-surface px-2 text-sm font-medium text-nova-accent outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                        >
+                          <option value="" disabled>
+                            Assign a coach
+                          </option>
+                          {activeCoaches.map((coach) => (
+                            <option key={coach.id} value={coach.id}>
+                              {coach.full_name || coach.id}
+                            </option>
+                          ))}
+                        </select>
+                      </li>
+                    ))}
+
+                    {pendingPlans.map((plan) => (
+                      <li key={plan.id}>
+                        <Link
+                          href={`/admin/review?id=${plan.id}`}
+                          className="flex items-center justify-between rounded-xl border border-nova-border/70 p-3 transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar name={plan.full_name} />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-nova-text">
+                                {plan.full_name}
+                              </p>
+                              <p className="text-xs text-nova-muted">
+                                {GOAL_LABEL[plan.goal] ?? plan.goal} · submitted{" "}
+                                {timeAgo(plan.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-nova-accent">
+                            Review
+                            <ArrowRight className="size-4" />
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </SectionCard>
+
+              <SectionCard title="Quick actions">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSection("members");
+                      setShowMemberForm(true);
+                    }}
+                  >
+                    <UserPlus className="size-3.5" />
+                    Add member
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSection("coaches");
+                      setShowCoachForm(true);
+                    }}
+                  >
+                    <Plus className="size-3.5" />
+                    Add coach
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCreateDummyUser}
+                    disabled={creatingDummy}
+                  >
+                    <Wand2 className="size-3.5" />
+                    {creatingDummy ? "Creating…" : "Add test member"}
+                  </Button>
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {section === "members" && (
+            <>
+              <SectionCard
+                title="Members"
+                description="Everyone training at the gym."
+                action={
+                  <Button
+                    size="sm"
+                    variant={showMemberForm ? "outline" : "default"}
+                    onClick={() => setShowMemberForm((v) => !v)}
+                  >
+                    {showMemberForm ? <X className="size-3.5" /> : <UserPlus className="size-3.5" />}
+                    {showMemberForm ? "Close" : "Add member"}
+                  </Button>
+                }
+              >
+                {showMemberForm && (
+                  <div className="mb-4 rounded-xl border border-nova-border/70 bg-nova-bg p-4">
+                    <AccountCreator
+                      role="client"
+                      coaches={coaches}
+                      onCreated={() => refreshLists()}
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-nova-muted" />
+                    <input
+                      value={memberQuery}
+                      onChange={(e) => setMemberQuery(e.target.value)}
+                      placeholder="Search members"
+                      className="flex h-10 w-full rounded-xl border border-nova-border bg-nova-surface pl-9 pr-3 text-sm text-nova-text outline-none placeholder:text-nova-muted focus-visible:ring-2 focus-visible:ring-nova-accent"
+                    />
+                  </div>
+                  <div className="flex gap-1.5">
+                    {(["all", "unassigned", "removed"] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => setMemberFilter(filter)}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                          memberFilter === filter
+                            ? "bg-nova-accent text-white"
+                            : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                        )}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {visibleMembers.length === 0 && <EmptyState>No members here yet.</EmptyState>}
+
+                  {visibleMembers.map((client) => {
+                    const plan = planByClient.get(client.id);
+                    return (
+                      <div
+                        key={client.id}
+                        className="flex flex-col gap-3 rounded-xl border border-nova-border/70 p-3 sm:flex-row sm:items-center"
+                      >
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <Avatar name={client.full_name} />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-nova-text">
+                              {client.full_name || "(no name)"}
+                            </p>
+                            <p className="flex flex-wrap items-center gap-1.5 text-xs text-nova-muted">
+                              {plan ? (
+                                <span
+                                  className={cn(
+                                    "rounded-full px-1.5 py-0.5 font-medium",
+                                    STATUS_STYLE[plan.status] ?? "bg-nova-bg",
+                                  )}
+                                >
+                                  {STATUS_LABEL[plan.status] ?? plan.status}
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-nova-bg px-1.5 py-0.5">
+                                  No plan yet
+                                </span>
+                              )}
+                              {!client.active && <span>· Removed</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            value={client.assigned_coach_id ?? ""}
+                            onChange={(e) => handleAssignCoach(client.id, e.target.value)}
+                            className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                          >
+                            <option value="">No coach</option>
+                            {activeCoaches.map((coach) => (
+                              <option key={coach.id} value={coach.id}>
+                                {coach.full_name || coach.id}
+                              </option>
+                            ))}
+                          </select>
+
+                          {plan && (
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`/admin/review?id=${plan.id}`}>
+                                {plan.status === "pending" ? "Review" : "Edit plan"}
+                              </Link>
+                            </Button>
+                          )}
+
+                          <Button
+                            variant={client.active ? "ghost" : "default"}
+                            size="sm"
+                            onClick={() => toggleActive(client.id, client.active)}
+                          >
+                            {client.active ? "Remove" : "Restore"}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </SectionCard>
+            </>
+          )}
+
+          {section === "coaches" && (
+            <SectionCard
+              title="Coaches"
+              description="Staff who build and approve plans."
+              action={
+                <Button
+                  size="sm"
+                  variant={showCoachForm ? "outline" : "default"}
+                  onClick={() => setShowCoachForm((v) => !v)}
+                >
+                  {showCoachForm ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
+                  {showCoachForm ? "Close" : "Add coach"}
+                </Button>
+              }
+            >
+              {showCoachForm && (
+                <div className="mb-4 rounded-xl border border-nova-border/70 bg-nova-bg p-4">
+                  <AccountCreator role="coach" onCreated={() => refreshLists()} />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {coaches.length === 0 && <EmptyState>No coaches yet.</EmptyState>}
+
+                {coaches.map((coach) => {
+                  const roster = clients.filter(
+                    (client) => client.assigned_coach_id === coach.id && client.active,
+                  );
+                  return (
+                    <div
+                      key={coach.id}
+                      className="flex items-center gap-3 rounded-xl border border-nova-border/70 p-3"
                     >
-                      <option value="" disabled>
-                        Assign a coach
-                      </option>
-                      {coaches
-                        .filter((coach) => coach.active)
-                        .map((coach) => (
+                      <Avatar name={coach.full_name} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-nova-text">
+                          {coach.full_name || "(no name)"}
+                        </p>
+                        <p className="text-xs text-nova-muted">
+                          {roster.length} member{roster.length === 1 ? "" : "s"} ·{" "}
+                          {coach.active ? "Active" : "Removed"}
+                        </p>
+                      </div>
+                      <Button
+                        variant={coach.active ? "ghost" : "default"}
+                        size="sm"
+                        onClick={() => toggleActive(coach.id, coach.active)}
+                      >
+                        {coach.active ? "Remove" : "Restore"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </SectionCard>
+          )}
+
+          {section === "assignments" && (
+            <>
+              <SectionCard
+                title="Unassigned members"
+                description="Pick members, then assign them to a coach in one go."
+              >
+                {unassigned.length === 0 ? (
+                  <p className="flex items-center gap-2 rounded-xl bg-nova-success/[0.06] px-4 py-4 text-sm text-nova-success">
+                    <CheckCircle2 className="size-4" />
+                    Every member has a coach.
+                  </p>
+                ) : (
+                  <>
+                    <ul className="space-y-2">
+                      {unassigned.map((client) => {
+                        const checked = selectedForAssign.includes(client.id);
+                        return (
+                          <li key={client.id}>
+                            <label
+                              className={cn(
+                                "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors",
+                                checked
+                                  ? "border-nova-accent bg-nova-accent/[0.04]"
+                                  : "border-nova-border/70 hover:bg-nova-bg",
+                              )}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) =>
+                                  setSelectedForAssign((prev) =>
+                                    e.target.checked
+                                      ? [...prev, client.id]
+                                      : prev.filter((id) => id !== client.id),
+                                  )
+                                }
+                                className="size-4 accent-[var(--nova-accent)]"
+                              />
+                              <Avatar name={client.full_name} />
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium text-nova-text">
+                                {client.full_name || "(no name)"}
+                              </span>
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-nova-bg p-3">
+                      <span className="text-sm text-nova-muted">
+                        {selectedForAssign.length} selected
+                      </span>
+                      <select
+                        value={bulkCoachId}
+                        onChange={(e) => setBulkCoachId(e.target.value)}
+                        className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                      >
+                        <option value="">Choose a coach…</option>
+                        {activeCoaches.map((coach) => (
                           <option key={coach.id} value={coach.id}>
                             {coach.full_name || coach.id}
                           </option>
                         ))}
-                    </select>
-                  </div>
-                ))}
-            </div>
-          </section>
-        )}
-
-        {plans.filter((p) => p.status === "pending").length > 0 && (
-          <section className="mt-8">
-            <h2 className="text-sm font-semibold text-nova-text">Pending Plans</h2>
-            <p className="mt-0.5 text-xs text-nova-muted">
-              You can review and approve these yourself if needed, instead of waiting on a coach.
-            </p>
-            <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-              {plans
-                .filter((p) => p.status === "pending")
-                .map((plan) => (
-                  <Link
-                    key={plan.id}
-                    href={`/admin/review?id=${plan.id}`}
-                    className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-nova-accent/[0.03]"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-nova-text">{plan.full_name}</p>
-                      <p className="mt-0.5 text-xs text-nova-muted">
-                        {GOAL_LABEL[plan.goal] ?? plan.goal} · Submitted {timeAgo(plan.created_at)}
-                      </p>
+                      </select>
+                      <Button
+                        size="sm"
+                        disabled={!bulkCoachId || selectedForAssign.length === 0}
+                        onClick={handleBulkAssign}
+                      >
+                        Assign
+                      </Button>
                     </div>
-                    <span className="flex items-center gap-1 text-sm font-medium text-nova-accent">
-                      Review
-                      <ChevronRight className="size-4" />
-                    </span>
-                  </Link>
-                ))}
-            </div>
-          </section>
-        )}
+                  </>
+                )}
+              </SectionCard>
 
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold text-nova-text">Add a coach</h2>
+              <SectionCard title="Coach rosters" description="Who's training with whom.">
+                {activeCoaches.length === 0 ? (
+                  <EmptyState>Add a coach first, then you can allocate members.</EmptyState>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {activeCoaches.map((coach) => {
+                      const roster = clients.filter(
+                        (client) => client.assigned_coach_id === coach.id && client.active,
+                      );
+                      return (
+                        <div
+                          key={coach.id}
+                          className="rounded-xl border border-nova-border/70 p-3"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Avatar name={coach.full_name} />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-nova-text">
+                                {coach.full_name || "(no name)"}
+                              </p>
+                              <p className="text-xs text-nova-muted">
+                                {roster.length} member{roster.length === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                          </div>
 
-          <form
-            onSubmit={handleCreateCoach}
-            className="mt-3 space-y-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
-          >
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-nova-text">Name</label>
-              <Input
-                value={newCoachName}
-                onChange={(e) => setNewCoachName(e.target.value)}
-                placeholder="Coach's full name"
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-nova-text">Email</label>
-              <Input
-                type="email"
-                value={newCoachEmail}
-                onChange={(e) => setNewCoachEmail(e.target.value)}
-                placeholder="coach@example.com"
-                required
-              />
-            </div>
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-sm font-medium text-nova-text">
-                  Password (editable)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setNewCoachPassword(generatePassword())}
-                  className="text-xs font-medium text-nova-accent hover:underline"
-                >
-                  Regenerate
-                </button>
-              </div>
-              <Input
-                value={newCoachPassword}
-                onChange={(e) => setNewCoachPassword(e.target.value)}
-                required
-              />
-              <p className="mt-1 text-xs text-nova-muted">
-                The coach will be asked to set their own password the first time they log in.
-              </p>
-            </div>
-            <Button type="submit" className="w-full" disabled={creatingCoach}>
-              {creatingCoach ? "Creating…" : "Create Coach"}
-            </Button>
-          </form>
-
-          {created && (
-            <div className="mt-3 rounded-2xl border border-nova-accent/30 bg-nova-accent/[0.04] p-4">
-              <p className="text-sm font-medium text-nova-text">
-                Coach account created — copy these now, they won&apos;t be shown again:
-              </p>
-              <div className="mt-2 space-y-1 font-mono text-sm text-nova-text">
-                <p>ID: {created.email}</p>
-                <p>Password: {created.password}</p>
-              </div>
-              <button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    `ID: ${created.email}\nPassword: ${created.password}`,
-                  )
-                }
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
-              >
-                <Copy className="size-3.5" />
-                Copy
-              </button>
-            </div>
+                          <ul className="mt-2.5 space-y-1">
+                            {roster.length === 0 && (
+                              <li className="text-xs text-nova-muted">No members yet.</li>
+                            )}
+                            {roster.map((client) => (
+                              <li
+                                key={client.id}
+                                className="flex items-center justify-between gap-2 rounded-lg bg-nova-bg px-2.5 py-1.5"
+                              >
+                                <span className="min-w-0 truncate text-sm text-nova-text">
+                                  {client.full_name || "(no name)"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAssignCoach(client.id, "")}
+                                  className="shrink-0 text-xs font-medium text-nova-muted hover:text-nova-danger"
+                                >
+                                  Unassign
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </SectionCard>
+            </>
           )}
 
-          {panelError && <p className="mt-3 text-sm text-nova-danger">{panelError}</p>}
-
-          <h2 className="mt-6 text-sm font-semibold text-nova-text">Coaches</h2>
-          <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-            {coaches.length === 0 && (
-              <p className="px-4 py-3 text-sm text-nova-muted">No coaches yet.</p>
-            )}
-            {coaches.map((coach) => (
-              <div key={coach.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-nova-text">
-                    {coach.full_name || "(no name)"}
-                  </p>
-                  <p className="text-xs text-nova-muted">
-                    {coach.active ? "Active" : "Removed"}
-                  </p>
+          {section === "plans" && (
+            <SectionCard
+              title="Plans"
+              description="Review what a coach built, or edit a plan yourself."
+              action={
+                <div className="flex gap-1.5">
+                  {(["pending", "approved", "all"] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      onClick={() => setPlanFilter(filter)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                        planFilter === filter
+                          ? "bg-nova-accent text-white"
+                          : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                      )}
+                    >
+                      {filter}
+                    </button>
+                  ))}
                 </div>
-                <Button
-                  variant={coach.active ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => toggleActive(coach.id, coach.active)}
-                >
-                  {coach.active ? "Remove" : "Restore"}
-                </Button>
-              </div>
-            ))}
-          </div>
-        </section>
+              }
+            >
+              <div className="space-y-2">
+                {visiblePlans.length === 0 && <EmptyState>Nothing here right now.</EmptyState>}
 
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold text-nova-text">Add a user</h2>
-
-          <form
-            onSubmit={handleCreateUser}
-            className="mt-3 space-y-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
-          >
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-nova-text">Name</label>
-              <Input
-                value={newUserName}
-                onChange={(e) => setNewUserName(e.target.value)}
-                placeholder="User's full name"
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-nova-text">Email</label>
-              <Input
-                type="email"
-                value={newUserEmail}
-                onChange={(e) => setNewUserEmail(e.target.value)}
-                placeholder="user@example.com"
-                required
-              />
-            </div>
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-sm font-medium text-nova-text">
-                  Password (editable)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setNewUserPassword(generatePassword())}
-                  className="text-xs font-medium text-nova-accent hover:underline"
-                >
-                  Regenerate
-                </button>
+                {visiblePlans.map((plan) => {
+                  const coach = coachById.get(
+                    clients.find((c) => c.id === plan.client_id)?.assigned_coach_id ?? "",
+                  );
+                  return (
+                    <Link
+                      key={plan.id}
+                      href={`/admin/review?id=${plan.id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-nova-border/70 p-3 transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar name={plan.full_name} />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-nova-text">
+                            {plan.full_name}
+                          </p>
+                          <p className="truncate text-xs text-nova-muted">
+                            {GOAL_LABEL[plan.goal] ?? plan.goal} · {timeAgo(plan.created_at)}
+                            {coach ? ` · Coach ${coach.full_name}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span
+                          className={cn(
+                            "hidden rounded-full px-2 py-0.5 text-xs font-medium sm:inline",
+                            STATUS_STYLE[plan.status] ?? "bg-nova-bg text-nova-muted",
+                          )}
+                        >
+                          {STATUS_LABEL[plan.status] ?? plan.status}
+                        </span>
+                        <ArrowRight className="size-4 text-nova-accent" />
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-              <Input
-                value={newUserPassword}
-                onChange={(e) => setNewUserPassword(e.target.value)}
-                required
-              />
-              <p className="mt-1 text-xs text-nova-muted">
-                The user will be asked to set their own password the first time they log in, then
-                complete their intake form to get a plan.
-              </p>
-            </div>
-            <Button type="submit" className="w-full" disabled={creatingUser}>
-              {creatingUser ? "Creating…" : "Create User"}
-            </Button>
-          </form>
-
-          {createdUser && (
-            <div className="mt-3 rounded-2xl border border-nova-accent/30 bg-nova-accent/[0.04] p-4">
-              <p className="text-sm font-medium text-nova-text">
-                User account created — copy these now, they won&apos;t be shown again:
-              </p>
-              <div className="mt-2 space-y-1 font-mono text-sm text-nova-text">
-                <p>ID: {createdUser.email}</p>
-                <p>Password: {createdUser.password}</p>
-              </div>
-              <button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    `ID: ${createdUser.email}\nPassword: ${createdUser.password}`,
-                  )
-                }
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
-              >
-                <Copy className="size-3.5" />
-                Copy
-              </button>
-            </div>
+            </SectionCard>
           )}
-
-          <h2 className="mt-6 text-sm font-semibold text-nova-text">Clients</h2>
-          <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-            {clients.length === 0 && (
-              <p className="px-4 py-3 text-sm text-nova-muted">No clients yet.</p>
-            )}
-            {clients.map((client) => (
-              <div
-                key={client.id}
-                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-nova-text">
-                    {client.full_name || "(no name)"}
-                  </p>
-                  <p className="text-xs text-nova-muted">
-                    {client.active ? "Active" : "Removed"}
-                  </p>
-                </div>
-                <select
-                  value={client.assigned_coach_id ?? ""}
-                  onChange={(e) => handleAssignCoach(client.id, e.target.value)}
-                  className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
-                >
-                  <option value="">Unassigned</option>
-                  {coaches
-                    .filter((coach) => coach.active)
-                    .map((coach) => (
-                      <option key={coach.id} value={coach.id}>
-                        {coach.full_name || coach.id}
-                      </option>
-                    ))}
-                </select>
-                <Button
-                  variant={client.active ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => toggleActive(client.id, client.active)}
-                >
-                  {client.active ? "Remove" : "Restore"}
-                </Button>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

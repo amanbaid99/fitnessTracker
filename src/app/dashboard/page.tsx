@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CalendarDays, Pencil, Plus, Sparkles } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { WarmupCard } from "@/components/client/WarmupCard";
-import { ExerciseCard } from "@/components/client/ExerciseCard";
+import { ExerciseCard, type ExerciseLogDraft } from "@/components/client/ExerciseCard";
 import { WeekStrip } from "@/components/client/WeekStrip";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import type { PlanDay } from "@/lib/planTemplates";
+import { normalizeDays, type PlanDay, type PlanSource } from "@/lib/planTemplates";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -20,20 +23,51 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-interface Plan {
+interface PlanRow {
+  id: string;
   full_name: string;
   status: string;
-  days: PlanDay[];
+  days: PlanDay[] | null;
+  custom_days: PlanDay[] | null;
+  custom_days_per_week: number | null;
+  active_plan: PlanSource | null;
+  coach_notes: string | null;
+  created_at: string;
+  approved_at: string | null;
+}
+
+interface ExerciseLogRow {
+  id: string;
+  plan_day_id: string;
+  planned_name: string;
+  performed_name: string;
+  sets_completed: number | null;
+  reps: string | null;
+  weight_kg: number | null;
+  logged_at: string;
+}
+
+/** Week 1 starts the day the plan was approved (or created, if not yet). */
+function weekNumber(plan: PlanRow) {
+  const start = new Date(plan.approved_at ?? plan.created_at);
+  start.setHours(0, 0, 0, 0);
+  const days = Math.floor((Date.now() - start.getTime()) / 86_400_000);
+  return Math.max(1, Math.floor(days / 7) + 1);
 }
 
 export default function ClientDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [plan, setPlan] = useState<Plan | null>(null);
+  const [plan, setPlan] = useState<PlanRow | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [source, setSource] = useState<PlanSource>("coach");
+  const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [completedDates, setCompletedDates] = useState<Set<string>>(new Set());
+  const [completedDayKeys, setCompletedDayKeys] = useState<Set<string>>(new Set());
   const [totalCompleted, setTotalCompleted] = useState(0);
+  const [exerciseLogs, setExerciseLogs] = useState<ExerciseLogRow[]>([]);
   const [marking, setMarking] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +95,9 @@ export default function ClientDashboardPage() {
 
       const { data } = await supabase
         .from("plans")
-        .select("full_name, status, days")
+        .select(
+          "id, full_name, status, days, custom_days, custom_days_per_week, active_plan, coach_notes, created_at, approved_at",
+        )
         .eq("client_id", sessionData.session.user.id)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -74,26 +110,52 @@ export default function ClientDashboardPage() {
         return;
       }
 
-      if (data.status !== "approved") {
+      const planRow = data as PlanRow;
+
+      if (planRow.status !== "approved") {
         router.replace("/onboarding/review");
         return;
       }
 
       setUserId(sessionData.session.user.id);
-      setPlan(data as Plan);
+      setPlan(planRow);
+      setSource(
+        planRow.active_plan === "custom" && (planRow.custom_days?.length ?? 0) > 0
+          ? "custom"
+          : "coach",
+      );
 
-      const { data: logs } = await supabase
-        .from("workout_logs")
-        .select("completed_at")
-        .eq("client_id", sessionData.session.user.id);
+      const [{ data: logs }, { data: exLogs }] = await Promise.all([
+        supabase
+          .from("workout_logs")
+          .select("completed_at, plan_day_id")
+          .eq("client_id", sessionData.session.user.id),
+        supabase
+          .from("exercise_logs")
+          .select(
+            "id, plan_day_id, planned_name, performed_name, sets_completed, reps, weight_kg, logged_at",
+          )
+          .eq("client_id", sessionData.session.user.id)
+          .order("logged_at", { ascending: false })
+          .limit(300),
+      ]);
 
       if (!active) return;
 
-      const dates = new Set(
-        (logs ?? []).map((log) => new Date(log.completed_at).toISOString().slice(0, 10)),
+      const rows = logs ?? [];
+      setCompletedDates(
+        new Set(rows.map((log) => new Date(log.completed_at).toISOString().slice(0, 10))),
       );
-      setCompletedDates(dates);
-      setTotalCompleted(logs?.length ?? 0);
+      setCompletedDayKeys(
+        new Set(
+          rows.map(
+            (log) =>
+              `${new Date(log.completed_at).toISOString().slice(0, 10)}:${log.plan_day_id}`,
+          ),
+        ),
+      );
+      setTotalCompleted(rows.length);
+      setExerciseLogs((exLogs as ExerciseLogRow[]) ?? []);
       setLoading(false);
     }
 
@@ -103,29 +165,119 @@ export default function ClientDashboardPage() {
     };
   }, [router]);
 
+  const coachDays = useMemo(() => normalizeDays(plan?.days), [plan]);
+  const customDays = useMemo(() => normalizeDays(plan?.custom_days), [plan]);
+  const days = source === "custom" ? customDays : coachDays;
+  const hasCustomPlan = customDays.length > 0;
+
+  // Default to the first day that hasn't been completed today, so the page
+  // opens on what's actually next rather than always on day 1.
+  const activeDay =
+    days.find((d) => d.id === activeDayId) ??
+    days.find((d) => !completedDayKeys.has(`${todayKey()}:${d.id}`)) ??
+    days[0];
+
+  const todaysLogs = useMemo(() => {
+    const key = todayKey();
+    const map = new Map<string, ExerciseLogRow>();
+    for (const log of exerciseLogs) {
+      if (log.logged_at.slice(0, 10) !== key) continue;
+      if (activeDay && log.plan_day_id !== activeDay.id) continue;
+      if (!map.has(log.planned_name)) map.set(log.planned_name, log);
+    }
+    return map;
+  }, [exerciseLogs, activeDay]);
+
+  /** Most recent pick per slot from *before* today — powers "Last time: …". */
+  const lastPerformed = useMemo(() => {
+    const key = todayKey();
+    const map = new Map<string, string>();
+    for (const log of exerciseLogs) {
+      if (log.logged_at.slice(0, 10) === key) continue;
+      if (!map.has(log.planned_name)) map.set(log.planned_name, log.performed_name);
+    }
+    return map;
+  }, [exerciseLogs]);
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.replace("/");
   }
 
-  async function handleMarkComplete() {
-    if (!plan || !userId || completedDates.has(todayKey())) return;
-    setMarking(true);
+  async function handleSwitchSource(next: PlanSource) {
+    if (next === source || !plan) return;
+    setSource(next);
+    setActiveDayId(null);
+    setSwitching(true);
+    await supabase.rpc("set_active_plan", { p_active: next });
+    setSwitching(false);
+  }
 
-    const { error } = await supabase.from("workout_logs").insert({
+  async function handleLogExercise(plannedName: string, draft: ExerciseLogDraft) {
+    if (!userId || !activeDay || !plan) return;
+
+    const existing = todaysLogs.get(plannedName);
+    const payload = {
       client_id: userId,
-      plan_day_id: todayWorkoutId(plan),
-    });
+      plan_day_id: activeDay.id,
+      plan_source: source,
+      planned_name: plannedName,
+      performed_name: draft.performedName,
+      is_alternate: draft.isAlternate,
+      week_number: weekNumber(plan),
+      sets_completed: draft.setsCompleted,
+      reps: draft.reps,
+      weight_kg: draft.weightKg,
+    };
 
-    setMarking(false);
-    if (!error) {
-      setCompletedDates((prev) => new Set(prev).add(todayKey()));
-      setTotalCompleted((prev) => prev + 1);
+    if (existing) {
+      const { data, error } = await supabase
+        .from("exercise_logs")
+        .update(payload)
+        .eq("id", existing.id)
+        .select(
+          "id, plan_day_id, planned_name, performed_name, sets_completed, reps, weight_kg, logged_at",
+        )
+        .single();
+
+      if (!error && data) {
+        setExerciseLogs((prev) =>
+          prev.map((log) => (log.id === existing.id ? (data as ExerciseLogRow) : log)),
+        );
+      }
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("exercise_logs")
+      .insert(payload)
+      .select(
+        "id, plan_day_id, planned_name, performed_name, sets_completed, reps, weight_kg, logged_at",
+      )
+      .single();
+
+    if (!error && data) {
+      setExerciseLogs((prev) => [data as ExerciseLogRow, ...prev]);
     }
   }
 
-  function todayWorkoutId(p: Plan) {
-    return p.days[0]?.id ?? "day-1";
+  async function handleMarkComplete() {
+    if (!activeDay || !userId) return;
+    const key = `${todayKey()}:${activeDay.id}`;
+    if (completedDayKeys.has(key)) return;
+
+    setMarking(true);
+    const { error } = await supabase.from("workout_logs").insert({
+      client_id: userId,
+      plan_day_id: activeDay.id,
+    });
+    setMarking(false);
+
+    if (!error) {
+      setCompletedDates((prev) => new Set(prev).add(todayKey()));
+      setCompletedDayKeys((prev) => new Set(prev).add(key));
+      setTotalCompleted((prev) => prev + 1);
+    }
   }
 
   if (loading || !plan) {
@@ -137,8 +289,9 @@ export default function ClientDashboardPage() {
   }
 
   const firstName = plan.full_name.split(" ")[0] || "there";
-  const todayWorkout = plan.days[0];
-  const alreadyDoneToday = completedDates.has(todayKey());
+  const dayDoneToday = activeDay
+    ? completedDayKeys.has(`${todayKey()}:${activeDay.id}`)
+    : false;
 
   return (
     <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
@@ -160,57 +313,160 @@ export default function ClientDashboardPage() {
           </button>
         </header>
 
-        <div className="mx-5 mt-5 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0 md:mt-6">
-          <WeekStrip completedDates={completedDates} />
-        </div>
-
-        <div className="mx-5 mt-3 grid grid-cols-2 divide-x divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0">
-          <div className="px-2 py-3.5 text-center md:py-5">
-            <p className="text-sm font-semibold text-nova-text">{totalCompleted} workouts</p>
-            <p className="mt-0.5 text-xs text-nova-muted">Total done</p>
-          </div>
-          <div className="px-2 py-3.5 text-center md:py-5">
-            <p className="text-sm font-semibold text-nova-text">{plan.days.length}-day</p>
-            <p className="mt-0.5 text-xs text-nova-muted">Plan</p>
-          </div>
-        </div>
-
         <main className="px-5 md:px-0">
+          {/* Which program is being followed right now. */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div className="flex rounded-full bg-nova-surface p-1 ring-1 ring-nova-border">
+              <button
+                type="button"
+                onClick={() => handleSwitchSource("coach")}
+                disabled={switching}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  source === "coach"
+                    ? "bg-nova-accent text-white"
+                    : "text-nova-muted hover:text-nova-text",
+                )}
+              >
+                Coach plan
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchSource("custom")}
+                disabled={switching || !hasCustomPlan}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
+                  source === "custom"
+                    ? "bg-nova-accent text-white"
+                    : "text-nova-muted hover:text-nova-text",
+                )}
+              >
+                My plan
+              </button>
+            </div>
+
+            <Button asChild variant="outline" size="sm">
+              <Link href="/dashboard/plan-builder">
+                {hasCustomPlan ? (
+                  <>
+                    <Pencil className="size-3.5" />
+                    Edit my plan
+                  </>
+                ) : (
+                  <>
+                    <Plus className="size-3.5" />
+                    Build my own plan
+                  </>
+                )}
+              </Link>
+            </Button>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+            <WeekStrip completedDates={completedDates} />
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 divide-x divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+            <div className="px-2 py-3.5 text-center md:py-5">
+              <p className="text-sm font-semibold text-nova-text">{totalCompleted}</p>
+              <p className="mt-0.5 text-xs text-nova-muted">Workouts done</p>
+            </div>
+            <div className="px-2 py-3.5 text-center md:py-5">
+              <p className="text-sm font-semibold text-nova-text">Week {weekNumber(plan)}</p>
+              <p className="mt-0.5 text-xs text-nova-muted">
+                {source === "custom" ? "My plan" : "Coach plan"}
+              </p>
+            </div>
+            <div className="px-2 py-3.5 text-center md:py-5">
+              <p className="text-sm font-semibold text-nova-text">{days.length}-day</p>
+              <p className="mt-0.5 text-xs text-nova-muted">Split</p>
+            </div>
+          </div>
+
+          {plan.coach_notes && source === "coach" && (
+            <div className="mt-3 rounded-2xl border border-nova-accent/25 bg-nova-accent/[0.04] p-4">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-nova-accent">
+                <Sparkles className="size-3.5" />
+                Note from your coach
+              </p>
+              <p className="mt-1 text-sm text-nova-text">{plan.coach_notes}</p>
+            </div>
+          )}
+
           <div className="mt-6">
             <WarmupCard />
           </div>
 
-          <div className="mt-6">
-            <h2 className="text-sm font-semibold text-nova-text">
-              Today&apos;s Workout
-            </h2>
-            <p className="mt-0.5 text-xs text-nova-muted">{todayWorkout.title}</p>
-
-            <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-              {todayWorkout.exercises.map((exercise) => (
-                <ExerciseCard
-                  key={exercise.name}
-                  name={exercise.name}
-                  sets={exercise.sets}
-                  reps={exercise.reps}
-                  restSeconds={parseInt(exercise.rest, 10) || 60}
-                />
-              ))}
+          {days.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-nova-border bg-nova-surface p-8 text-center">
+              <CalendarDays className="mx-auto size-6 text-nova-muted" />
+              <p className="mt-2 text-sm font-medium text-nova-text">
+                This plan has no training days yet
+              </p>
+              <Button asChild size="sm" className="mt-4">
+                <Link href="/dashboard/plan-builder">Build my own plan</Link>
+              </Button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="mt-6">
+                <h2 className="text-sm font-semibold text-nova-text">Your workout</h2>
+                <div className="-mx-5 mt-2 flex gap-1.5 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:px-0">
+                  {days.map((day) => {
+                    const done = completedDayKeys.has(`${todayKey()}:${day.id}`);
+                    const isActive = day.id === activeDay?.id;
+                    return (
+                      <button
+                        key={day.id}
+                        type="button"
+                        onClick={() => setActiveDayId(day.id)}
+                        className={cn(
+                          "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-nova-accent text-white"
+                            : "bg-nova-surface text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                        )}
+                      >
+                        {day.title.split("—")[0].trim()}
+                        {done && <span className="ml-1.5">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          <Button
-            variant="success"
-            className="mt-6 w-full md:w-auto"
-            disabled={alreadyDoneToday || marking}
-            onClick={handleMarkComplete}
-          >
-            {alreadyDoneToday
-              ? "Completed today ✓"
-              : marking
-                ? "Saving…"
-                : "Mark Workout Complete"}
-          </Button>
+              {activeDay && (
+                <>
+                  <p className="mt-3 text-xs text-nova-muted">{activeDay.title}</p>
+
+                  <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+                    {activeDay.exercises.map((exercise, i) => (
+                      <ExerciseCard
+                        key={`${activeDay.id}-${i}-${exercise.name}`}
+                        exercise={exercise}
+                        logged={todaysLogs.get(exercise.name) ?? null}
+                        lastPerformedName={lastPerformed.get(exercise.name)}
+                        onLog={(draft) => handleLogExercise(exercise.name, draft)}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    variant="success"
+                    className="mt-6 w-full md:w-auto"
+                    disabled={dayDoneToday || marking}
+                    onClick={handleMarkComplete}
+                  >
+                    {dayDoneToday
+                      ? "Completed today ✓"
+                      : marking
+                        ? "Saving…"
+                        : "Mark Workout Complete"}
+                  </Button>
+                </>
+              )}
+            </>
+          )}
         </main>
       </div>
     </div>

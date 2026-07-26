@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Pencil, Plus, Sparkles } from "lucide-react";
+import { CalendarDays, LogOut, Pencil, Plus, Sparkles } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { WarmupCard } from "@/components/client/WarmupCard";
 import { DaySelector } from "@/components/client/DaySelector";
@@ -419,31 +419,32 @@ export default function ClientDashboardPage() {
       <BottomNav />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-4xl">
-        <header className="flex items-center justify-between px-5 pt-6 md:px-0 md:pt-10">
-          <div>
-            <h1 className="text-xl font-semibold text-nova-text md:text-2xl">
+        <header className="flex items-center justify-between gap-3 px-5 pt-5 md:px-0 md:pt-10">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold text-nova-text md:text-2xl">
               Hello, {firstName} 👋
             </h1>
-            <p className="mt-1 text-sm text-nova-muted">{today}</p>
+            <p className="truncate text-xs text-nova-muted md:text-sm">{today}</p>
           </div>
           <button
             onClick={handleSignOut}
-            className="text-sm font-medium text-nova-muted hover:text-nova-text"
+            aria-label="Sign out"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-nova-muted transition-colors hover:bg-nova-surface hover:text-nova-text"
           >
-            Sign out
+            <LogOut className="size-4" />
           </button>
         </header>
 
         <main className="px-5 md:px-0">
           {/* Which program is being followed right now. */}
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <div className="flex rounded-full bg-nova-surface p-1 ring-1 ring-nova-border">
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex flex-1 rounded-full bg-nova-surface p-0.5 ring-1 ring-nova-border">
               <button
                 type="button"
                 onClick={() => handleSwitchSource("coach")}
                 disabled={switching}
                 className={cn(
-                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  "flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors md:text-sm",
                   source === "coach"
                     ? "bg-nova-accent text-white"
                     : "text-nova-muted hover:text-nova-text",
@@ -456,7 +457,7 @@ export default function ClientDashboardPage() {
                 onClick={() => handleSwitchSource("custom")}
                 disabled={switching || !hasCustomPlan}
                 className={cn(
-                  "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
+                  "flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 md:text-sm",
                   source === "custom"
                     ? "bg-nova-accent text-white"
                     : "text-nova-muted hover:text-nova-text",
@@ -466,57 +467,28 @@ export default function ClientDashboardPage() {
               </button>
             </div>
 
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard/plan-builder">
-                {hasCustomPlan ? (
-                  <>
-                    <Pencil className="size-3.5" />
-                    Edit my plan
-                  </>
-                ) : (
-                  <>
-                    <Plus className="size-3.5" />
-                    Build my own plan
-                  </>
-                )}
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link
+                href="/dashboard/plan-builder"
+                aria-label={hasCustomPlan ? "Edit my plan" : "Build my own plan"}
+              >
+                {hasCustomPlan ? <Pencil className="size-3.5" /> : <Plus className="size-3.5" />}
+                <span className="hidden sm:inline">
+                  {hasCustomPlan ? "Edit my plan" : "Build my own"}
+                </span>
               </Link>
             </Button>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-            <WeekStrip completedDates={completedDates} />
-          </div>
-
-          <div className="mt-3 grid grid-cols-3 divide-x divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-            <div className="px-2 py-3.5 text-center md:py-5">
-              <p className="text-sm font-semibold text-nova-text">{totalCompleted}</p>
-              <p className="mt-0.5 text-xs text-nova-muted">Workouts done</p>
-            </div>
-            <div className="px-2 py-3.5 text-center md:py-5">
-              <p className="text-sm font-semibold text-nova-text">Week {weekNumber(plan)}</p>
-              <p className="mt-0.5 text-xs text-nova-muted">
-                {source === "custom" ? "My plan" : "Coach plan"}
-              </p>
-            </div>
-            <div className="px-2 py-3.5 text-center md:py-5">
-              <p className="text-sm font-semibold text-nova-text">{days.length}-day</p>
-              <p className="mt-0.5 text-xs text-nova-muted">Split</p>
-            </div>
-          </div>
-
           {plan.coach_notes && source === "coach" && (
-            <div className="mt-3 rounded-2xl border border-nova-accent/25 bg-nova-accent/[0.04] p-4">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-nova-accent">
-                <Sparkles className="size-3.5" />
+            <div className="mt-3 rounded-xl border border-nova-accent/25 bg-nova-accent/[0.04] px-3 py-2.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-nova-accent">
+                <Sparkles className="size-3" />
                 Note from your coach
               </p>
-              <p className="mt-1 text-sm text-nova-text">{plan.coach_notes}</p>
+              <p className="mt-0.5 text-sm text-nova-text">{plan.coach_notes}</p>
             </div>
           )}
-
-          <div className="mt-6">
-            <WarmupCard />
-          </div>
 
           {days.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-nova-border bg-nova-surface p-8 text-center">
@@ -532,7 +504,7 @@ export default function ClientDashboardPage() {
             <>
               {activeDay && (
                 <>
-                  <div className="mt-6">
+                  <div className="mt-4">
                     <DaySelector
                       days={days}
                       activeDayId={activeDay.id}
@@ -541,6 +513,10 @@ export default function ClientDashboardPage() {
                       completedTodayDayIds={completedTodayDayIds}
                       onSelect={setActiveDayId}
                     />
+                  </div>
+
+                  <div className="mt-3">
+                    <WarmupCard />
                   </div>
 
                   {activeDay.exercises.length === 0 && (
@@ -568,7 +544,7 @@ export default function ClientDashboardPage() {
 
                   <Button
                     variant="success"
-                    className="mt-6 w-full md:w-auto"
+                    className="mt-5 w-full md:w-auto"
                     disabled={dayDoneToday || marking}
                     onClick={handleMarkComplete}
                   >
@@ -582,6 +558,31 @@ export default function ClientDashboardPage() {
               )}
             </>
           )}
+
+          {/* Secondary by design: the session comes first on a phone, and
+              the week's summary is what you scroll to afterwards. */}
+          <section className="mt-8">
+            <h2 className="text-sm font-semibold text-nova-text">Your week</h2>
+            <div className="mt-2 rounded-2xl border border-nova-border/70 bg-nova-surface p-3.5 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+              <WeekStrip completedDates={completedDates} />
+              <div className="mt-3 grid grid-cols-3 divide-x divide-nova-border border-t border-nova-border pt-3">
+                <div className="px-1 text-center">
+                  <p className="text-sm font-semibold text-nova-text">{totalCompleted}</p>
+                  <p className="text-[11px] text-nova-muted">Workouts</p>
+                </div>
+                <div className="px-1 text-center">
+                  <p className="text-sm font-semibold text-nova-text">Week {weekNumber(plan)}</p>
+                  <p className="text-[11px] text-nova-muted">
+                    {source === "custom" ? "My plan" : "Coach plan"}
+                  </p>
+                </div>
+                <div className="px-1 text-center">
+                  <p className="text-sm font-semibold text-nova-text">{days.length}-day</p>
+                  <p className="text-[11px] text-nova-muted">Split</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </main>
       </div>
     </div>

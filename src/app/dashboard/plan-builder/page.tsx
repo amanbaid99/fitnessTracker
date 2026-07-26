@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Copy, Info } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { PlanEditor } from "@/components/plan/PlanEditor";
+import { StartingRecords } from "@/components/client/StartingRecords";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -34,6 +35,7 @@ function seedDays(count: number, existing: PlanDay[]): PlanDay[] {
 export default function PlanBuilderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [coachDays, setCoachDays] = useState<PlanDay[]>([]);
   const [days, setDays] = useState<PlanDay[]>([]);
   const [activePlan, setActivePlan] = useState<PlanSource>("coach");
@@ -66,6 +68,7 @@ export default function PlanBuilderPage() {
         return;
       }
 
+      setUserId(sessionData.session.user.id);
       const existingCustom = normalizeDays(data.custom_days as PlanDay[] | null);
       setCoachDays(normalizeDays(data.days as PlanDay[] | null));
       setDays(existingCustom.length > 0 ? existingCustom : seedDays(3, []));
@@ -196,6 +199,15 @@ export default function PlanBuilderPage() {
               setDays(next);
             }} />
           </section>
+
+          {userId && (
+            <section className="mt-6">
+              <StartingRecords
+                days={days.length > 0 ? days : coachDays}
+                userId={userId}
+              />
+            </section>
+          )}
 
           <div className="mt-6 flex items-start gap-2 rounded-2xl border border-nova-border/70 bg-nova-surface p-4">
             <Info className="mt-0.5 size-4 shrink-0 text-nova-muted" />

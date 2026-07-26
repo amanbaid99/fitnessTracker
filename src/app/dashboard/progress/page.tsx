@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { WeekStrip } from "@/components/client/WeekStrip";
+import { RecordsProgress, type PrHistoryRow } from "@/components/client/RecordsProgress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
+import type { PersonalRecord } from "@/lib/prs";
 
 interface LogRow {
   completed_at: string;
@@ -33,10 +36,18 @@ function computeStreak(dateKeys: Set<string>): number {
   return streak;
 }
 
+function thisMonth(iso: string) {
+  const date = new Date(iso);
+  const now = new Date();
+  return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+}
+
 export default function ProgressPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<LogRow[]>([]);
+  const [records, setRecords] = useState<PersonalRecord[]>([]);
+  const [history, setHistory] = useState<PrHistoryRow[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -48,14 +59,34 @@ export default function ProgressPage() {
         return;
       }
 
-      const { data } = await supabase
-        .from("workout_logs")
-        .select("completed_at, plan_day_id")
-        .eq("client_id", sessionData.session.user.id)
-        .order("completed_at", { ascending: false });
+      const clientId = sessionData.session.user.id;
+
+      const [{ data }, { data: prRows }, { data: historyRows }] = await Promise.all([
+        supabase
+          .from("workout_logs")
+          .select("completed_at, plan_day_id")
+          .eq("client_id", clientId)
+          .order("completed_at", { ascending: false }),
+        supabase
+          .from("exercise_prs")
+          .select(
+            "exercise_key, exercise_name, weight_kg, reps, estimated_1rm, source, achieved_at, updated_at",
+          )
+          .eq("client_id", clientId),
+        supabase
+          .from("exercise_pr_history")
+          .select(
+            "exercise_key, exercise_name, weight_kg, reps, estimated_1rm, source, achieved_at",
+          )
+          .eq("client_id", clientId)
+          .order("achieved_at", { ascending: true }),
+      ]);
 
       if (!active) return;
+
       setLogs((data as LogRow[]) ?? []);
+      setRecords((prRows as PersonalRecord[]) ?? []);
+      setHistory((historyRows as PrHistoryRow[]) ?? []);
       setLoading(false);
     }
 
@@ -75,6 +106,9 @@ export default function ProgressPage() {
 
   const completedDates = new Set(logs.map((l) => dateKey(l.completed_at)));
   const streak = computeStreak(completedDates);
+  const recordsThisMonth = history.filter(
+    (row) => row.source === "logged" && thisMonth(row.achieved_at),
+  ).length;
 
   return (
     <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
@@ -83,46 +117,70 @@ export default function ProgressPage() {
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl">
         <header className="px-5 pt-6 md:px-0 md:pt-10">
           <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Progress</h1>
-          <p className="mt-1 text-sm text-nova-muted">Your training history at a glance.</p>
+          <p className="mt-1 text-sm text-nova-muted">
+            Your training history and personal records.
+          </p>
         </header>
 
         <main className="px-5 md:px-0">
-          <div className="mt-6 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-            <WeekStrip completedDates={completedDates} />
-          </div>
+          <Tabs defaultValue="activity" className="mt-5">
+            <TabsList>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="records">
+                Records
+                {records.length > 0 && (
+                  <span className="ml-1.5 text-xs text-nova-muted">{records.length}</span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-              <p className="text-2xl font-semibold text-nova-text">{logs.length}</p>
-              <p className="mt-0.5 text-xs text-nova-muted">Total workouts</p>
-            </div>
-            <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-              <p className="text-2xl font-semibold text-nova-text">{streak}-day</p>
-              <p className="mt-0.5 text-xs text-nova-muted">Current streak</p>
-            </div>
-          </div>
+            <TabsContent value="activity" className="mt-5">
+              <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <WeekStrip completedDates={completedDates} />
+              </div>
 
-          <div className="mt-6">
-            <h2 className="text-sm font-semibold text-nova-text">Recent workouts</h2>
-            <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-              {logs.length === 0 && (
-                <p className="px-4 py-3 text-sm text-nova-muted">
-                  No workouts logged yet — complete one from your dashboard.
-                </p>
-              )}
-              {logs.slice(0, 10).map((log, i) => (
-                <div key={`${log.completed_at}-${i}`} className="px-4 py-3">
-                  <p className="text-sm font-medium text-nova-text">
-                    {new Date(log.completed_at).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <p className="text-2xl font-semibold text-nova-text">{logs.length}</p>
+                  <p className="mt-0.5 text-xs text-nova-muted">Workouts</p>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <p className="text-2xl font-semibold text-nova-text">{streak}</p>
+                  <p className="mt-0.5 text-xs text-nova-muted">Day streak</p>
+                </div>
+                <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <p className="text-2xl font-semibold text-nova-text">{recordsThisMonth}</p>
+                  <p className="mt-0.5 text-xs text-nova-muted">PRs this month</p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h2 className="text-sm font-semibold text-nova-text">Recent workouts</h2>
+                <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  {logs.length === 0 && (
+                    <p className="px-4 py-3 text-sm text-nova-muted">
+                      No workouts logged yet — complete one from your dashboard.
+                    </p>
+                  )}
+                  {logs.slice(0, 10).map((log, i) => (
+                    <div key={`${log.completed_at}-${i}`} className="px-4 py-3">
+                      <p className="text-sm font-medium text-nova-text">
+                        {new Date(log.completed_at).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="records" className="mt-5">
+              <RecordsProgress records={records} history={history} />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </div>

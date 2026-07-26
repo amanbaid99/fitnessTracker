@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Pencil, Plus, Sparkles } from "lucide-react";
@@ -18,6 +18,14 @@ import {
   suggestNextDayId,
   type WorkoutHistoryEntry,
 } from "@/lib/rotation";
+import {
+  beatsRecord,
+  bestSet,
+  estimate1RM,
+  exerciseKey,
+  type LoggedSet,
+  type PersonalRecord,
+} from "@/lib/prs";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -47,11 +55,15 @@ interface ExerciseLogRow {
   plan_day_id: string;
   planned_name: string;
   performed_name: string;
+  sets: { weight_kg: number | null; reps: number | null }[] | null;
   sets_completed: number | null;
   reps: string | null;
   weight_kg: number | null;
   logged_at: string;
 }
+
+const LOG_COLUMNS =
+  "id, plan_day_id, planned_name, performed_name, sets, sets_completed, reps, weight_kg, logged_at";
 
 /** Week 1 starts the day the plan was approved (or created, if not yet). */
 function weekNumber(plan: PlanRow) {
@@ -73,6 +85,7 @@ export default function ClientDashboardPage() {
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryEntry[]>([]);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLogRow[]>([]);
+  const [records, setRecords] = useState<PersonalRecord[]>([]);
   const [marking, setMarking] = useState(false);
   const [switching, setSwitching] = useState(false);
 
@@ -132,19 +145,23 @@ export default function ClientDashboardPage() {
           : "coach",
       );
 
-      const [{ data: logs }, { data: exLogs }] = await Promise.all([
+      const [{ data: logs }, { data: exLogs }, { data: prRows }] = await Promise.all([
         supabase
           .from("workout_logs")
           .select("completed_at, plan_day_id, plan_source")
           .eq("client_id", sessionData.session.user.id),
         supabase
           .from("exercise_logs")
-          .select(
-            "id, plan_day_id, planned_name, performed_name, sets_completed, reps, weight_kg, logged_at",
-          )
+          .select(LOG_COLUMNS)
           .eq("client_id", sessionData.session.user.id)
           .order("logged_at", { ascending: false })
           .limit(300),
+        supabase
+          .from("exercise_prs")
+          .select(
+            "exercise_key, exercise_name, weight_kg, reps, estimated_1rm, source, achieved_at, updated_at",
+          )
+          .eq("client_id", sessionData.session.user.id),
       ]);
 
       if (!active) return;
@@ -175,6 +192,7 @@ export default function ClientDashboardPage() {
       );
       setTotalCompleted(rows.length);
       setExerciseLogs((exLogs as ExerciseLogRow[]) ?? []);
+      setRecords((prRows as PersonalRecord[]) ?? []);
       setLoading(false);
     }
 
@@ -229,6 +247,28 @@ export default function ClientDashboardPage() {
     return map;
   }, [exerciseLogs, activeDay]);
 
+  const recordsByKey = useMemo(
+    () => new Map(records.map((record) => [record.exercise_key, record])),
+    [records],
+  );
+
+  const recordFor = useCallback(
+    (name: string, exerciseId?: string) => recordsByKey.get(exerciseKey(name, exerciseId)),
+    [recordsByKey],
+  );
+
+  /** Sets from the most recent session for a slot, used to prefill today's. */
+  const previousSetsFor = useCallback(
+    (plannedName: string) => {
+      const key = todayKey();
+      const previous = exerciseLogs.find(
+        (log) => log.planned_name === plannedName && log.logged_at.slice(0, 10) !== key,
+      );
+      return previous?.sets ?? undefined;
+    },
+    [exerciseLogs],
+  );
+
   /** Most recent pick per slot from *before* today — powers "Last time: …". */
   const lastPerformed = useMemo(() => {
     const key = todayKey();
@@ -258,6 +298,8 @@ export default function ClientDashboardPage() {
     if (!userId || !activeDay || !plan) return;
 
     const existing = todaysLogs.get(plannedName);
+    const best = bestSet(draft.sets);
+
     const payload = {
       client_id: userId,
       plan_day_id: activeDay.id,
@@ -266,40 +308,73 @@ export default function ClientDashboardPage() {
       performed_name: draft.performedName,
       is_alternate: draft.isAlternate,
       week_number: weekNumber(plan),
-      sets_completed: draft.setsCompleted,
-      reps: draft.reps,
-      weight_kg: draft.weightKg,
+      sets: draft.sets,
+      // Summary of the best set, kept alongside the detail so older readers
+      // (and the coach's activity feed) still make sense.
+      sets_completed: draft.sets.length,
+      reps: best?.reps != null ? String(best.reps) : null,
+      weight_kg: best?.weight_kg ?? null,
     };
 
-    if (existing) {
-      const { data, error } = await supabase
-        .from("exercise_logs")
-        .update(payload)
-        .eq("id", existing.id)
-        .select(
-          "id, plan_day_id, planned_name, performed_name, sets_completed, reps, weight_kg, logged_at",
-        )
-        .single();
+    const { data, error } = existing
+      ? await supabase
+          .from("exercise_logs")
+          .update(payload)
+          .eq("id", existing.id)
+          .select(LOG_COLUMNS)
+          .single()
+      : await supabase.from("exercise_logs").insert(payload).select(LOG_COLUMNS).single();
 
-      if (!error && data) {
-        setExerciseLogs((prev) =>
-          prev.map((log) => (log.id === existing.id ? (data as ExerciseLogRow) : log)),
-        );
-      }
-      return;
-    }
+    if (error || !data) return;
 
-    const { data, error } = await supabase
-      .from("exercise_logs")
-      .insert(payload)
-      .select(
-        "id, plan_day_id, planned_name, performed_name, sets_completed, reps, weight_kg, logged_at",
-      )
-      .single();
+    setExerciseLogs((prev) =>
+      existing
+        ? prev.map((log) => (log.id === existing.id ? (data as ExerciseLogRow) : log))
+        : [data as ExerciseLogRow, ...prev],
+    );
 
-    if (!error && data) {
-      setExerciseLogs((prev) => [data as ExerciseLogRow, ...prev]);
-    }
+    if (best) await updateRecord(draft, best);
+  }
+
+  /** Promotes the session's best set to a personal record when it beats the
+   * one on the books, and appends to the record's timeline. */
+  async function updateRecord(draft: ExerciseLogDraft, best: LoggedSet) {
+    if (!userId) return;
+
+    const key = exerciseKey(draft.performedName, draft.performedExerciseId);
+    const current = recordsByKey.get(key);
+    if (!beatsRecord(best, current)) return;
+
+    const achievedAt = new Date().toISOString();
+    const record: PersonalRecord = {
+      exercise_key: key,
+      exercise_name: draft.performedName,
+      weight_kg: best.weight_kg,
+      reps: best.reps,
+      estimated_1rm: estimate1RM(best.weight_kg, best.reps),
+      source: "logged",
+      achieved_at: achievedAt,
+      updated_at: achievedAt,
+    };
+
+    const { error } = await supabase
+      .from("exercise_prs")
+      .upsert({ client_id: userId, ...record }, { onConflict: "client_id,exercise_key" });
+
+    if (error) return;
+
+    await supabase.from("exercise_pr_history").insert({
+      client_id: userId,
+      exercise_key: key,
+      exercise_name: record.exercise_name,
+      weight_kg: record.weight_kg,
+      reps: record.reps,
+      estimated_1rm: record.estimated_1rm,
+      source: "logged",
+      achieved_at: achievedAt,
+    });
+
+    setRecords((prev) => [...prev.filter((r) => r.exercise_key !== key), record]);
   }
 
   async function handleMarkComplete() {
@@ -475,13 +550,17 @@ export default function ClientDashboardPage() {
                     </p>
                   )}
 
-                  <div className="mt-4 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+                  {/* One exercise per row on every screen — a set-by-set
+                      logging form needs the full width to stay tappable. */}
+                  <div className="mt-4 space-y-3">
                     {activeDay.exercises.map((exercise, i) => (
                       <ExerciseCard
                         key={`${activeDay.id}-${i}-${exercise.name}`}
                         exercise={exercise}
                         logged={todaysLogs.get(exercise.name) ?? null}
                         lastPerformedName={lastPerformed.get(exercise.name)}
+                        previousSets={previousSetsFor(exercise.name)}
+                        recordFor={recordFor}
                         onLog={(draft) => handleLogExercise(exercise.name, draft)}
                       />
                     ))}

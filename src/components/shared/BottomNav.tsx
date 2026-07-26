@@ -6,6 +6,7 @@ import {
   Home,
   LineChart,
   ClipboardList,
+  Dumbbell,
   MessageCircle,
   Scale,
   Users,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 const clientTabs = [
   { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/dashboard/plan-builder", label: "My Plan", icon: Dumbbell },
   { href: "/dashboard/progress", label: "Progress", icon: LineChart },
   { href: "/dashboard/body-metrics", label: "Body", icon: Scale },
   { href: "/dashboard/messages", label: "Messages", icon: MessageCircle },

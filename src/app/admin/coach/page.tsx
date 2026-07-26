@@ -3,18 +3,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pencil, Plus } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { UserManagementSection } from "@/components/shared/UserManagementSection";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
 interface PlanRow {
   id: string;
+  client_id: string;
   full_name: string;
   goal: string;
   status: string;
   created_at: string;
   approved_at: string | null;
+}
+
+interface ClientProfile {
+  id: string;
+  full_name: string;
 }
 
 const GOAL_LABEL: Record<string, string> = {
@@ -24,7 +31,7 @@ const GOAL_LABEL: Record<string, string> = {
 };
 
 function initials(name: string) {
-  return name
+  return (name || "?")
     .split(" ")
     .map((p) => p[0])
     .join("")
@@ -45,6 +52,9 @@ export default function CoachDashboardPage() {
   const [coachName, setCoachName] = useState("Coach");
   const [pending, setPending] = useState<PlanRow[]>([]);
   const [approved, setApproved] = useState<PlanRow[]>([]);
+  const [withoutPlan, setWithoutPlan] = useState<ClientProfile[]>([]);
+  const [creatingFor, setCreatingFor] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -64,13 +74,7 @@ export default function CoachDashboardPage() {
 
       if (!active) return;
 
-      if (!profile || profile.role !== "coach") {
-        await supabase.auth.signOut();
-        router.replace("/admin");
-        return;
-      }
-
-      if (profile.active === false) {
+      if (!profile || profile.role !== "coach" || profile.active === false) {
         await supabase.auth.signOut();
         router.replace("/admin");
         return;
@@ -80,31 +84,39 @@ export default function CoachDashboardPage() {
 
       const { data: assignedClients } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("assigned_coach_id", sessionData.session.user.id);
+        .select("id, full_name")
+        .eq("assigned_coach_id", sessionData.session.user.id)
+        .eq("active", true);
 
       if (!active) return;
 
-      const clientIds = (assignedClients ?? []).map((c) => c.id);
+      const roster = (assignedClients as ClientProfile[]) ?? [];
 
-      if (clientIds.length === 0) {
+      if (roster.length === 0) {
         setPending([]);
         setApproved([]);
+        setWithoutPlan([]);
         setLoading(false);
         return;
       }
 
       const { data: plans } = await supabase
         .from("plans")
-        .select("id, full_name, goal, status, created_at, approved_at, client_id")
-        .in("client_id", clientIds)
+        .select("id, client_id, full_name, goal, status, created_at, approved_at")
+        .in(
+          "client_id",
+          roster.map((client) => client.id),
+        )
         .order("created_at", { ascending: false });
 
       if (!active) return;
 
-      const rows = (plans ?? []) as (PlanRow & { client_id: string })[];
+      const rows = (plans ?? []) as PlanRow[];
+      const clientsWithPlans = new Set(rows.map((plan) => plan.client_id));
+
       setPending(rows.filter((p) => p.status === "pending"));
       setApproved(rows.filter((p) => p.status === "approved"));
+      setWithoutPlan(roster.filter((client) => !clientsWithPlans.has(client.id)));
       setLoading(false);
     }
 
@@ -113,6 +125,27 @@ export default function CoachDashboardPage() {
       active = false;
     };
   }, [router]);
+
+  /** Starts an empty program for a member who never filled in the intake form. */
+  async function handleCreatePlan(clientId: string) {
+    setError(null);
+    setCreatingFor(clientId);
+
+    const { data, error: createError } = await supabase.rpc("coach_create_plan", {
+      p_client_id: clientId,
+      p_goal: "general-fitness",
+      p_days: [],
+    });
+
+    setCreatingFor(null);
+
+    if (createError || !data) {
+      setError(createError?.message ?? "Could not create the plan.");
+      return;
+    }
+
+    router.push(`/admin/coach/review?id=${data as string}`);
+  }
 
   if (loading) {
     return (
@@ -128,9 +161,7 @@ export default function CoachDashboardPage() {
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-5xl">
         <header className="px-5 pt-6 md:px-0 md:pt-10">
-          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">
-            Hi, {coachName} 👋
-          </h1>
+          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Hi, {coachName} 👋</h1>
           <p className="mt-1 text-sm text-nova-muted">
             {pending.length === 0
               ? "No plans need your review right now"
@@ -139,13 +170,13 @@ export default function CoachDashboardPage() {
         </header>
 
         <main className="px-5 md:px-0">
+          {error && <p className="mt-4 text-sm text-nova-danger">{error}</p>}
+
           <div className="mt-6 lg:grid lg:grid-cols-3 lg:gap-8">
             <div className="lg:col-span-2">
               <section>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-nova-text">
-                    Pending Review
-                  </h2>
+                  <h2 className="text-sm font-semibold text-nova-text">Pending Review</h2>
                   {pending.length > 0 && (
                     <span className="inline-flex size-5 items-center justify-center rounded-full bg-nova-warning/15 text-xs font-semibold text-nova-warning">
                       {pending.length}
@@ -155,9 +186,7 @@ export default function CoachDashboardPage() {
 
                 <div className="mt-3 space-y-3">
                   {pending.length === 0 && (
-                    <p className="text-sm text-nova-muted">
-                      You&apos;re all caught up.
-                    </p>
+                    <p className="text-sm text-nova-muted">You&apos;re all caught up.</p>
                   )}
                   {pending.map((plan) => (
                     <Link
@@ -166,9 +195,7 @@ export default function CoachDashboardPage() {
                       className="flex items-center justify-between rounded-2xl border-l-4 border-nova-warning bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors hover:bg-nova-accent/[0.03]"
                     >
                       <div>
-                        <p className="text-sm font-medium text-nova-text">
-                          {plan.full_name}
-                        </p>
+                        <p className="text-sm font-medium text-nova-text">{plan.full_name}</p>
                         <p className="mt-0.5 text-xs text-nova-muted">
                           {GOAL_LABEL[plan.goal] ?? plan.goal} · Submitted{" "}
                           {timeAgo(plan.created_at)}
@@ -183,20 +210,49 @@ export default function CoachDashboardPage() {
                 </div>
               </section>
 
+              {withoutPlan.length > 0 && (
+                <section className="mt-8">
+                  <h2 className="text-sm font-semibold text-nova-text">Needs a program</h2>
+                  <p className="mt-0.5 text-xs text-nova-muted">
+                    Assigned to you, but no plan built yet.
+                  </p>
+                  <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                    {withoutPlan.map((client) => (
+                      <div key={client.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+                          {initials(client.full_name)}
+                        </div>
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-nova-text">
+                          {client.full_name || "(no name)"}
+                        </p>
+                        <Button
+                          size="sm"
+                          disabled={creatingFor === client.id}
+                          onClick={() => handleCreatePlan(client.id)}
+                        >
+                          <Plus className="size-3.5" />
+                          {creatingFor === client.id ? "Creating…" : "Build plan"}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               <section className="mt-8">
-                <h2 className="text-sm font-semibold text-nova-text">
-                  Active Clients
-                </h2>
+                <h2 className="text-sm font-semibold text-nova-text">Active Clients</h2>
+                <p className="mt-0.5 text-xs text-nova-muted">
+                  Open a client to add workouts, swap exercises, or set alternates.
+                </p>
                 <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
                   {approved.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-nova-muted">
-                      No approved clients yet.
-                    </p>
+                    <p className="px-4 py-3 text-sm text-nova-muted">No approved clients yet.</p>
                   )}
                   {approved.map((plan) => (
-                    <div
+                    <Link
                       key={plan.id}
-                      className="flex items-center gap-3 px-4 py-3"
+                      href={`/admin/coach/review?id=${plan.id}`}
+                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-nova-accent/[0.03]"
                     >
                       <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
                         {initials(plan.full_name)}
@@ -209,14 +265,17 @@ export default function CoachDashboardPage() {
                           {GOAL_LABEL[plan.goal] ?? plan.goal}
                         </p>
                       </div>
-                      <span className="size-2.5 shrink-0 rounded-full bg-nova-success" />
-                    </div>
+                      <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-nova-accent">
+                        <Pencil className="size-3.5" />
+                        Edit
+                      </span>
+                    </Link>
                   ))}
                 </div>
               </section>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="mt-8 lg:col-span-1 lg:mt-0">
               <UserManagementSection role="client" title="Manage Clients" />
             </div>
           </div>

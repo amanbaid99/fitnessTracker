@@ -87,3 +87,237 @@ body {
     border-color: var(--border);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Animated exercise illustrations
+   ---------------------------------------------------------------------------
+   Each exercise tile draws a small figure whose moving parts carry one of the
+   classes below. Transforms are relative to the SVG's own view box so a
+   rotation can pivot around a joint (an elbow, a hip) rather than the middle
+   of the element's bounding box.
+--------------------------------------------------------------------------- */
+
+.nova-art [class*="nova-anim-"] {
+  transform-box: view-box;
+  transform-origin: 32px 32px;
+}
+
+@keyframes nova-press {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(9px);
+  }
+}
+
+@keyframes nova-lift {
+  0%,
+  100% {
+    transform: translateY(7px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes nova-dip {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(7px);
+  }
+}
+
+@keyframes nova-hinge {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(34deg);
+  }
+}
+
+@keyframes nova-slide {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes nova-curl-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-140deg);
+  }
+}
+
+@keyframes nova-curl-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(140deg);
+  }
+}
+
+@keyframes nova-raise-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(58deg);
+  }
+}
+
+@keyframes nova-raise-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-58deg);
+  }
+}
+
+@keyframes nova-hop {
+  0%,
+  100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes nova-stride-front {
+  0%,
+  100% {
+    transform: rotate(24deg);
+  }
+  50% {
+    transform: rotate(-26deg);
+  }
+}
+
+@keyframes nova-stride-back {
+  0%,
+  100% {
+    transform: rotate(-26deg);
+  }
+  50% {
+    transform: rotate(24deg);
+  }
+}
+
+@keyframes nova-sway {
+  0%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+}
+
+@keyframes nova-drift {
+  0%,
+  100% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes nova-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.06);
+  }
+}
+
+.nova-anim-press {
+  animation: nova-press 2.4s ease-in-out infinite;
+}
+.nova-anim-lift {
+  animation: nova-lift 2.4s ease-in-out infinite;
+}
+.nova-anim-dip {
+  animation: nova-dip 2.2s ease-in-out infinite;
+}
+.nova-anim-hinge {
+  animation: nova-hinge 2.8s ease-in-out infinite;
+  transform-origin: 32px 34px;
+}
+.nova-anim-slide {
+  animation: nova-slide 2.2s ease-in-out infinite;
+}
+.nova-anim-curl-left {
+  animation: nova-curl-left 2.2s ease-in-out infinite;
+  transform-origin: 24px 33px;
+}
+.nova-anim-curl-right {
+  animation: nova-curl-right 2.2s ease-in-out infinite;
+  transform-origin: 40px 33px;
+}
+.nova-anim-raise-left {
+  animation: nova-raise-left 2.6s ease-in-out infinite;
+  transform-origin: 30px 26px;
+}
+.nova-anim-raise-right {
+  animation: nova-raise-right 2.6s ease-in-out infinite;
+  transform-origin: 34px 26px;
+}
+.nova-anim-fly-left {
+  animation: nova-raise-left 2.8s ease-in-out infinite;
+  transform-origin: 32px 34px;
+}
+.nova-anim-fly-right {
+  animation: nova-raise-right 2.8s ease-in-out infinite;
+  transform-origin: 32px 34px;
+}
+.nova-anim-hop {
+  animation: nova-hop 1.2s ease-in-out infinite;
+}
+.nova-anim-stride-front {
+  animation: nova-stride-front 0.9s ease-in-out infinite;
+  transform-origin: 32px 38px;
+}
+.nova-anim-stride-back {
+  animation: nova-stride-back 0.9s ease-in-out infinite;
+  transform-origin: 32px 38px;
+}
+.nova-anim-sway {
+  animation: nova-sway 3.2s ease-in-out infinite;
+  transform-origin: 32px 46px;
+}
+.nova-anim-drift {
+  animation: nova-drift 2.6s ease-in-out infinite;
+}
+.nova-anim-breathe {
+  animation: nova-breathe 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-art [class*="nova-anim-"] {
+    animation: none !important;
+  }
+}

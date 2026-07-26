@@ -1,3 +1,23 @@
+import {
+  findExerciseByName,
+  type CatalogExercise,
+} from "@/lib/exerciseLibrary";
+
+/**
+ * A swap for the exercise it hangs off — e.g. "DB Press" as an alternate for
+ * "Barbell Bench Press". The client picks which one they actually did when
+ * logging, so week 1 can be the bench and week 2 the dumbbell version.
+ */
+export interface PlanAlternate {
+  name: string;
+  /** Catalog id when the alternate came from the library, absent if custom. */
+  exerciseId?: string;
+  sets?: number;
+  reps?: string;
+}
+
+export const MAX_ALTERNATES = 3;
+
 export interface PlanExercise {
   name: string;
   sets: number;
@@ -5,12 +25,67 @@ export interface PlanExercise {
   rest: string;
   tempo: string;
   rpe: string;
+  /** Catalog id when the exercise came from the library, absent if custom. */
+  exerciseId?: string;
+  alternates?: PlanAlternate[];
 }
 
 export interface PlanDay {
   id: string;
   title: string;
   exercises: PlanExercise[];
+}
+
+/** Which plan the client is actually training off right now. */
+export type PlanSource = "coach" | "custom";
+
+export function exerciseFromCatalog(catalog: CatalogExercise): PlanExercise {
+  return {
+    name: catalog.name,
+    sets: catalog.defaultSets,
+    reps: catalog.defaultReps,
+    rest: catalog.defaultRest,
+    tempo: "2-0-2",
+    rpe: "7",
+    exerciseId: catalog.id,
+    alternates: [],
+  };
+}
+
+export function customExercise(name: string): PlanExercise {
+  return {
+    name: name.trim(),
+    sets: 3,
+    reps: "10",
+    rest: "60s",
+    tempo: "2-0-2",
+    rpe: "7",
+    alternates: [],
+  };
+}
+
+export function emptyDay(index: number): PlanDay {
+  return {
+    id: `day-${index + 1}`,
+    title: `Day ${index + 1}`,
+    exercises: [],
+  };
+}
+
+/**
+ * Days saved before this version have no `alternates` array and no catalog
+ * ids. Filling both in on read keeps every editor and card able to assume
+ * they're there.
+ */
+export function normalizeDays(days: PlanDay[] | null | undefined): PlanDay[] {
+  return (days ?? []).map((day) => ({
+    ...day,
+    exercises: (day.exercises ?? []).map((exercise) => ({
+      ...exercise,
+      exerciseId: exercise.exerciseId ?? findExerciseByName(exercise.name)?.id,
+      alternates: exercise.alternates ?? [],
+    })),
+  }));
 }
 
 export type Goal = "build-muscle" | "fat-loss" | "general-fitness";
@@ -152,10 +227,14 @@ export function generatePlan(
   return template.map((day) => ({
     ...day,
     exercises: day.exercises.map((exercise) => {
-      let result = {
+      let result: PlanExercise = {
         ...exercise,
         sets: Math.max(2, exercise.sets + setDelta),
         rpe: clampRpe(exercise.rpe, rpeDelta),
+        // Resolved before any caution suffix is appended below, so the
+        // illustration still matches the underlying movement.
+        exerciseId: findExerciseByName(exercise.name)?.id,
+        alternates: [],
       };
 
       if (hasKneePain && KNEE_SENSITIVE.has(exercise.name)) {

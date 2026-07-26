@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
+import { UserManagementSection } from "@/components/shared/UserManagementSection";
 import { supabase } from "@/lib/supabase";
 
 interface PlanRow {
@@ -57,7 +58,7 @@ export default function CoachDashboardPage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, role")
+        .select("full_name, role, active")
         .eq("id", sessionData.session.user.id)
         .single();
 
@@ -65,6 +66,12 @@ export default function CoachDashboardPage() {
 
       if (!profile || (profile.role !== "coach" && profile.role !== "admin")) {
         router.replace("/dashboard");
+        return;
+      }
+
+      if (profile.active === false) {
+        await supabase.auth.signOut();
+        router.replace("/");
         return;
       }
 
@@ -189,6 +196,10 @@ export default function CoachDashboardPage() {
                   ))}
                 </div>
               </section>
+            </div>
+
+            <div className="lg:col-span-1">
+              <UserManagementSection role="client" title="Manage Clients" />
             </div>
           </div>
         </main>

@@ -36,6 +36,20 @@ export default function ClientDashboardPage() {
         return;
       }
 
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("active")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (!active) return;
+
+      if (profile?.active === false) {
+        await supabase.auth.signOut();
+        router.replace("/");
+        return;
+      }
+
       const { data } = await supabase
         .from("plans")
         .select("full_name, status, days")

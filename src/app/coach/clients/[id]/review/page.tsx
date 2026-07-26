@@ -21,6 +21,10 @@ const DAYS = [
   { value: "day-4", label: "Day 4", title: "Day 4 — Full Body", exercises: [] },
 ];
 
+export function generateStaticParams() {
+  return [{ id: "1" }];
+}
+
 export default async function CoachReviewPage({
   params,
 }: {

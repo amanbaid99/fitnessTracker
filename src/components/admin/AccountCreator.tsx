@@ -5,6 +5,8 @@ import { Check, Copy, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
+import { PLAN_PRESETS } from "@/lib/planPresets";
+import type { PlanDay } from "@/lib/planTemplates";
 
 export interface StaffProfile {
   id: string;
@@ -31,6 +33,8 @@ interface AccountCreatorProps {
    * roster, and keep that coach signed in afterwards.
    */
   claimForSignedInCoach?: boolean;
+  /** Saved templates offered alongside the built-in splits. */
+  templates?: { id: string; name: string; days: PlanDay[] | null }[];
 }
 
 /**
@@ -46,16 +50,32 @@ export function AccountCreator({
   coaches = [],
   onCreated,
   claimForSignedInCoach = false,
+  templates = [],
 }: AccountCreatorProps) {
   const isCoach = role === "coach";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState(() => generatePassword(isCoach ? "Coach" : "Nova"));
   const [coachId, setCoachId] = useState("");
+  // "" = let them choose, "preset:<id>" or "template:<uuid>" = assign now.
+  const [startingPlan, setStartingPlan] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  /** Resolves the picked starting plan to days, or null for "decide later". */
+  function startingPlanDays(): PlanDay[] | null {
+    if (startingPlan.startsWith("preset:")) {
+      const preset = PLAN_PRESETS.find((p) => p.id === startingPlan.slice("preset:".length));
+      return preset ? preset.days : null;
+    }
+    if (startingPlan.startsWith("template:")) {
+      const template = templates.find((t) => t.id === startingPlan.slice("template:".length));
+      return template?.days?.length ? template.days : null;
+    }
+    return null;
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -111,6 +131,23 @@ export function AccountCreator({
           p_coach_id: coachId,
         });
       }
+
+      const days = startingPlanDays();
+      if (days) {
+        // Approved on creation: staff picked it deliberately, so there's
+        // nothing left to review.
+        const rpc = claimForSignedInCoach ? "coach_create_plan" : "admin_create_plan";
+        const { error: planError } = await supabase.rpc(rpc, {
+          p_client_id: data.user.id,
+          p_goal: "general-fitness",
+          p_days: days,
+          p_status: "approved",
+          p_preset_id: startingPlan.startsWith("preset:")
+            ? startingPlan.slice("preset:".length)
+            : null,
+        });
+        if (planError) setError(planError.message);
+      }
     }
 
     setBusy(false);
@@ -125,6 +162,7 @@ export function AccountCreator({
     setName("");
     setEmail("");
     setCoachId("");
+    setStartingPlan("");
     setPassword(generatePassword(isCoach ? "Coach" : "Nova"));
     onCreated();
   }
@@ -192,6 +230,37 @@ export function AccountCreator({
             </label>
           )}
         </div>
+
+        {!isCoach && (
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-nova-text">
+              Starting plan <span className="text-nova-muted">(optional)</span>
+            </span>
+            <select
+              value={startingPlan}
+              onChange={(e) => setStartingPlan(e.target.value)}
+              className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-3 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+            >
+              <option value="">Let them choose</option>
+              <optgroup label="Built-in splits">
+                {PLAN_PRESETS.map((preset) => (
+                  <option key={preset.id} value={`preset:${preset.id}`}>
+                    {preset.name} · {preset.daysPerWeek} days
+                  </option>
+                ))}
+              </optgroup>
+              {templates.length > 0 && (
+                <optgroup label="Templates">
+                  {templates.map((template) => (
+                    <option key={template.id} value={`template:${template.id}`}>
+                      {template.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </label>
+        )}
 
         <p className="text-xs text-nova-muted">
           {claimForSignedInCoach && "They'll be added to your clients. "}

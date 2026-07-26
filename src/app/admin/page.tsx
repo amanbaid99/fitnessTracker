@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   LayoutGrid,
+  LayoutTemplate,
   Link2,
   Plus,
   Search,
@@ -26,6 +27,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatTile } from "@/components/admin/StatTile";
 import { AccountCreator, type StaffProfile } from "@/components/admin/AccountCreator";
 import { CoachRow } from "@/components/admin/CoachRow";
+import { AccountEditor } from "@/components/admin/AccountEditor";
+import { TemplateWorkshop, type WorkoutTemplate } from "@/components/plan/TemplateWorkshop";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";
@@ -58,7 +61,7 @@ const STATUS_LABEL: Record<string, string> = {
   changes_requested: "Changes requested",
 };
 
-type Section = "overview" | "members" | "coaches" | "assignments" | "plans";
+type Section = "overview" | "members" | "coaches" | "assignments" | "plans" | "templates";
 
 const SECTIONS: { id: Section; label: string; icon: typeof Users }[] = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
@@ -66,6 +69,7 @@ const SECTIONS: { id: Section; label: string; icon: typeof Users }[] = [
   { id: "coaches", label: "Coaches", icon: ShieldCheck },
   { id: "assignments", label: "Assignments", icon: Link2 },
   { id: "plans", label: "Plans", icon: ClipboardCheck },
+  { id: "templates", label: "Templates", icon: LayoutTemplate },
 ];
 
 function initials(name: string) {
@@ -151,6 +155,7 @@ export default function AdminPage() {
   const [coaches, setCoaches] = useState<StaffProfile[]>([]);
   const [clients, setClients] = useState<StaffProfile[]>([]);
   const [plans, setPlans] = useState<PlanRow[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [panelError, setPanelError] = useState<string | null>(null);
   const [creatingDummy, setCreatingDummy] = useState(false);
 
@@ -161,6 +166,7 @@ export default function AdminPage() {
   const [planFilter, setPlanFilter] = useState<"pending" | "approved" | "all">("pending");
   const [selectedForAssign, setSelectedForAssign] = useState<string[]>([]);
   const [bulkCoachId, setBulkCoachId] = useState("");
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
 
   useEffect(() => {
     // localStorage only exists after mount — reading it during the static
@@ -175,14 +181,17 @@ export default function AdminPage() {
   }, [isAdmin]);
 
   async function refreshLists() {
-    const [{ data: coachRows }, { data: clientRows }, { data: planRows }] = await Promise.all([
-      supabase.rpc("admin_list_staff", { p_role: "coach" }),
-      supabase.rpc("admin_list_staff", { p_role: "client" }),
-      supabase.rpc("admin_list_plans"),
-    ]);
+    const [{ data: coachRows }, { data: clientRows }, { data: planRows }, { data: templateRows }] =
+      await Promise.all([
+        supabase.rpc("admin_list_staff", { p_role: "coach" }),
+        supabase.rpc("admin_list_staff", { p_role: "client" }),
+        supabase.rpc("admin_list_plans"),
+        supabase.rpc("admin_list_templates"),
+      ]);
     setCoaches((coachRows as StaffProfile[]) ?? []);
     setClients((clientRows as StaffProfile[]) ?? []);
     setPlans((planRows as PlanRow[]) ?? []);
+    setTemplates((templateRows as WorkoutTemplate[]) ?? []);
   }
 
   function handleAdminSubmit(e: FormEvent) {
@@ -761,6 +770,7 @@ export default function AdminPage() {
                     <AccountCreator
                       role="client"
                       coaches={coaches}
+                      templates={templates}
                       onCreated={() => refreshLists()}
                     />
                   </div>
@@ -803,18 +813,21 @@ export default function AdminPage() {
                     const assignedCoach = client.assigned_coach_id
                       ? coachById.get(client.assigned_coach_id)
                       : undefined;
+                    const editing = editingMemberId === client.id;
+
                     return (
                       <div
                         key={client.id}
-                        className="flex flex-col gap-3 rounded-xl border border-nova-border/70 p-3 sm:flex-row sm:items-center"
+                        className="rounded-xl border border-nova-border/70 p-3"
                       >
+                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                           <Avatar name={client.full_name} />
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-nova-text">
                               {client.full_name || "(no name)"}
                             </p>
-                            <p className="flex flex-wrap items-center gap-1.5 text-xs text-nova-muted">
+                            <p className="flex items-center gap-1.5 overflow-hidden text-xs text-nova-muted [&>span]:whitespace-nowrap">
                               {plan ? (
                                 <span
                                   className={cn(
@@ -840,7 +853,7 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                           <select
                             value={client.assigned_coach_id ?? ""}
                             onChange={(e) => handleAssignCoach(client.id, e.target.value)}
@@ -875,6 +888,14 @@ export default function AdminPage() {
                           )}
 
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingMemberId(editing ? null : client.id)}
+                          >
+                            Edit
+                          </Button>
+
+                          <Button
                             variant={client.active ? "ghost" : "default"}
                             size="sm"
                             onClick={() => toggleActive(client.id, client.active)}
@@ -882,6 +903,17 @@ export default function AdminPage() {
                             {client.active ? "Remove" : "Restore"}
                           </Button>
                         </div>
+                       </div>
+
+                        {editing && (
+                          <div className="mt-3 border-t border-nova-border/70 pt-3">
+                            <AccountEditor
+                              account={client}
+                              mode="admin"
+                              onSaved={refreshLists}
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1082,6 +1114,15 @@ export default function AdminPage() {
                 )}
               </SectionCard>
             </>
+          )}
+
+          {section === "templates" && (
+            <SectionCard
+              title="Workout templates"
+              description="Reusable programs. Yours are editable by every admin; a coach's own template stays theirs to change."
+            >
+              <TemplateWorkshop mode="admin" />
+            </SectionCard>
           )}
 
           {section === "plans" && (

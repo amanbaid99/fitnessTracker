@@ -35,7 +35,7 @@ export default function HomePage() {
             Log in
           </Link>
           <Button asChild size="sm">
-            <Link href="/onboarding">Get started</Link>
+            <Link href="/auth/register">Get started</Link>
           </Button>
         </nav>
       </header>
@@ -51,7 +51,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg">
-              <Link href="/onboarding">Create your account</Link>
+              <Link href="/auth/register">Create your account</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/auth/login">I already have an account</Link>

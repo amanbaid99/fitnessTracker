@@ -223,15 +223,21 @@ export default function PlanBuilderPage() {
         </main>
       </div>
 
-      <div className="fixed inset-x-0 bottom-16 z-40 mx-auto flex w-full max-w-[430px] items-center gap-3 border-t border-nova-border bg-nova-bg/95 px-5 py-3 backdrop-blur md:bottom-0 md:max-w-2xl md:px-0 lg:max-w-4xl">
-        <p className="flex-1 text-xs text-nova-muted">
+      <div className="fixed inset-x-0 bottom-16 z-40 mx-auto flex w-full max-w-[430px] items-center gap-2 border-t border-nova-border bg-nova-bg/95 px-5 py-3 backdrop-blur md:bottom-0 md:max-w-2xl md:gap-3 md:px-0 lg:max-w-4xl">
+        {/* The counter is the first thing to go when space is tight. */}
+        <p className="hidden flex-1 text-xs text-nova-muted sm:block">
           {days.length} days · {totalExercises} exercise{totalExercises === 1 ? "" : "s"}
         </p>
-        <Button variant="outline" disabled={saving} onClick={() => save(false)}>
+        <Button
+          variant="outline"
+          className="flex-1 sm:flex-none"
+          disabled={saving}
+          onClick={() => save(false)}
+        >
           Save draft
         </Button>
-        <Button disabled={saving} onClick={() => save(true)}>
-          {saving ? "Saving…" : activePlan === "custom" ? "Save plan" : "Save & train this"}
+        <Button className="flex-1 sm:flex-none" disabled={saving} onClick={() => save(true)}>
+          {saving ? "Saving…" : activePlan === "custom" ? "Save plan" : "Save & train"}
         </Button>
       </div>
     </div>

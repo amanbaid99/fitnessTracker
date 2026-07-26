@@ -50,7 +50,7 @@ export function DaySelector({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-      <div className="p-4">
+      <div className="p-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p
@@ -77,11 +77,11 @@ export function DaySelector({
               )}
             </p>
 
-            <h2 className="mt-1 truncate text-lg font-semibold text-nova-text">
+            <h2 className="mt-0.5 truncate text-base font-semibold text-nova-text md:text-lg">
               {dayLabel(activeDay)}
             </h2>
             {daySubtitle(activeDay) && (
-              <p className="truncate text-sm text-nova-muted">{daySubtitle(activeDay)}</p>
+              <p className="truncate text-xs text-nova-muted md:text-sm">{daySubtitle(activeDay)}</p>
             )}
             <p className="mt-0.5 text-xs text-nova-muted">
               {activeDay.exercises.length} exercise

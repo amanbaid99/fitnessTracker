@@ -1,17 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, UserPlus, X } from "lucide-react";
+import { Pencil, Plus, UserPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AccountCreator } from "@/components/admin/AccountCreator";
+import { AccountEditor } from "@/components/admin/AccountEditor";
 import { supabase } from "@/lib/supabase";
+import type { WorkoutTemplate } from "@/components/plan/TemplateWorkshop";
 
 interface ClientRow {
   id: string;
   full_name: string;
   active: boolean;
 }
+
+/**
+ * Emails live in auth.users, which coaches can't read through RLS — the
+ * editor fills it in from what they type, or leaves it blank to keep the
+ * existing address.
+ */
 
 function initials(name: string) {
   return (name || "?")
@@ -35,8 +43,10 @@ export function CoachClientsPanel({
   onRosterChange?: () => void;
 }) {
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchClients = useCallback(
@@ -60,10 +70,17 @@ export function CoachClientsPanel({
     let active = true;
 
     async function load() {
-      const { data, error: loadError } = await fetchClients();
+      const [{ data, error: loadError }, { data: templateRows }] = await Promise.all([
+        fetchClients(),
+        supabase
+          .from("workout_templates")
+          .select("id, name, description, days, days_per_week, created_by, owner_role, updated_at")
+          .order("updated_at", { ascending: false }),
+      ]);
       if (!active) return;
       if (loadError) setError(loadError.message);
       setClients((data as ClientRow[]) ?? []);
+      setTemplates((templateRows as WorkoutTemplate[]) ?? []);
       setLoading(false);
     }
 
@@ -113,6 +130,7 @@ export function CoachClientsPanel({
             <AccountCreator
               role="client"
               claimForSignedInCoach
+              templates={templates}
               onCreated={() => {
                 refresh();
                 onRosterChange?.();
@@ -131,30 +149,52 @@ export function CoachClientsPanel({
 
         <ul className="space-y-1.5">
           {clients.map((client) => (
-            <li key={client.id} className="flex items-center gap-2.5 rounded-xl px-1 py-1.5">
-              <span
-                className={cn(
-                  "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                  client.active
-                    ? "bg-nova-accent/10 text-nova-accent"
-                    : "bg-nova-bg text-nova-muted",
-                )}
-              >
-                {initials(client.full_name)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-nova-text">
-                  {client.full_name || "(no name)"}
+            <li key={client.id} className="rounded-xl px-1 py-1.5">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                    client.active
+                      ? "bg-nova-accent/10 text-nova-accent"
+                      : "bg-nova-bg text-nova-muted",
+                  )}
+                >
+                  {initials(client.full_name)}
                 </span>
-                {!client.active && <span className="text-xs text-nova-muted">Removed</span>}
-              </span>
-              <Button
-                variant={client.active ? "ghost" : "default"}
-                size="sm"
-                onClick={() => toggleActive(client)}
-              >
-                {client.active ? "Remove" : <><Plus className="size-3.5" />Restore</>}
-              </Button>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-nova-text">
+                    {client.full_name || "(no name)"}
+                  </span>
+                  {!client.active && <span className="text-xs text-nova-muted">Removed</span>}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingId(editingId === client.id ? null : client.id)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button
+                  variant={client.active ? "ghost" : "default"}
+                  size="sm"
+                  onClick={() => toggleActive(client)}
+                >
+                  {client.active ? "Remove" : <><Plus className="size-3.5" />Restore</>}
+                </Button>
+              </div>
+
+              {editingId === client.id && (
+                <div className="mt-2 rounded-xl border border-nova-border/70 bg-nova-bg p-3">
+                  <AccountEditor
+                    account={client}
+                    mode="coach"
+                    onSaved={() => {
+                      refresh();
+                      onRosterChange?.();
+                    }}
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>

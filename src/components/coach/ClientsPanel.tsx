@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AccountCreator } from "@/components/admin/AccountCreator";
 import { supabase } from "@/lib/supabase";
+import type { WorkoutTemplate } from "@/components/plan/TemplateWorkshop";
 
 interface ClientRow {
   id: string;
@@ -35,6 +36,7 @@ export function CoachClientsPanel({
   onRosterChange?: () => void;
 }) {
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,10 +62,17 @@ export function CoachClientsPanel({
     let active = true;
 
     async function load() {
-      const { data, error: loadError } = await fetchClients();
+      const [{ data, error: loadError }, { data: templateRows }] = await Promise.all([
+        fetchClients(),
+        supabase
+          .from("workout_templates")
+          .select("id, name, description, days, days_per_week, created_by, owner_role, updated_at")
+          .order("updated_at", { ascending: false }),
+      ]);
       if (!active) return;
       if (loadError) setError(loadError.message);
       setClients((data as ClientRow[]) ?? []);
+      setTemplates((templateRows as WorkoutTemplate[]) ?? []);
       setLoading(false);
     }
 
@@ -113,6 +122,7 @@ export function CoachClientsPanel({
             <AccountCreator
               role="client"
               claimForSignedInCoach
+              templates={templates}
               onCreated={() => {
                 refresh();
                 onRosterChange?.();

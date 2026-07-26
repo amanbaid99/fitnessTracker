@@ -10,7 +10,6 @@ import {
   MessageCircle,
   Scale,
   Users,
-  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,9 +23,8 @@ const clientTabs = [
 
 const coachTabs = [
   { href: "/admin/coach", label: "Clients", icon: Users },
-  { href: "/admin/coach/check-ins", label: "Check-ins", icon: ClipboardList },
+  { href: "/admin/coach/templates", label: "Templates", icon: ClipboardList },
   { href: "/admin/coach/messages", label: "Messages", icon: MessageCircle },
-  { href: "/admin/coach/settings", label: "Settings", icon: Settings },
 ];
 
 export function BottomNav({

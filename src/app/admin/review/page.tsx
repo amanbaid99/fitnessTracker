@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ExerciseReviewRow } from "@/components/coach/ExerciseReviewRow";
 import { supabase } from "@/lib/supabase";
-import type { PlanDay } from "@/lib/planTemplates";
+import type { PlanDay, PlanExercise } from "@/lib/planTemplates";
 
 const ADMIN_SESSION_KEY = "nova_admin_session";
 
@@ -26,6 +26,7 @@ interface Plan {
   medical_conditions: string[];
   medical_notes: string | null;
   days: PlanDay[];
+  coach_notes: string | null;
   status: string;
 }
 
@@ -36,7 +37,10 @@ function AdminReviewContent() {
 
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [days, setDays] = useState<PlanDay[]>([]);
+  const [coachNotes, setCoachNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -61,6 +65,8 @@ function AdminReviewContent() {
       }
 
       setPlan(found);
+      setDays(found.days);
+      setCoachNotes(found.coach_notes ?? "");
       setLoading(false);
     }
 
@@ -70,9 +76,48 @@ function AdminReviewContent() {
     };
   }, [planId, router]);
 
+  function updateExercise(dayId: string, index: number, updated: PlanExercise) {
+    setSaved(false);
+    setDays((prev) =>
+      prev.map((day) =>
+        day.id === dayId
+          ? {
+              ...day,
+              exercises: day.exercises.map((ex, i) => (i === index ? updated : ex)),
+            }
+          : day,
+      ),
+    );
+  }
+
+  async function handleSaveChanges() {
+    if (!plan) return;
+    setSaving(true);
+
+    const { error } = await supabase.rpc("admin_save_plan", {
+      p_id: plan.id,
+      p_days: days,
+      p_coach_notes: coachNotes || null,
+    });
+
+    setSaving(false);
+    if (!error) setSaved(true);
+  }
+
   async function handleDecision(status: "approved" | "changes_requested") {
     if (!plan) return;
     setSaving(true);
+
+    const { error: saveError } = await supabase.rpc("admin_save_plan", {
+      p_id: plan.id,
+      p_days: days,
+      p_coach_notes: coachNotes || null,
+    });
+
+    if (saveError) {
+      setSaving(false);
+      return;
+    }
 
     const { error } = await supabase.rpc("admin_update_plan_status", {
       p_id: plan.id,
@@ -93,7 +138,6 @@ function AdminReviewContent() {
     );
   }
 
-  const days: PlanDay[] = plan.days;
   const flaggedConditions = plan.medical_conditions.filter((c) => c !== "none");
 
   return (
@@ -140,26 +184,45 @@ function AdminReviewContent() {
           {days.map((day) => (
             <TabsContent key={day.id} value={day.id} className="mt-4">
               <h2 className="text-sm font-semibold text-nova-text">{day.title}</h2>
+              <p className="mt-0.5 text-xs text-nova-muted">
+                Tap an exercise to edit its sets, reps, rest, tempo, or RPE.
+              </p>
 
               <div className="mt-3 space-y-3">
                 {day.exercises.map((exercise, i) => (
                   <ExerciseReviewRow
-                    key={exercise.name}
-                    {...exercise}
-                    defaultOpen={i === 0}
+                    key={`${day.id}-${i}`}
+                    exercise={exercise}
+                    onChange={(updated) => updateExercise(day.id, i, updated)}
+                    defaultOpen={false}
                   />
                 ))}
-              </div>
-
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-nova-text">
-                  Day Notes
-                </label>
-                <Textarea placeholder="Add notes for this day..." rows={3} />
               </div>
             </TabsContent>
           ))}
         </Tabs>
+
+        <div className="mt-6">
+          <label className="mb-2 block text-sm font-medium text-nova-text">
+            Coach notes (visible to the client)
+          </label>
+          <Textarea
+            value={coachNotes}
+            onChange={(e) => {
+              setSaved(false);
+              setCoachNotes(e.target.value);
+            }}
+            placeholder="Add notes about this program..."
+            rows={3}
+          />
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <Button variant="outline" onClick={handleSaveChanges} disabled={saving}>
+            {saving ? "Saving…" : "Save Changes"}
+          </Button>
+          {saved && <span className="text-sm text-nova-success">Saved</span>}
+        </div>
       </main>
 
       <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] gap-3 border-t border-nova-border bg-nova-bg/95 px-5 py-4 backdrop-blur md:max-w-2xl md:px-0">

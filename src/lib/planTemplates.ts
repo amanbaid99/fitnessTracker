@@ -130,28 +130,41 @@ const BACK_SENSITIVE = new Set([
   "Barbell Row",
 ]);
 
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
+
+function clampRpe(rpe: string, delta: number): string {
+  const value = parseInt(rpe, 10);
+  if (Number.isNaN(value)) return rpe;
+  return String(Math.max(4, Math.min(9, value + delta)));
+}
+
 export function generatePlan(
   goal: Goal,
   medicalConditions: string[],
+  experienceLevel: ExperienceLevel = "intermediate",
 ): PlanDay[] {
   const template = TEMPLATES[goal] ?? TEMPLATES["general-fitness"];
   const hasKneePain = medicalConditions.includes("knee-pain");
   const hasBackPain = medicalConditions.includes("back-pain");
-
-  if (!hasKneePain && !hasBackPain) {
-    return template;
-  }
+  const rpeDelta = experienceLevel === "beginner" ? -1 : experienceLevel === "advanced" ? 1 : 0;
+  const setDelta = experienceLevel === "beginner" ? -1 : 0;
 
   return template.map((day) => ({
     ...day,
     exercises: day.exercises.map((exercise) => {
+      let result = {
+        ...exercise,
+        sets: Math.max(2, exercise.sets + setDelta),
+        rpe: clampRpe(exercise.rpe, rpeDelta),
+      };
+
       if (hasKneePain && KNEE_SENSITIVE.has(exercise.name)) {
-        return { ...exercise, name: `${exercise.name} (light load — knee caution)`, rpe: "5" };
+        result = { ...result, name: `${exercise.name} (light load — knee caution)`, rpe: "5" };
       }
       if (hasBackPain && BACK_SENSITIVE.has(exercise.name)) {
-        return { ...exercise, name: `${exercise.name} (light load — back caution)`, rpe: "5" };
+        result = { ...result, name: `${exercise.name} (light load — back caution)`, rpe: "5" };
       }
-      return exercise;
+      return result;
     }),
   }));
 }

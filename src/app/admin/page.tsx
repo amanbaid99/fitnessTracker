@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { generatePlan, type Goal } from "@/lib/planTemplates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -89,6 +90,7 @@ export default function AdminPage() {
   const [createdUser, setCreatedUser] = useState<{ email: string; password: string } | null>(
     null,
   );
+  const [creatingDummy, setCreatingDummy] = useState(false);
 
   useEffect(() => {
     // Reading localStorage only after mount avoids a server/client
@@ -293,6 +295,59 @@ export default function AdminPage() {
     refreshLists();
   }
 
+  // Quick way to spin up a fake client + a submitted plan for testing the
+  // assign-coach / review flow without filling out the onboarding form.
+  async function handleCreateDummyUser() {
+    setPanelError(null);
+    setCreatedUser(null);
+    setCreatingDummy(true);
+
+    const suffix = Math.random().toString(36).slice(2, 8);
+    const name = `Test User ${suffix}`;
+    const email = `test-${suffix}@nova.local`;
+    const dummyPassword = generatePassword();
+    const goals: Goal[] = ["build-muscle", "fat-loss", "general-fitness"];
+    const goal = goals[Math.floor(Math.random() * goals.length)];
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: dummyPassword,
+      options: { data: { full_name: name } },
+    });
+
+    if (error || !data.user) {
+      setPanelError(error?.message ?? "Could not create the dummy user.");
+      setCreatingDummy(false);
+      return;
+    }
+
+    const days = generatePlan(goal, [], "intermediate");
+    const { error: insertError } = await supabase.from("plans").insert({
+      client_id: data.user.id,
+      full_name: name,
+      age: 25 + Math.floor(Math.random() * 20),
+      height_cm: 160 + Math.floor(Math.random() * 30),
+      weight_kg: 60 + Math.floor(Math.random() * 40),
+      experience_level: "intermediate",
+      goal,
+      medical_conditions: [],
+      medical_notes: null,
+      days,
+      status: "pending",
+    });
+
+    await supabase.auth.signOut();
+    setCreatingDummy(false);
+
+    if (insertError) {
+      setPanelError(insertError.message);
+      return;
+    }
+
+    setCreatedUser({ email, password: dummyPassword });
+    refreshLists();
+  }
+
   async function handleAssignCoach(clientId: string, coachId: string) {
     setPanelError(null);
     const { error } = await supabase.rpc("admin_assign_coach", {
@@ -449,17 +504,27 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-16 md:max-w-3xl">
-      <header className="flex items-center justify-between px-5 pt-6 md:px-0 md:pt-10">
+      <header className="flex items-start justify-between px-5 pt-6 md:px-0 md:pt-10">
         <div>
           <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Admin</h1>
           <p className="mt-1 text-sm text-nova-muted">Manage coaches and clients.</p>
         </div>
-        <button
-          onClick={handleAdminSignOut}
-          className="text-sm font-medium text-nova-muted hover:text-nova-text"
-        >
-          Sign out
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          <button
+            onClick={handleAdminSignOut}
+            className="text-sm font-medium text-nova-muted hover:text-nova-text"
+          >
+            Sign out
+          </button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateDummyUser}
+            disabled={creatingDummy}
+          >
+            {creatingDummy ? "Creating…" : "+ Dummy test user"}
+          </Button>
+        </div>
       </header>
 
       <main className="px-5 md:px-0">

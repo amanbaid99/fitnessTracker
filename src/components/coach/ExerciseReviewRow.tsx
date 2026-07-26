@@ -1,98 +1,84 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Repeat, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { PlanExercise } from "@/lib/planTemplates";
 
 interface ExerciseReviewRowProps {
-  name: string;
-  sets: number;
-  reps: string;
-  rest: string;
-  tempo: string;
-  rpe: string;
+  exercise: PlanExercise;
+  onChange: (updated: PlanExercise) => void;
   defaultOpen?: boolean;
 }
 
+function field(label: string, value: string, onChange: (v: string) => void) {
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] font-medium text-nova-muted">{label}</label>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 text-center text-sm"
+      />
+    </div>
+  );
+}
+
 export function ExerciseReviewRow({
-  name,
-  sets,
-  reps,
-  rest,
-  tempo,
-  rpe,
+  exercise,
+  onChange,
   defaultOpen = false,
 }: ExerciseReviewRowProps) {
   const [open, setOpen] = useState(defaultOpen);
 
+  function update(patch: Partial<PlanExercise>) {
+    onChange({ ...exercise, ...patch });
+  }
+
   return (
     <div className="rounded-xl border border-nova-border bg-nova-surface">
-      <div className="flex w-full items-center justify-between px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex-1 text-left"
-        >
-          <p className="text-sm font-medium text-nova-text">{name}</p>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+      >
+        <div>
+          <p className="text-sm font-medium text-nova-text">{exercise.name}</p>
           <p className="mt-0.5 text-xs text-nova-muted">
-            {sets} × {reps}
+            {exercise.sets} × {exercise.reps}
           </p>
-        </button>
-        <div className="flex items-center gap-1 text-nova-muted">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Edit exercise"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Swap exercise"
-          >
-            <Repeat className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label={open ? "Collapse exercise" : "Expand exercise"}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <ChevronDown
-              className={cn(
-                "size-4 transition-transform",
-                open && "rotate-180",
-              )}
-            />
-          </Button>
         </div>
-      </div>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-nova-muted transition-transform",
+            open && "rotate-180",
+          )}
+        />
+      </button>
 
       {open && (
         <div className="space-y-3 border-t border-nova-border px-4 py-3">
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-lg bg-nova-bg py-2">
-              <p className="font-semibold text-nova-text">{rest}</p>
-              <p className="mt-0.5 text-nova-muted">Rest</p>
-            </div>
-            <div className="rounded-lg bg-nova-bg py-2">
-              <p className="font-semibold text-nova-text">{tempo}</p>
-              <p className="mt-0.5 text-nova-muted">Tempo</p>
-            </div>
-            <div className="rounded-lg bg-nova-bg py-2">
-              <p className="font-semibold text-nova-text">{rpe}</p>
-              <p className="mt-0.5 text-nova-muted">RPE</p>
-            </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-medium text-nova-muted">
+              Exercise name
+            </label>
+            <Input
+              value={exercise.name}
+              onChange={(e) => update({ name: e.target.value })}
+              className="h-9 text-sm"
+            />
           </div>
-          <Textarea placeholder="Coach notes..." rows={2} />
+          <div className="grid grid-cols-3 gap-2">
+            {field("Sets", String(exercise.sets), (v) => update({ sets: Number(v) || 0 }))}
+            {field("Reps", exercise.reps, (v) => update({ reps: v }))}
+            {field("Rest", exercise.rest, (v) => update({ rest: v }))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {field("Tempo", exercise.tempo, (v) => update({ tempo: v }))}
+            {field("RPE", exercise.rpe, (v) => update({ rpe: v }))}
+          </div>
         </div>
       )}
     </div>

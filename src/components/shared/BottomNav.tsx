@@ -7,6 +7,7 @@ import {
   LineChart,
   ClipboardList,
   MessageCircle,
+  Scale,
   Users,
   Settings,
 } from "lucide-react";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 const clientTabs = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/dashboard/progress", label: "Progress", icon: LineChart },
-  { href: "/dashboard/check-in", label: "Check-in", icon: ClipboardList },
+  { href: "/dashboard/body-metrics", label: "Body", icon: Scale },
   { href: "/dashboard/messages", label: "Messages", icon: MessageCircle },
 ];
 

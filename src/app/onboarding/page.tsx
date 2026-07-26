@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import { generatePlan, type Goal } from "@/lib/planTemplates";
+import { generatePlan, type ExperienceLevel, type Goal } from "@/lib/planTemplates";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,12 @@ const GOALS: { value: Goal; label: string }[] = [
   { value: "general-fitness", label: "General fitness" },
 ];
 
+const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
+  { value: "beginner", label: "Beginner (new to training)" },
+  { value: "intermediate", label: "Intermediate (6+ months)" },
+  { value: "advanced", label: "Advanced (2+ years)" },
+];
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [checkingSession, setCheckingSession] = useState(true);
@@ -46,6 +52,9 @@ export default function OnboardingPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [age, setAge] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>("intermediate");
   const [goal, setGoal] = useState<Goal>("build-muscle");
   const [selected, setSelected] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
@@ -124,12 +133,15 @@ export default function OnboardingPage() {
       userId = data.user.id;
     }
 
-    const days = generatePlan(goal, selected);
+    const days = generatePlan(goal, selected, experienceLevel);
 
     const { error: insertError } = await supabase.from("plans").insert({
       client_id: userId,
       full_name: fullName,
       age: age ? Number(age) : null,
+      height_cm: heightCm ? Number(heightCm) : null,
+      weight_kg: weightKg ? Number(weightKg) : null,
+      experience_level: experienceLevel,
       goal,
       medical_conditions: selected,
       medical_notes: notes || null,
@@ -230,8 +242,8 @@ export default function OnboardingPage() {
         )}
 
         <section className="mt-8">
-          <h2 className="text-sm font-semibold text-nova-text">Your goal</h2>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <h2 className="text-sm font-semibold text-nova-text">About you</h2>
+          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
             <div>
               <label htmlFor="age" className="mb-1.5 block text-sm font-medium text-nova-text">
                 Age
@@ -247,22 +259,71 @@ export default function OnboardingPage() {
               />
             </div>
             <div>
-              <label htmlFor="goal" className="mb-1.5 block text-sm font-medium text-nova-text">
-                Primary goal
+              <label htmlFor="height" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Height (cm)
+              </label>
+              <Input
+                id="height"
+                type="number"
+                min={100}
+                max={250}
+                value={heightCm}
+                onChange={(e) => setHeightCm(e.target.value)}
+                placeholder="175"
+              />
+            </div>
+            <div>
+              <label htmlFor="weight" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Weight (kg)
+              </label>
+              <Input
+                id="weight"
+                type="number"
+                min={30}
+                max={300}
+                value={weightKg}
+                onChange={(e) => setWeightKg(e.target.value)}
+                placeholder="70"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="experience"
+                className="mb-1.5 block text-sm font-medium text-nova-text"
+              >
+                Experience
               </label>
               <select
-                id="goal"
-                value={goal}
-                onChange={(e) => setGoal(e.target.value as Goal)}
-                className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-3 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                id="experience"
+                value={experienceLevel}
+                onChange={(e) => setExperienceLevel(e.target.value as ExperienceLevel)}
+                className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
               >
-                {GOALS.map((g) => (
-                  <option key={g.value} value={g.value}>
-                    {g.label}
+                {EXPERIENCE_LEVELS.map((lvl) => (
+                  <option key={lvl.value} value={lvl.value}>
+                    {lvl.label}
                   </option>
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="mt-3">
+            <label htmlFor="goal" className="mb-1.5 block text-sm font-medium text-nova-text">
+              Primary goal
+            </label>
+            <select
+              id="goal"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value as Goal)}
+              className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-3 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent md:max-w-xs"
+            >
+              {GOALS.map((g) => (
+                <option key={g.value} value={g.value}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
           </div>
         </section>
 

@@ -1,39 +1,87 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ClipboardList, UserCheck, LineChart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const LINKS = [
-  { href: "/onboarding", label: "Onboarding Form", sub: "Step 3 of 7 — Medical History" },
-  { href: "/onboarding/review", label: "Plan Under Review", sub: "Post-onboarding waiting screen" },
-  { href: "/dashboard", label: "Client Dashboard", sub: "Today's workout" },
-  { href: "/coach/clients/1/review", label: "Coach Review", sub: "Review & approve a client's plan" },
-  { href: "/coach", label: "Coach Dashboard", sub: "Pending reviews & active clients" },
+const STEPS = [
+  {
+    icon: ClipboardList,
+    title: "Tell us about yourself",
+    body: "Create your account and share your goals and health history in one short form.",
+  },
+  {
+    icon: UserCheck,
+    title: "Your coach builds your plan",
+    body: "A real coach reviews your profile and tailors a program specifically for you.",
+  },
+  {
+    icon: LineChart,
+    title: "Train and track progress",
+    body: "See your plan, log workouts, and check in weekly as your coach adjusts your program.",
+  },
 ];
 
-export default function DevNavigationPage() {
+export default function HomePage() {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-5 py-10">
-      <h1 className="text-xl font-semibold text-nova-text">
-        Nova — Dev Navigation
-      </h1>
-      <p className="mt-1 text-sm text-nova-muted">
-        Jump to any screen for development.
-      </p>
-
-      <nav className="mt-6 space-y-3">
-        {LINKS.map(({ href, label, sub }) => (
+    <div className="flex min-h-dvh w-full flex-col bg-nova-bg">
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
+        <span className="text-lg font-semibold tracking-tight text-nova-text">
+          Nova
+        </span>
+        <nav className="flex items-center gap-3">
           <Link
-            key={href}
-            href={href}
-            className="flex items-center justify-between rounded-xl border border-nova-border bg-nova-surface p-4 transition-colors hover:border-nova-accent"
+            href="/auth/login"
+            className="text-sm font-medium text-nova-muted hover:text-nova-text"
           >
-            <div>
-              <p className="text-sm font-medium text-nova-text">{label}</p>
-              <p className="mt-0.5 text-xs text-nova-muted">{sub}</p>
-            </div>
-            <ArrowRight className="size-4 shrink-0 text-nova-muted" />
+            Log in
           </Link>
-        ))}
-      </nav>
+          <Button asChild size="sm">
+            <Link href="/onboarding">Get started</Link>
+          </Button>
+        </nav>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6">
+        <section className="py-16 text-center md:py-24">
+          <h1 className="mx-auto max-w-2xl text-4xl font-semibold leading-tight text-nova-text md:text-5xl">
+            Fitness coaching, tailored by a real coach
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-base text-nova-muted md:text-lg">
+            Tell us your goals, get a program built for you, and train with a
+            coach who reviews your progress every step of the way.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href="/onboarding">Create your account</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/auth/login">I already have an account</Link>
+            </Button>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 pb-20 md:grid-cols-3 md:gap-8">
+          {STEPS.map(({ icon: Icon, title, body }) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-nova-border/70 bg-nova-surface p-6 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
+            >
+              <div className="flex size-10 items-center justify-center rounded-full bg-nova-accent/10 text-nova-accent">
+                <Icon className="size-5" />
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-nova-text">
+                {title}
+              </h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-nova-muted">
+                {body}
+              </p>
+            </div>
+          ))}
+        </section>
+      </main>
+
+      <footer className="border-t border-nova-border px-6 py-8 text-center text-xs text-nova-muted">
+        Nova — AI-assisted fitness coaching.
+      </footer>
     </div>
   );
 }

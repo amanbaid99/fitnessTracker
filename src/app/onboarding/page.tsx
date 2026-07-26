@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   HeartPulse,
   Activity,
@@ -13,7 +15,10 @@ import {
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { generatePlan, type Goal } from "@/lib/planTemplates";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const CONDITIONS = [
@@ -27,8 +32,23 @@ const CONDITIONS = [
   { id: "none", label: "None of the above", icon: CircleOff },
 ];
 
-export default function OnboardingMedicalHistoryPage() {
+const GOALS: { value: Goal; label: string }[] = [
+  { value: "build-muscle", label: "Build muscle" },
+  { value: "fat-loss", label: "Fat loss" },
+  { value: "general-fitness", label: "General fitness" },
+];
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [age, setAge] = useState("");
+  const [goal, setGoal] = useState<Goal>("build-muscle");
   const [selected, setSelected] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   function toggle(id: string) {
     setSelected((prev) =>
@@ -36,90 +56,221 @@ export default function OnboardingMedicalHistoryPage() {
     );
   }
 
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    });
+
+    if (signUpError) {
+      setError(signUpError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    if (!data.session || !data.user) {
+      setError(
+        "Account created — check your email to confirm it, then log in to see your plan.",
+      );
+      setSubmitting(false);
+      return;
+    }
+
+    const days = generatePlan(goal, selected);
+
+    const { error: insertError } = await supabase.from("plans").insert({
+      client_id: data.user.id,
+      full_name: fullName,
+      age: age ? Number(age) : null,
+      goal,
+      medical_conditions: selected,
+      medical_notes: notes || null,
+      days,
+      status: "pending",
+    });
+
+    if (insertError) {
+      setError(insertError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    router.push("/onboarding/review");
+  }
+
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-28">
-      <header className="flex items-center justify-between px-5 pt-6">
-        <span className="text-lg font-semibold tracking-tight text-nova-text">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-16 md:max-w-2xl">
+      <header className="px-5 pt-6 md:px-0 md:pt-10">
+        <Link href="/" className="text-lg font-semibold tracking-tight text-nova-text">
           Nova
-        </span>
-        <span className="text-sm font-medium text-nova-muted">
-          Step 3 of 7
-        </span>
-      </header>
-
-      <div className="px-5 pt-4">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-nova-surface">
-          <div
-            className="h-full rounded-full bg-nova-accent transition-all"
-            style={{ width: `${(3 / 7) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      <main className="flex-1 px-5 pt-8">
-        <h1 className="text-2xl font-semibold leading-snug text-nova-text">
-          Any medical history we should know about?
+        </Link>
+        <h1 className="mt-4 text-2xl font-semibold leading-snug text-nova-text md:text-3xl">
+          Let&apos;s build your plan
         </h1>
         <p className="mt-2 text-sm text-nova-muted">
-          This helps your coach keep your training safe and effective.
+          Create your account and tell us a bit about yourself — your coach will
+          tailor a program from this.
         </p>
+      </header>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          {CONDITIONS.map(({ id, label, icon: Icon }) => {
-            const isSelected = selected.includes(id);
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => toggle(id)}
-                aria-pressed={isSelected}
-                className={cn(
-                  "flex flex-col items-start gap-3 rounded-xl border bg-nova-surface p-4 text-left transition-colors",
-                  isSelected
-                    ? "border-nova-accent ring-1 ring-nova-accent"
-                    : "border-nova-border",
-                )}
+      <form onSubmit={handleSubmit} className="flex-1 px-5 pt-8 md:px-0">
+        <section>
+          <h2 className="text-sm font-semibold text-nova-text">Your account</h2>
+          <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+            <div className="md:col-span-2">
+              <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Full name
+              </label>
+              <Input
+                id="fullName"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Aman Baid"
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-nova-text">Your goal</h2>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div>
+              <label htmlFor="age" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Age
+              </label>
+              <Input
+                id="age"
+                type="number"
+                min={13}
+                max={100}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="28"
+              />
+            </div>
+            <div>
+              <label htmlFor="goal" className="mb-1.5 block text-sm font-medium text-nova-text">
+                Primary goal
+              </label>
+              <select
+                id="goal"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value as Goal)}
+                className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-3 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
               >
-                <Icon
+                {GOALS.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-nova-text">
+            Any medical history we should know about?
+          </h2>
+          <p className="mt-1 text-sm text-nova-muted">
+            This helps your coach keep your training safe and effective.
+          </p>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {CONDITIONS.map(({ id, label, icon: Icon }) => {
+              const isSelected = selected.includes(id);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => toggle(id)}
+                  aria-pressed={isSelected}
                   className={cn(
-                    "size-5",
-                    isSelected ? "text-nova-accent" : "text-nova-muted",
+                    "flex flex-col items-start gap-3 rounded-2xl border bg-nova-surface p-4 text-left shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors",
+                    isSelected
+                      ? "border-nova-accent bg-nova-accent/[0.04] ring-1 ring-nova-accent"
+                      : "border-nova-border/70",
                   )}
-                />
-                <span className="text-sm font-medium text-nova-text">
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                >
+                  <Icon
+                    className={cn(
+                      "size-5",
+                      isSelected ? "text-nova-accent" : "text-nova-muted",
+                    )}
+                  />
+                  <span className="text-sm font-medium text-nova-text">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="mt-6">
-          <label
-            htmlFor="medical-notes"
-            className="mb-2 block text-sm font-medium text-nova-text"
-          >
-            Anything else? (optional)
-          </label>
-          <Textarea
-            id="medical-notes"
-            placeholder="Medications, past surgeries, doctor restrictions..."
-            rows={4}
-          />
-        </div>
+          <div className="mt-4">
+            <label htmlFor="medical-notes" className="mb-2 block text-sm font-medium text-nova-text">
+              Anything else? (optional)
+            </label>
+            <Textarea
+              id="medical-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Medications, past surgeries, doctor restrictions..."
+              rows={4}
+            />
+          </div>
 
-        <p className="mt-4 flex items-center gap-1.5 text-xs text-nova-muted">
-          <Lock className="size-3.5" />
-          Your data is private and only shared with your coach.
-        </p>
-      </main>
+          <p className="mt-4 flex items-center gap-1.5 text-xs text-nova-muted">
+            <Lock className="size-3.5" />
+            Your data is private and only shared with your coach.
+          </p>
+        </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] gap-3 border-t border-nova-border bg-nova-bg/95 px-5 py-4 backdrop-blur">
-        <Button variant="ghost" className="flex-1">
-          Back
+        {error && <p className="mt-6 text-sm text-nova-danger">{error}</p>}
+
+        <Button type="submit" className="mt-8 w-full md:w-auto" disabled={submitting}>
+          {submitting ? "Creating your plan…" : "Create account & get my plan"}
         </Button>
-        <Button className="flex-1">Continue</Button>
-      </div>
+
+        <p className="mt-4 text-sm text-nova-muted">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="font-medium text-nova-accent hover:underline">
+            Log in
+          </Link>
+        </p>
+      </form>
     </div>
   );
 }

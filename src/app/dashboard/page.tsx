@@ -1,13 +1,13 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { WarmupCard } from "@/components/client/WarmupCard";
 import { ExerciseCard } from "@/components/client/ExerciseCard";
 import { Button } from "@/components/ui/button";
-
-const EXERCISES = [
-  { name: "Barbell Bench Press", sets: 4, reps: "8", restSeconds: 90 },
-  { name: "Incline Dumbbell Press", sets: 3, reps: "10", restSeconds: 60 },
-  { name: "Cable Fly", sets: 3, reps: "12", restSeconds: 45 },
-];
+import { supabase } from "@/lib/supabase";
+import type { PlanDay } from "@/lib/planTemplates";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -15,55 +15,138 @@ const today = new Date().toLocaleDateString("en-US", {
   day: "numeric",
 });
 
+interface Plan {
+  full_name: string;
+  status: string;
+  days: PlanDay[];
+}
+
 export default function ClientDashboardPage() {
-  return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-24">
-      <header className="px-5 pt-6">
-        <h1 className="text-xl font-semibold text-nova-text">
-          Good morning, Aman 👋
-        </h1>
-        <p className="mt-1 text-sm text-nova-muted">{today}</p>
-      </header>
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<Plan | null>(null);
 
-      <div className="mx-5 mt-5 grid grid-cols-3 divide-x divide-nova-border rounded-xl border border-nova-border bg-nova-surface">
-        <div className="px-2 py-3 text-center">
-          <p className="text-sm font-semibold text-nova-text">Week 2/8</p>
-          <p className="mt-0.5 text-xs text-nova-muted">Program</p>
-        </div>
-        <div className="px-2 py-3 text-center">
-          <p className="text-sm font-semibold text-nova-text">4 workouts</p>
-          <p className="mt-0.5 text-xs text-nova-muted">Done</p>
-        </div>
-        <div className="px-2 py-3 text-center">
-          <p className="text-sm font-semibold text-nova-text">2-day</p>
-          <p className="mt-0.5 text-xs text-nova-muted">Streak</p>
-        </div>
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        router.replace("/auth/login");
+        return;
+      }
+
+      const { data } = await supabase
+        .from("plans")
+        .select("full_name, status, days")
+        .eq("client_id", sessionData.session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!active) return;
+
+      if (!data) {
+        router.replace("/onboarding");
+        return;
+      }
+
+      if (data.status !== "approved") {
+        router.replace("/onboarding/review");
+        return;
+      }
+
+      setPlan(data as Plan);
+      setLoading(false);
+    }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.replace("/");
+  }
+
+  if (loading || !plan) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">
+        <p className="text-sm text-nova-muted">Loading your plan…</p>
       </div>
+    );
+  }
 
-      <main className="flex-1 px-5">
-        <div className="mt-6">
-          <WarmupCard />
-        </div>
+  const firstName = plan.full_name.split(" ")[0] || "there";
+  const todayWorkout = plan.days[0];
+  const completed = plan.days.length > 1 ? plan.days.length - 1 : 0;
 
-        <div className="mt-6">
-          <h2 className="text-sm font-semibold text-nova-text">
-            Today&apos;s Workout
-          </h2>
-          <p className="mt-0.5 text-xs text-nova-muted">Upper Body Push</p>
+  return (
+    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
+      <BottomNav />
 
-          <div className="mt-3 space-y-3">
-            {EXERCISES.map((exercise) => (
-              <ExerciseCard key={exercise.name} {...exercise} />
-            ))}
+      <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-4xl">
+        <header className="flex items-center justify-between px-5 pt-6 md:px-0 md:pt-10">
+          <div>
+            <h1 className="text-xl font-semibold text-nova-text md:text-2xl">
+              Good morning, {firstName} 👋
+            </h1>
+            <p className="mt-1 text-sm text-nova-muted">{today}</p>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="text-sm font-medium text-nova-muted hover:text-nova-text"
+          >
+            Sign out
+          </button>
+        </header>
+
+        <div className="mx-5 mt-5 grid grid-cols-3 divide-x divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0 md:mt-6">
+          <div className="px-2 py-3.5 text-center md:py-5">
+            <p className="text-sm font-semibold text-nova-text">Week 1</p>
+            <p className="mt-0.5 text-xs text-nova-muted">Program</p>
+          </div>
+          <div className="px-2 py-3.5 text-center md:py-5">
+            <p className="text-sm font-semibold text-nova-text">{completed} workouts</p>
+            <p className="mt-0.5 text-xs text-nova-muted">Done</p>
+          </div>
+          <div className="px-2 py-3.5 text-center md:py-5">
+            <p className="text-sm font-semibold text-nova-text">{plan.days.length}-day</p>
+            <p className="mt-0.5 text-xs text-nova-muted">Plan</p>
           </div>
         </div>
 
-        <Button variant="success" className="mt-6 w-full">
-          Mark Workout Complete
-        </Button>
-      </main>
+        <main className="px-5 md:px-0">
+          <div className="mt-6">
+            <WarmupCard />
+          </div>
 
-      <BottomNav />
+          <div className="mt-6">
+            <h2 className="text-sm font-semibold text-nova-text">
+              Today&apos;s Workout
+            </h2>
+            <p className="mt-0.5 text-xs text-nova-muted">{todayWorkout.title}</p>
+
+            <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+              {todayWorkout.exercises.map((exercise) => (
+                <ExerciseCard
+                  key={exercise.name}
+                  name={exercise.name}
+                  sets={exercise.sets}
+                  reps={exercise.reps}
+                  restSeconds={parseInt(exercise.rest, 10) || 60}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Button variant="success" className="mt-6 w-full md:w-auto">
+            Mark Workout Complete
+          </Button>
+        </main>
+      </div>
     </div>
   );
 }

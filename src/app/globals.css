@@ -4,38 +4,38 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.875rem;
 
-  --background: #0a0a0a;
-  --foreground: #f5f5f5;
-  --card: #141414;
-  --card-foreground: #f5f5f5;
-  --popover: #141414;
-  --popover-foreground: #f5f5f5;
+  --background: #ffffff;
+  --foreground: #1c1e26;
+  --card: #ffffff;
+  --card-foreground: #1c1e26;
+  --popover: #ffffff;
+  --popover-foreground: #1c1e26;
   --primary: #6366f1;
-  --primary-foreground: #f5f5f5;
-  --secondary: #141414;
-  --secondary-foreground: #f5f5f5;
-  --muted: #141414;
-  --muted-foreground: #737373;
-  --accent: #141414;
-  --accent-foreground: #f5f5f5;
-  --destructive: #ef4444;
-  --border: #242424;
-  --input: #242424;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f2f8;
+  --secondary-foreground: #1c1e26;
+  --muted: #f5f6fa;
+  --muted-foreground: #6b7280;
+  --accent: #eef0ff;
+  --accent-foreground: #1c1e26;
+  --destructive: #e11d48;
+  --border: #e8e9f0;
+  --input: #e8e9f0;
   --ring: #6366f1;
 
   /* Nova design tokens */
-  --nova-bg: #0a0a0a;
-  --nova-surface: #141414;
-  --nova-border: #242424;
+  --nova-bg: #f8f9fc;
+  --nova-surface: #ffffff;
+  --nova-border: #e8e9f0;
   --nova-accent: #6366f1;
   --nova-accent-hover: #4f46e5;
-  --nova-success: #22c55e;
-  --nova-warning: #f59e0b;
-  --nova-danger: #ef4444;
-  --nova-text: #f5f5f5;
-  --nova-muted: #737373;
+  --nova-success: #16a34a;
+  --nova-warning: #d97706;
+  --nova-danger: #e11d48;
+  --nova-text: #1c1e26;
+  --nova-muted: #6b7280;
 }
 
 @theme inline {

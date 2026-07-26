@@ -16,18 +16,12 @@ interface StaffProfile {
   id: string;
   full_name: string;
   active: boolean;
+  assigned_coach_id: string | null;
 }
 
-function randomSuffix() {
-  return Math.random().toString(36).slice(2, 8);
-}
-
-function generateCoachCredentials() {
-  const suffix = randomSuffix();
-  return {
-    email: `coach-${suffix}@nova.local`,
-    password: `Coach-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`,
-  };
+function generatePassword() {
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `Coach-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 export default function AdminPage() {
@@ -44,11 +38,33 @@ export default function AdminPage() {
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachSubmitting, setCoachSubmitting] = useState(false);
 
+  // Forced password change on a coach's first login.
+  const [forcePasswordChange, setForcePasswordChange] = useState(false);
+  const [previousPassword, setPreviousPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
+  const [passwordChangeSubmitting, setPasswordChangeSubmitting] = useState(false);
+
   const [coaches, setCoaches] = useState<StaffProfile[]>([]);
   const [clients, setClients] = useState<StaffProfile[]>([]);
-  const [generated, setGenerated] = useState<{ email: string; password: string } | null>(null);
-  const [generating, setGenerating] = useState(false);
   const [panelError, setPanelError] = useState<string | null>(null);
+
+  // New-coach form.
+  const [newCoachName, setNewCoachName] = useState("");
+  const [newCoachEmail, setNewCoachEmail] = useState("");
+  const [newCoachPassword, setNewCoachPassword] = useState(() => generatePassword());
+  const [creatingCoach, setCreatingCoach] = useState(false);
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+
+  // New-user (client) form.
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState(() => generatePassword());
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createdUser, setCreatedUser] = useState<{ email: string; password: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     // Reading localStorage only after mount avoids a server/client
@@ -100,7 +116,7 @@ export default function AdminPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, active")
+      .select("role, active, must_change_password")
       .eq("id", data.session.user.id)
       .single();
 
@@ -111,24 +127,76 @@ export default function AdminPage() {
       return;
     }
 
+    setCoachSubmitting(false);
+
+    if (profile.must_change_password) {
+      setPreviousPassword(coachPassword);
+      setForcePasswordChange(true);
+      return;
+    }
+
     router.push("/admin/coach");
   }
 
-  async function handleGenerateCoach() {
-    setPanelError(null);
-    setGenerated(null);
-    setGenerating(true);
-    const creds = generateCoachCredentials();
+  async function handleSetNewPassword(e: FormEvent) {
+    e.preventDefault();
+    setPasswordChangeError(null);
 
+    if (newPassword.length < 6) {
+      setPasswordChangeError("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordChangeError("Passwords don't match.");
+      return;
+    }
+    if (newPassword === previousPassword) {
+      setPasswordChangeError("New password must be different from your current password.");
+      return;
+    }
+
+    setPasswordChangeSubmitting(true);
+
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateError) {
+      setPasswordChangeError(updateError.message);
+      setPasswordChangeSubmitting(false);
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      await supabase
+        .from("profiles")
+        .update({ must_change_password: false })
+        .eq("id", sessionData.session.user.id);
+    }
+
+    router.push("/admin/coach");
+  }
+
+  async function handleCreateCoach(e: FormEvent) {
+    e.preventDefault();
+    setPanelError(null);
+    setCreated(null);
+
+    if (newCoachPassword.length < 6) {
+      setPanelError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setCreatingCoach(true);
+
+    const email = newCoachEmail.trim();
     const { data, error } = await supabase.auth.signUp({
-      email: creds.email,
-      password: creds.password,
-      options: { data: { full_name: `Coach ${creds.email.split("@")[0]}` } },
+      email,
+      password: newCoachPassword,
+      options: { data: { full_name: newCoachName.trim() } },
     });
 
     if (error || !data.user) {
       setPanelError(error?.message ?? "Could not create the coach account.");
-      setGenerating(false);
+      setCreatingCoach(false);
       return;
     }
 
@@ -139,14 +207,76 @@ export default function AdminPage() {
     // signUp() logs this browser in as the newly created coach — sign back
     // out immediately so the admin session isn't quietly replaced by it.
     await supabase.auth.signOut();
-    setGenerating(false);
+    setCreatingCoach(false);
 
     if (promoteError) {
       setPanelError(promoteError.message);
       return;
     }
 
-    setGenerated(creds);
+    setCreated({ email, password: newCoachPassword });
+    setNewCoachName("");
+    setNewCoachEmail("");
+    setNewCoachPassword(generatePassword());
+    refreshLists();
+  }
+
+  async function handleCreateUser(e: FormEvent) {
+    e.preventDefault();
+    setPanelError(null);
+    setCreatedUser(null);
+
+    if (newUserPassword.length < 6) {
+      setPanelError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setCreatingUser(true);
+
+    const email = newUserEmail.trim();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: newUserPassword,
+      options: { data: { full_name: newUserName.trim() } },
+    });
+
+    if (error || !data.user) {
+      setPanelError(error?.message ?? "Could not create the user account.");
+      setCreatingUser(false);
+      return;
+    }
+
+    const { error: flagError } = await supabase.rpc("admin_flag_password_change", {
+      p_id: data.user.id,
+    });
+
+    // signUp() logs this browser in as the newly created user — sign back
+    // out immediately so the admin session isn't quietly replaced by it.
+    await supabase.auth.signOut();
+    setCreatingUser(false);
+
+    if (flagError) {
+      setPanelError(flagError.message);
+      return;
+    }
+
+    setCreatedUser({ email, password: newUserPassword });
+    setNewUserName("");
+    setNewUserEmail("");
+    setNewUserPassword(generatePassword());
+    refreshLists();
+  }
+
+  async function handleAssignCoach(clientId: string, coachId: string) {
+    setPanelError(null);
+    const { error } = await supabase.rpc("admin_assign_coach", {
+      p_client_id: clientId,
+      p_coach_id: coachId || null,
+    });
+    if (error) {
+      setPanelError(error.message);
+      return;
+    }
     refreshLists();
   }
 
@@ -169,6 +299,51 @@ export default function AdminPage() {
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <p className="text-sm text-nova-muted">Loading…</p>
+      </div>
+    );
+  }
+
+  if (forcePasswordChange) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
+        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
+          Nova Staff
+        </span>
+        <h1 className="text-2xl font-semibold text-nova-text">Set a new password</h1>
+        <p className="mt-2 text-sm text-nova-muted">
+          This is your first time logging in — choose a new password before continuing.
+        </p>
+
+        <form onSubmit={handleSetNewPassword} className="mt-8 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-nova-text">
+              New password
+            </label>
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-nova-text">
+              Confirm new password
+            </label>
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+          {passwordChangeError && (
+            <p className="text-sm text-nova-danger">{passwordChangeError}</p>
+          )}
+          <Button type="submit" className="w-full" disabled={passwordChangeSubmitting}>
+            {passwordChangeSubmitting ? "Saving…" : "Set password & continue"}
+          </Button>
+        </form>
       </div>
     );
   }
@@ -263,26 +438,71 @@ export default function AdminPage() {
 
       <main className="px-5 md:px-0">
         <section className="mt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-nova-text">Coaches</h2>
-            <Button size="sm" onClick={handleGenerateCoach} disabled={generating}>
-              {generating ? "Generating…" : "Generate Coach Account"}
-            </Button>
-          </div>
+          <h2 className="text-sm font-semibold text-nova-text">Add a coach</h2>
 
-          {generated && (
+          <form
+            onSubmit={handleCreateCoach}
+            className="mt-3 space-y-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
+          >
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-nova-text">Name</label>
+              <Input
+                value={newCoachName}
+                onChange={(e) => setNewCoachName(e.target.value)}
+                placeholder="Coach's full name"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-nova-text">Email</label>
+              <Input
+                type="email"
+                value={newCoachEmail}
+                onChange={(e) => setNewCoachEmail(e.target.value)}
+                placeholder="coach@example.com"
+                required
+              />
+            </div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-sm font-medium text-nova-text">
+                  Password (editable)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setNewCoachPassword(generatePassword())}
+                  className="text-xs font-medium text-nova-accent hover:underline"
+                >
+                  Regenerate
+                </button>
+              </div>
+              <Input
+                value={newCoachPassword}
+                onChange={(e) => setNewCoachPassword(e.target.value)}
+                required
+              />
+              <p className="mt-1 text-xs text-nova-muted">
+                The coach will be asked to set their own password the first time they log in.
+              </p>
+            </div>
+            <Button type="submit" className="w-full" disabled={creatingCoach}>
+              {creatingCoach ? "Creating…" : "Create Coach"}
+            </Button>
+          </form>
+
+          {created && (
             <div className="mt-3 rounded-2xl border border-nova-accent/30 bg-nova-accent/[0.04] p-4">
               <p className="text-sm font-medium text-nova-text">
-                New coach account created — copy these now, they won&apos;t be shown again:
+                Coach account created — copy these now, they won&apos;t be shown again:
               </p>
               <div className="mt-2 space-y-1 font-mono text-sm text-nova-text">
-                <p>ID: {generated.email}</p>
-                <p>Password: {generated.password}</p>
+                <p>ID: {created.email}</p>
+                <p>Password: {created.password}</p>
               </div>
               <button
                 onClick={() =>
                   navigator.clipboard.writeText(
-                    `ID: ${generated.email}\nPassword: ${generated.password}`,
+                    `ID: ${created.email}\nPassword: ${created.password}`,
                   )
                 }
                 className="mt-2 flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
@@ -295,6 +515,7 @@ export default function AdminPage() {
 
           {panelError && <p className="mt-3 text-sm text-nova-danger">{panelError}</p>}
 
+          <h2 className="mt-6 text-sm font-semibold text-nova-text">Coaches</h2>
           <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
             {coaches.length === 0 && (
               <p className="px-4 py-3 text-sm text-nova-muted">No coaches yet.</p>
@@ -322,13 +543,92 @@ export default function AdminPage() {
         </section>
 
         <section className="mt-8">
-          <h2 className="text-sm font-semibold text-nova-text">Clients</h2>
+          <h2 className="text-sm font-semibold text-nova-text">Add a user</h2>
+
+          <form
+            onSubmit={handleCreateUser}
+            className="mt-3 space-y-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
+          >
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-nova-text">Name</label>
+              <Input
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="User's full name"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-nova-text">Email</label>
+              <Input
+                type="email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                placeholder="user@example.com"
+                required
+              />
+            </div>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-sm font-medium text-nova-text">
+                  Password (editable)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setNewUserPassword(generatePassword())}
+                  className="text-xs font-medium text-nova-accent hover:underline"
+                >
+                  Regenerate
+                </button>
+              </div>
+              <Input
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                required
+              />
+              <p className="mt-1 text-xs text-nova-muted">
+                The user will be asked to set their own password the first time they log in, then
+                complete their intake form to get a plan.
+              </p>
+            </div>
+            <Button type="submit" className="w-full" disabled={creatingUser}>
+              {creatingUser ? "Creating…" : "Create User"}
+            </Button>
+          </form>
+
+          {createdUser && (
+            <div className="mt-3 rounded-2xl border border-nova-accent/30 bg-nova-accent/[0.04] p-4">
+              <p className="text-sm font-medium text-nova-text">
+                User account created — copy these now, they won&apos;t be shown again:
+              </p>
+              <div className="mt-2 space-y-1 font-mono text-sm text-nova-text">
+                <p>ID: {createdUser.email}</p>
+                <p>Password: {createdUser.password}</p>
+              </div>
+              <button
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    `ID: ${createdUser.email}\nPassword: ${createdUser.password}`,
+                  )
+                }
+                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
+              >
+                <Copy className="size-3.5" />
+                Copy
+              </button>
+            </div>
+          )}
+
+          <h2 className="mt-6 text-sm font-semibold text-nova-text">Clients</h2>
           <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
             {clients.length === 0 && (
               <p className="px-4 py-3 text-sm text-nova-muted">No clients yet.</p>
             )}
             {clients.map((client) => (
-              <div key={client.id} className="flex items-center gap-3 px-4 py-3">
+              <div
+                key={client.id}
+                className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3"
+              >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-nova-text">
                     {client.full_name || "(no name)"}
@@ -337,6 +637,20 @@ export default function AdminPage() {
                     {client.active ? "Active" : "Removed"}
                   </p>
                 </div>
+                <select
+                  value={client.assigned_coach_id ?? ""}
+                  onChange={(e) => handleAssignCoach(client.id, e.target.value)}
+                  className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                >
+                  <option value="">Unassigned</option>
+                  {coaches
+                    .filter((coach) => coach.active)
+                    .map((coach) => (
+                      <option key={coach.id} value={coach.id}>
+                        {coach.full_name || coach.id}
+                      </option>
+                    ))}
+                </select>
                 <Button
                   variant={client.active ? "outline" : "default"}
                   size="sm"

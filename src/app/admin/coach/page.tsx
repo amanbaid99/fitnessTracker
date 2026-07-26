@@ -78,14 +78,31 @@ export default function CoachDashboardPage() {
 
       setCoachName(profile.full_name?.split(" ")[0] || "Coach");
 
+      const { data: assignedClients } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("assigned_coach_id", sessionData.session.user.id);
+
+      if (!active) return;
+
+      const clientIds = (assignedClients ?? []).map((c) => c.id);
+
+      if (clientIds.length === 0) {
+        setPending([]);
+        setApproved([]);
+        setLoading(false);
+        return;
+      }
+
       const { data: plans } = await supabase
         .from("plans")
-        .select("id, full_name, goal, status, created_at, approved_at")
+        .select("id, full_name, goal, status, created_at, approved_at, client_id")
+        .in("client_id", clientIds)
         .order("created_at", { ascending: false });
 
       if (!active) return;
 
-      const rows = (plans ?? []) as PlanRow[];
+      const rows = (plans ?? []) as (PlanRow & { client_id: string })[];
       setPending(rows.filter((p) => p.status === "pending"));
       setApproved(rows.filter((p) => p.status === "approved"));
       setLoading(false);

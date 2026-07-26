@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -40,6 +40,8 @@ const GOALS: { value: Goal; label: string }[] = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [existingUserId, setExistingUserId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +51,41 @@ export default function OnboardingPage() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!active) return;
+
+      if (!sessionData.session) {
+        setCheckingSession(false);
+        return;
+      }
+
+      // Already logged in — most likely an admin-created account logging in
+      // for the first time. Skip the account fields and prefill the name,
+      // since this is just the intake form for an account that already
+      // exists.
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (!active) return;
+
+      setExistingUserId(sessionData.session.user.id);
+      setFullName(profile?.full_name ?? "");
+      setCheckingSession(false);
+    }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function toggle(id: string) {
     setSelected((prev) =>
@@ -61,30 +98,36 @@ export default function OnboardingPage() {
     setError(null);
     setSubmitting(true);
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    });
+    let userId = existingUserId;
 
-    if (signUpError) {
-      setError(signUpError.message);
-      setSubmitting(false);
-      return;
-    }
+    if (!userId) {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
 
-    if (!data.session || !data.user) {
-      setError(
-        "Account created — check your email to confirm it, then log in to see your plan.",
-      );
-      setSubmitting(false);
-      return;
+      if (signUpError) {
+        setError(signUpError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      if (!data.session || !data.user) {
+        setError(
+          "Account created — check your email to confirm it, then log in to see your plan.",
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      userId = data.user.id;
     }
 
     const days = generatePlan(goal, selected);
 
     const { error: insertError } = await supabase.from("plans").insert({
-      client_id: data.user.id,
+      client_id: userId,
       full_name: fullName,
       age: age ? Number(age) : null,
       goal,
@@ -103,6 +146,14 @@ export default function OnboardingPage() {
     router.push("/onboarding/review");
   }
 
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">
+        <p className="text-sm text-nova-muted">Loading…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-16 md:max-w-2xl">
       <header className="px-5 pt-6 md:px-0 md:pt-10">
@@ -119,50 +170,64 @@ export default function OnboardingPage() {
       </header>
 
       <form onSubmit={handleSubmit} className="flex-1 px-5 pt-8 md:px-0">
-        <section>
-          <h2 className="text-sm font-semibold text-nova-text">Your account</h2>
-          <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-            <div className="md:col-span-2">
-              <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-nova-text">
-                Full name
-              </label>
+        {existingUserId ? (
+          <section>
+            <h2 className="text-sm font-semibold text-nova-text">Your name</h2>
+            <div className="mt-3">
               <Input
-                id="fullName"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Aman Baid"
+                placeholder="Your full name"
               />
             </div>
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-nova-text">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-              />
+          </section>
+        ) : (
+          <section>
+            <h2 className="text-sm font-semibold text-nova-text">Your account</h2>
+            <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+              <div className="md:col-span-2">
+                <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-nova-text">
+                  Full name
+                </label>
+                <Input
+                  id="fullName"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Aman Baid"
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-nova-text">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-nova-text">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-nova-text">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="mt-8">
           <h2 className="text-sm font-semibold text-nova-text">Your goal</h2>
@@ -261,15 +326,21 @@ export default function OnboardingPage() {
         {error && <p className="mt-6 text-sm text-nova-danger">{error}</p>}
 
         <Button type="submit" className="mt-8 w-full md:w-auto" disabled={submitting}>
-          {submitting ? "Creating your plan…" : "Create account & get my plan"}
+          {submitting
+            ? "Getting your plan started…"
+            : existingUserId
+              ? "Get my plan"
+              : "Create account & get my plan"}
         </Button>
 
-        <p className="mt-4 text-sm text-nova-muted">
-          Already have an account?{" "}
-          <Link href="/auth/login" className="font-medium text-nova-accent hover:underline">
-            Log in
-          </Link>
-        </p>
+        {!existingUserId && (
+          <p className="mt-4 text-sm text-nova-muted">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="font-medium text-nova-accent hover:underline">
+              Log in
+            </Link>
+          </p>
+        )}
       </form>
     </div>
   );

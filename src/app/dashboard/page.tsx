@@ -6,12 +6,18 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, Pencil, Plus, Sparkles } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { WarmupCard } from "@/components/client/WarmupCard";
+import { DaySelector } from "@/components/client/DaySelector";
 import { ExerciseCard, type ExerciseLogDraft } from "@/components/client/ExerciseCard";
 import { WeekStrip } from "@/components/client/WeekStrip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { normalizeDays, type PlanDay, type PlanSource } from "@/lib/planTemplates";
+import {
+  lastCompletedByDay,
+  suggestNextDayId,
+  type WorkoutHistoryEntry,
+} from "@/lib/rotation";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -64,6 +70,7 @@ export default function ClientDashboardPage() {
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [completedDates, setCompletedDates] = useState<Set<string>>(new Set());
   const [completedDayKeys, setCompletedDayKeys] = useState<Set<string>>(new Set());
+  const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryEntry[]>([]);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLogRow[]>([]);
   const [marking, setMarking] = useState(false);
@@ -128,7 +135,7 @@ export default function ClientDashboardPage() {
       const [{ data: logs }, { data: exLogs }] = await Promise.all([
         supabase
           .from("workout_logs")
-          .select("completed_at, plan_day_id")
+          .select("completed_at, plan_day_id, plan_source")
           .eq("client_id", sessionData.session.user.id),
         supabase
           .from("exercise_logs")
@@ -142,7 +149,12 @@ export default function ClientDashboardPage() {
 
       if (!active) return;
 
-      const rows = logs ?? [];
+      const rows = (logs ?? []) as {
+        completed_at: string;
+        plan_day_id: string;
+        plan_source: PlanSource | null;
+      }[];
+
       setCompletedDates(
         new Set(rows.map((log) => new Date(log.completed_at).toISOString().slice(0, 10))),
       );
@@ -153,6 +165,13 @@ export default function ClientDashboardPage() {
               `${new Date(log.completed_at).toISOString().slice(0, 10)}:${log.plan_day_id}`,
           ),
         ),
+      );
+      setWorkoutHistory(
+        rows.map((log) => ({
+          dayId: log.plan_day_id,
+          completedAt: log.completed_at,
+          source: log.plan_source ?? "coach",
+        })),
       );
       setTotalCompleted(rows.length);
       setExerciseLogs((exLogs as ExerciseLogRow[]) ?? []);
@@ -170,11 +189,33 @@ export default function ClientDashboardPage() {
   const days = source === "custom" ? customDays : coachDays;
   const hasCustomPlan = customDays.length > 0;
 
-  // Default to the first day that hasn't been completed today, so the page
-  // opens on what's actually next rather than always on day 1.
+  // Suggestion follows the rotation — the day after whatever was finished
+  // last — so a skipped day never forces the wrong session on you, and
+  // picking a different day just moves where the rotation carries on from.
+  const historyForSource = useMemo(
+    () => workoutHistory.filter((entry) => entry.source === source),
+    [workoutHistory, source],
+  );
+  const suggestedDayId = useMemo(
+    () => suggestNextDayId(days, historyForSource),
+    [days, historyForSource],
+  );
+  const lastCompleted = useMemo(
+    () => lastCompletedByDay(historyForSource),
+    [historyForSource],
+  );
+  const completedTodayDayIds = useMemo(() => {
+    const key = todayKey();
+    return new Set(
+      [...completedDayKeys]
+        .filter((entry) => entry.startsWith(`${key}:`))
+        .map((entry) => entry.slice(key.length + 1)),
+    );
+  }, [completedDayKeys]);
+
   const activeDay =
     days.find((d) => d.id === activeDayId) ??
-    days.find((d) => !completedDayKeys.has(`${todayKey()}:${d.id}`)) ??
+    days.find((d) => d.id === suggestedDayId) ??
     days[0];
 
   const todaysLogs = useMemo(() => {
@@ -270,12 +311,17 @@ export default function ClientDashboardPage() {
     const { error } = await supabase.from("workout_logs").insert({
       client_id: userId,
       plan_day_id: activeDay.id,
+      plan_source: source,
     });
     setMarking(false);
 
     if (!error) {
       setCompletedDates((prev) => new Set(prev).add(todayKey()));
       setCompletedDayKeys((prev) => new Set(prev).add(key));
+      setWorkoutHistory((prev) => [
+        { dayId: activeDay.id, completedAt: new Date().toISOString(), source },
+        ...prev,
+      ]);
       setTotalCompleted((prev) => prev + 1);
     }
   }
@@ -409,37 +455,27 @@ export default function ClientDashboardPage() {
             </div>
           ) : (
             <>
-              <div className="mt-6">
-                <h2 className="text-sm font-semibold text-nova-text">Your workout</h2>
-                <div className="-mx-5 mt-2 flex gap-1.5 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:px-0">
-                  {days.map((day) => {
-                    const done = completedDayKeys.has(`${todayKey()}:${day.id}`);
-                    const isActive = day.id === activeDay?.id;
-                    return (
-                      <button
-                        key={day.id}
-                        type="button"
-                        onClick={() => setActiveDayId(day.id)}
-                        className={cn(
-                          "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-nova-accent text-white"
-                            : "bg-nova-surface text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
-                        )}
-                      >
-                        {day.title.split("—")[0].trim()}
-                        {done && <span className="ml-1.5">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {activeDay && (
                 <>
-                  <p className="mt-3 text-xs text-nova-muted">{activeDay.title}</p>
+                  <div className="mt-6">
+                    <DaySelector
+                      days={days}
+                      activeDayId={activeDay.id}
+                      suggestedDayId={suggestedDayId}
+                      lastCompleted={lastCompleted}
+                      completedTodayDayIds={completedTodayDayIds}
+                      onSelect={setActiveDayId}
+                    />
+                  </div>
 
-                  <div className="mt-3 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+                  {activeDay.exercises.length === 0 && (
+                    <p className="mt-4 rounded-2xl border border-dashed border-nova-border bg-nova-surface px-4 py-6 text-center text-sm text-nova-muted">
+                      This day has no exercises yet — pick another day above, or add some in
+                      your plan builder.
+                    </p>
+                  )}
+
+                  <div className="mt-4 space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
                     {activeDay.exercises.map((exercise, i) => (
                       <ExerciseCard
                         key={`${activeDay.id}-${i}-${exercise.name}`}

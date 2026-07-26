@@ -11,6 +11,9 @@ export interface StaffProfile {
   full_name: string;
   active: boolean;
   assigned_coach_id: string | null;
+  must_change_password?: boolean;
+  email?: string | null;
+  created_at?: string;
 }
 
 function generatePassword(prefix: string) {
@@ -23,16 +26,27 @@ interface AccountCreatorProps {
   /** Offered as an optional "assign straight away" step for new members. */
   coaches?: StaffProfile[];
   onCreated: () => void;
+  /**
+   * Coach context: put the new member straight onto the signed-in coach's
+   * roster, and keep that coach signed in afterwards.
+   */
+  claimForSignedInCoach?: boolean;
 }
 
 /**
  * Creates a coach or member account and shows the credentials once.
  *
  * Account creation goes through the normal browser sign-up call, which logs
- * this tab in as the new account — so it signs straight back out to leave the
- * admin session intact.
+ * this tab in as the new account. The admin panel's own login isn't a
+ * Supabase session, so there it just signs back out; a coach, though, has a
+ * real session to put back — hence the capture-and-restore below.
  */
-export function AccountCreator({ role, coaches = [], onCreated }: AccountCreatorProps) {
+export function AccountCreator({
+  role,
+  coaches = [],
+  onCreated,
+  claimForSignedInCoach = false,
+}: AccountCreatorProps) {
   const isCoach = role === "coach";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -56,6 +70,10 @@ export function AccountCreator({ role, coaches = [], onCreated }: AccountCreator
     setBusy(true);
     const trimmedEmail = email.trim();
 
+    // Captured before sign-up replaces the session with the new account's.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const priorSession = sessionData.session;
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
@@ -72,14 +90,29 @@ export function AccountCreator({ role, coaches = [], onCreated }: AccountCreator
       ? await supabase.rpc("admin_promote_to_coach", { p_id: data.user.id })
       : await supabase.rpc("admin_flag_password_change", { p_id: data.user.id });
 
-    if (!isCoach && coachId) {
-      await supabase.rpc("admin_assign_coach", {
-        p_client_id: data.user.id,
-        p_coach_id: coachId,
+    // Restore whoever was signed in before touching anything that depends on
+    // auth.uid() — coach_claim_client assigns to the *calling* coach, so it
+    // has to run as the coach and not as the account just created.
+    if (priorSession) {
+      await supabase.auth.setSession({
+        access_token: priorSession.access_token,
+        refresh_token: priorSession.refresh_token,
       });
+    } else {
+      await supabase.auth.signOut();
     }
 
-    await supabase.auth.signOut();
+    if (!isCoach) {
+      if (claimForSignedInCoach) {
+        await supabase.rpc("coach_claim_client", { p_client_id: data.user.id });
+      } else if (coachId) {
+        await supabase.rpc("admin_assign_coach", {
+          p_client_id: data.user.id,
+          p_coach_id: coachId,
+        });
+      }
+    }
+
     setBusy(false);
 
     if (roleError) {
@@ -137,7 +170,7 @@ export function AccountCreator({ role, coaches = [], onCreated }: AccountCreator
             <Input value={password} onChange={(e) => setPassword(e.target.value)} required />
           </label>
 
-          {!isCoach && (
+          {!isCoach && !claimForSignedInCoach && (
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-nova-text">
                 Assign a coach <span className="text-nova-muted">(optional)</span>
@@ -161,6 +194,7 @@ export function AccountCreator({ role, coaches = [], onCreated }: AccountCreator
         </div>
 
         <p className="text-xs text-nova-muted">
+          {claimForSignedInCoach && "They'll be added to your clients. "}
           They&apos;ll be asked to set their own password the first time they log in
           {isCoach ? "." : ", then fill in their intake form to get a plan."}
         </p>

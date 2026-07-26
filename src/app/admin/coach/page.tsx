@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Pencil, Plus } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
-import { UserManagementSection } from "@/components/shared/UserManagementSection";
+import { CoachClientsPanel } from "@/components/coach/ClientsPanel";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
@@ -49,6 +49,7 @@ function timeAgo(iso: string) {
 export default function CoachDashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [coachId, setCoachId] = useState<string | null>(null);
   const [coachName, setCoachName] = useState("Coach");
   const [pending, setPending] = useState<PlanRow[]>([]);
   const [approved, setApproved] = useState<PlanRow[]>([]);
@@ -56,75 +57,87 @@ export default function CoachDashboardPage() {
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /** Fetches everything the dashboard shows; returns null if not a coach. */
+  const fetchDashboard = useCallback(async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      router.replace("/admin");
+      return null;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, role, active")
+      .eq("id", sessionData.session.user.id)
+      .single();
+
+    if (!profile || profile.role !== "coach" || profile.active === false) {
+      await supabase.auth.signOut();
+      router.replace("/admin");
+      return null;
+    }
+
+    const coach = sessionData.session.user.id;
+
+    const { data: assignedClients } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("assigned_coach_id", coach)
+      .eq("active", true);
+
+    const roster = (assignedClients as ClientProfile[]) ?? [];
+
+    if (roster.length === 0) {
+      return { coach, name: profile.full_name as string | null, rows: [] as PlanRow[], roster };
+    }
+
+    const { data: plans } = await supabase
+      .from("plans")
+      .select("id, client_id, full_name, goal, status, created_at, approved_at")
+      .in(
+        "client_id",
+        roster.map((client) => client.id),
+      )
+      .order("created_at", { ascending: false });
+
+    return {
+      coach,
+      name: profile.full_name as string | null,
+      rows: (plans ?? []) as PlanRow[],
+      roster,
+    };
+  }, [router]);
+
+  const apply = useCallback((result: Awaited<ReturnType<typeof fetchDashboard>>) => {
+    if (!result) return;
+    const clientsWithPlans = new Set(result.rows.map((plan) => plan.client_id));
+
+    setCoachId(result.coach);
+    setCoachName(result.name?.split(" ")[0] || "Coach");
+    setPending(result.rows.filter((p) => p.status === "pending"));
+    setApproved(result.rows.filter((p) => p.status === "approved"));
+    setWithoutPlan(result.roster.filter((client) => !clientsWithPlans.has(client.id)));
+    setLoading(false);
+  }, []);
+
+  const reload = useCallback(async () => {
+    apply(await fetchDashboard());
+  }, [apply, fetchDashboard]);
+
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        router.replace("/admin");
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, role, active")
-        .eq("id", sessionData.session.user.id)
-        .single();
-
+      const result = await fetchDashboard();
       if (!active) return;
-
-      if (!profile || profile.role !== "coach" || profile.active === false) {
-        await supabase.auth.signOut();
-        router.replace("/admin");
-        return;
-      }
-
-      setCoachName(profile.full_name?.split(" ")[0] || "Coach");
-
-      const { data: assignedClients } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .eq("assigned_coach_id", sessionData.session.user.id)
-        .eq("active", true);
-
-      if (!active) return;
-
-      const roster = (assignedClients as ClientProfile[]) ?? [];
-
-      if (roster.length === 0) {
-        setPending([]);
-        setApproved([]);
-        setWithoutPlan([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: plans } = await supabase
-        .from("plans")
-        .select("id, client_id, full_name, goal, status, created_at, approved_at")
-        .in(
-          "client_id",
-          roster.map((client) => client.id),
-        )
-        .order("created_at", { ascending: false });
-
-      if (!active) return;
-
-      const rows = (plans ?? []) as PlanRow[];
-      const clientsWithPlans = new Set(rows.map((plan) => plan.client_id));
-
-      setPending(rows.filter((p) => p.status === "pending"));
-      setApproved(rows.filter((p) => p.status === "approved"));
-      setWithoutPlan(roster.filter((client) => !clientsWithPlans.has(client.id)));
-      setLoading(false);
+      apply(result);
     }
 
     load();
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [apply, fetchDashboard]);
 
   /** Starts an empty program for a member who never filled in the intake form. */
   async function handleCreatePlan(clientId: string) {
@@ -276,7 +289,7 @@ export default function CoachDashboardPage() {
             </div>
 
             <div className="mt-8 lg:col-span-1 lg:mt-0">
-              <UserManagementSection role="client" title="Manage Clients" />
+              {coachId && <CoachClientsPanel coachId={coachId} onRosterChange={reload} />}
             </div>
           </div>
         </main>

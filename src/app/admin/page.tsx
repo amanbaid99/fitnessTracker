@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatTile } from "@/components/admin/StatTile";
 import { AccountCreator, type StaffProfile } from "@/components/admin/AccountCreator";
+import { CoachRow } from "@/components/admin/CoachRow";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";
@@ -175,8 +176,8 @@ export default function AdminPage() {
 
   async function refreshLists() {
     const [{ data: coachRows }, { data: clientRows }, { data: planRows }] = await Promise.all([
-      supabase.rpc("admin_list_profiles", { p_role: "coach" }),
-      supabase.rpc("admin_list_profiles", { p_role: "client" }),
+      supabase.rpc("admin_list_staff", { p_role: "coach" }),
+      supabase.rpc("admin_list_staff", { p_role: "client" }),
       supabase.rpc("admin_list_plans"),
     ]);
     setCoaches((coachRows as StaffProfile[]) ?? []);
@@ -799,6 +800,9 @@ export default function AdminPage() {
 
                   {visibleMembers.map((client) => {
                     const plan = planByClient.get(client.id);
+                    const assignedCoach = client.assigned_coach_id
+                      ? coachById.get(client.assigned_coach_id)
+                      : undefined;
                     return (
                       <div
                         key={client.id}
@@ -825,6 +829,12 @@ export default function AdminPage() {
                                   No plan yet
                                 </span>
                               )}
+                              <span>
+                                ·{" "}
+                                {assignedCoach
+                                  ? `Coach ${assignedCoach.full_name || "(no name)"}`
+                                  : "No coach"}
+                              </span>
                               {!client.active && <span>· Removed</span>}
                             </p>
                           </div>
@@ -834,15 +844,27 @@ export default function AdminPage() {
                           <select
                             value={client.assigned_coach_id ?? ""}
                             onChange={(e) => handleAssignCoach(client.id, e.target.value)}
+                            aria-label={`Coach for ${client.full_name || "member"}`}
                             className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
                           >
-                            <option value="">No coach</option>
+                            <option value="">— No coach —</option>
                             {activeCoaches.map((coach) => (
                               <option key={coach.id} value={coach.id}>
+                                {assignedCoach?.id === coach.id ? "Coach: " : "Move to: "}
                                 {coach.full_name || coach.id}
                               </option>
                             ))}
                           </select>
+
+                          {client.assigned_coach_id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAssignCoach(client.id, "")}
+                            >
+                              Unassign
+                            </Button>
+                          )}
 
                           {plan && (
                             <Button asChild variant="outline" size="sm">
@@ -892,35 +914,19 @@ export default function AdminPage() {
               <div className="space-y-2">
                 {coaches.length === 0 && <EmptyState>No coaches yet.</EmptyState>}
 
-                {coaches.map((coach) => {
-                  const roster = clients.filter(
-                    (client) => client.assigned_coach_id === coach.id && client.active,
-                  );
-                  return (
-                    <div
-                      key={coach.id}
-                      className="flex items-center gap-3 rounded-xl border border-nova-border/70 p-3"
-                    >
-                      <Avatar name={coach.full_name} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-nova-text">
-                          {coach.full_name || "(no name)"}
-                        </p>
-                        <p className="text-xs text-nova-muted">
-                          {roster.length} member{roster.length === 1 ? "" : "s"} ·{" "}
-                          {coach.active ? "Active" : "Removed"}
-                        </p>
-                      </div>
-                      <Button
-                        variant={coach.active ? "ghost" : "default"}
-                        size="sm"
-                        onClick={() => toggleActive(coach.id, coach.active)}
-                      >
-                        {coach.active ? "Remove" : "Restore"}
-                      </Button>
-                    </div>
-                  );
-                })}
+                {coaches.map((coach) => (
+                  <CoachRow
+                    key={coach.id}
+                    coach={coach}
+                    clientCount={
+                      clients.filter(
+                        (client) => client.assigned_coach_id === coach.id && client.active,
+                      ).length
+                    }
+                    onChanged={refreshLists}
+                    onToggleActive={() => toggleActive(coach.id, coach.active)}
+                  />
+                ))}
               </div>
             </SectionCard>
           )}
@@ -1034,11 +1040,31 @@ export default function AdminPage() {
                             {roster.map((client) => (
                               <li
                                 key={client.id}
-                                className="flex items-center justify-between gap-2 rounded-lg bg-nova-bg px-2.5 py-1.5"
+                                className="flex items-center gap-2 rounded-lg bg-nova-bg px-2.5 py-1.5"
                               >
-                                <span className="min-w-0 truncate text-sm text-nova-text">
+                                <span className="min-w-0 flex-1 truncate text-sm text-nova-text">
                                   {client.full_name || "(no name)"}
                                 </span>
+                                {activeCoaches.length > 1 && (
+                                  <select
+                                    value=""
+                                    aria-label={`Move ${client.full_name || "member"} to another coach`}
+                                    onChange={(e) =>
+                                      e.target.value &&
+                                      handleAssignCoach(client.id, e.target.value)
+                                    }
+                                    className="h-7 shrink-0 rounded-md border border-nova-border bg-nova-surface px-1.5 text-xs text-nova-muted outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                                  >
+                                    <option value="">Move…</option>
+                                    {activeCoaches
+                                      .filter((other) => other.id !== coach.id)
+                                      .map((other) => (
+                                        <option key={other.id} value={other.id}>
+                                          {other.full_name || other.id}
+                                        </option>
+                                      ))}
+                                  </select>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => handleAssignCoach(client.id, "")}

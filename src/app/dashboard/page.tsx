@@ -422,7 +422,7 @@ export default function ClientDashboardPage() {
         <header className="flex items-center justify-between px-5 pt-6 md:px-0 md:pt-10">
           <div>
             <h1 className="text-xl font-semibold text-nova-text md:text-2xl">
-              Good morning, {firstName} 👋
+              Hello, {firstName} 👋
             </h1>
             <p className="mt-1 text-sm text-nova-muted">{today}</p>
           </div>

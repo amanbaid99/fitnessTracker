@@ -192,7 +192,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-nova-muted">
         New to Nova?{" "}
-        <Link href="/onboarding" className="font-medium text-nova-accent hover:underline">
+        <Link href="/auth/register" className="font-medium text-nova-accent hover:underline">
           Create an account
         </Link>
       </p>

@@ -46,7 +46,16 @@ function Field({
     return (
       <div>
         {label}
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div
+          className={cn(
+            "grid gap-2",
+            // Long labels ("Coming back after a long break") need the full
+            // width; short ones would waste half a row each.
+            (field.options ?? []).every((o) => o.label.length <= 22)
+              ? "grid-cols-2"
+              : "grid-cols-1 sm:grid-cols-2",
+          )}
+        >
           {field.options?.map((option) => (
             <button
               key={option.value}
@@ -54,7 +63,7 @@ function Field({
               onClick={() => onChange(option.value)}
               aria-pressed={value === option.value}
               className={cn(
-                "rounded-xl border bg-nova-surface px-3.5 py-3 text-left text-sm transition-colors",
+                "rounded-xl border bg-nova-surface px-3 py-2.5 text-left text-sm transition-colors",
                 value === option.value
                   ? "border-nova-accent text-nova-text ring-1 ring-nova-accent"
                   : "border-nova-border/70 text-nova-muted hover:text-nova-text",
@@ -362,13 +371,19 @@ export default function AssessmentPage() {
       p_assessment_id: assessmentId,
     });
 
-    setSubmitting(false);
-
     if (error) {
+      setSubmitting(false);
       setErrors([error.message]);
       return;
     }
 
+    // Kick off generation, but never block on it: the plan already exists in
+    // the coach's queue, and the review screen is honest about it either way.
+    supabase.functions
+      .invoke("generate-program", { body: { assessmentId } })
+      .catch((cause) => console.error("generate-program invoke failed", cause));
+
+    setSubmitting(false);
     router.push("/onboarding/review");
   }
 
@@ -436,7 +451,7 @@ export default function AssessmentPage() {
       <h1 className="mt-5 text-xl font-semibold text-nova-text">{step.title}</h1>
       {step.intro && <p className="mt-1 text-sm text-nova-muted">{step.intro}</p>}
 
-      <div className="mt-6 flex-1 space-y-5">
+      <div className="mt-5 flex-1 space-y-4">
         {step.fields
           .filter((field) => isFieldVisible(field, answers))
           .map((field) => (

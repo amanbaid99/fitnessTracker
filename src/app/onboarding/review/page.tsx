@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+
+/** The pipeline from the workflow doc, so the wait feels like progress. */
+const STAGES = [
+  { title: "Assessment submitted", done: true },
+  { title: "Nova AI preparing your programme", done: false },
+  { title: "Coach reviews and approves", done: false },
+  { title: "Programme published to your dashboard", done: false },
+];
 
 export default function PlanUnderReviewPage() {
   const router = useRouter();
@@ -67,34 +75,42 @@ export default function PlanUnderReviewPage() {
         </div>
       </div>
 
-      <h1 className="mt-8 text-2xl font-semibold text-nova-text">
-        Your plan is being crafted
-      </h1>
+      <h1 className="mt-8 text-2xl font-semibold text-nova-text">Assessment received</h1>
       <p className="mt-3 text-sm leading-relaxed text-nova-muted">
-        Your coach is reviewing your profile and personalising your program.
-        This usually takes 24–48 hours. We&apos;ll notify you the moment
-        it&apos;s ready.
+        Thank you for completing your assessment. Nova AI is analysing your information and
+        preparing your personalised training programme.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-nova-muted">
+        Your coach will carefully review the programme before it is published. Your workout
+        plan will be available within the next 24 hours.
       </p>
 
-      <div className="mt-8 flex w-full items-center gap-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-left shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-sm font-semibold text-nova-accent">
-          NC
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-nova-text">
-            Assigned to your Nova coach
-          </p>
-          <Badge className="mt-1.5">ACSM Certified</Badge>
-        </div>
-      </div>
+      <ol className="mt-8 w-full space-y-3 text-left">
+        {STAGES.map((stage, i) => (
+          <li key={stage.title} className="flex items-center gap-3">
+            <span
+              className={
+                stage.done
+                  ? "flex size-7 shrink-0 items-center justify-center rounded-full bg-nova-success text-white"
+                  : "flex size-7 shrink-0 items-center justify-center rounded-full bg-nova-surface text-xs font-semibold text-nova-muted ring-1 ring-nova-border"
+              }
+            >
+              {stage.done ? <Check className="size-4" /> : i + 1}
+            </span>
+            <span className={stage.done ? "text-sm font-medium text-nova-text" : "text-sm text-nova-muted"}>
+              {stage.title}
+            </span>
+          </li>
+        ))}
+      </ol>
 
-      <a
-        href="#"
+      <Link
+        href="/dashboard/messages"
         className="mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
       >
-        Got a question? Ask your coach
+        Got a question? Message your coach
         <ArrowRight className="size-4" />
-      </a>
+      </Link>
     </div>
   );
 }

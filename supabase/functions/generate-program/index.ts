@@ -1,0 +1,303 @@
+/**
+ * generate-program — turns a submitted assessment into a draft programme.
+ *
+ * Why an edge function at all: the app is a static export, so there is no
+ * server to hold ANTHROPIC_API_KEY. This runs on Supabase, holds the key, and
+ * is the only thing that ever talks to the Claude API.
+ *
+ * Where it sits in the pipeline:
+ *
+ *   submit_assessment()  → plan row created with status 'awaiting_ai'
+ *   generate-program     → fills in days + ai_report, status 'pending'
+ *   coach edits, publish_plan() → status 'approved', client can see it
+ *
+ * It deliberately never publishes. If generation fails the plan stays in the
+ * coach's queue with an explanation attached, because a coach writing the
+ * programme by hand is a worse day, not a broken product.
+ *
+ * Deploy:
+ *   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+ *   supabase functions deploy generate-program
+ */
+
+import { createClient } from "npm:@supabase/supabase-js@2";
+import Anthropic from "npm:@anthropic-ai/sdk";
+import { CATALOG_IDS, catalogEntry } from "./catalog.ts";
+import {
+  buildUserPrompt,
+  programSchema,
+  SYSTEM_PROMPT,
+  type GeneratedProgram,
+} from "./prompt.ts";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
+
+interface PlanRow {
+  id: string;
+  client_id: string;
+  status: string;
+  assessment_id: string | null;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method !== "POST") return json({ error: "POST only" }, 405);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return json({ error: "Missing Authorization header" }, 401);
+
+  // Two clients on purpose: the caller's own token decides *who* is asking,
+  // the service key does the writing (clients have no update rights on plans).
+  const asCaller = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const admin = createClient(supabaseUrl, serviceKey);
+
+  const { data: userData } = await asCaller.auth.getUser();
+  const caller = userData?.user;
+  if (!caller) return json({ error: "Not signed in" }, 401);
+
+  let body: { assessmentId?: string; planId?: string; force?: boolean };
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Expected a JSON body" }, 400);
+  }
+
+  // ---------------------------------------------------------------------
+  // Find the plan, and check the caller is allowed near it
+  // ---------------------------------------------------------------------
+  let plan: PlanRow | null = null;
+
+  if (body.planId) {
+    const { data } = await admin
+      .from("plans")
+      .select("id, client_id, status, assessment_id")
+      .eq("id", body.planId)
+      .maybeSingle();
+    plan = data;
+  } else if (body.assessmentId) {
+    const { data } = await admin
+      .from("plans")
+      .select("id, client_id, status, assessment_id")
+      .eq("assessment_id", body.assessmentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    plan = data;
+  } else {
+    return json({ error: "Pass an assessmentId or a planId" }, 400);
+  }
+
+  if (!plan) return json({ error: "No plan is waiting on that assessment" }, 404);
+
+  if (plan.client_id !== caller.id) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("role, active")
+      .eq("id", caller.id)
+      .maybeSingle();
+    const staff = profile?.active && (profile.role === "coach" || profile.role === "admin");
+    if (!staff) return json({ error: "That plan isn't yours" }, 403);
+  }
+
+  // Generation is idempotent: a retried invoke (flaky network, a client that
+  // refreshed) must not overwrite what a coach has already started editing.
+  if (plan.status !== "awaiting_ai" && !body.force) {
+    return json({ status: plan.status, skipped: "already generated" });
+  }
+
+  const { data: assessment } = await admin
+    .from("assessments")
+    .select("id, answers, equipment_photos")
+    .eq("id", plan.assessment_id ?? "")
+    .maybeSingle();
+
+  if (!assessment) return json({ error: "That plan has no assessment attached" }, 404);
+
+  // ---------------------------------------------------------------------
+  // Generate
+  // ---------------------------------------------------------------------
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+
+  if (!apiKey) {
+    const fell = await fallbackToTemplate(admin, plan, "ANTHROPIC_API_KEY is not set");
+    return json(fell);
+  }
+
+  try {
+    const program = await generate(apiKey, assessment.answers ?? {}, assessment.equipment_photos ?? []);
+    const days = toPlanDays(program);
+
+    if (days.length === 0) throw new Error("The model returned no training days");
+
+    await admin
+      .from("plans")
+      .update({
+        days,
+        ai_report: program.report,
+        generated_by: "ai",
+        status: "pending",
+      })
+      .eq("id", plan.id);
+
+    await admin.from("assessments").update({ status: "processed" }).eq("id", assessment.id);
+
+    return json({ status: "pending", generated_by: "ai", days: days.length });
+  } catch (error) {
+    console.error("generate-program failed", error);
+    const fell = await fallbackToTemplate(
+      admin,
+      plan,
+      error instanceof Error ? error.message : String(error),
+    );
+    return json(fell);
+  }
+});
+
+/** One Claude call, constrained to the catalog and to the plan's shape. */
+async function generate(
+  apiKey: string,
+  answers: Record<string, unknown>,
+  photos: string[],
+): Promise<GeneratedProgram> {
+  const client = new Anthropic({ apiKey });
+
+  // Streamed because a six-day programme with alternates is a long response,
+  // and a non-streamed request that size risks the platform's HTTP timeout.
+  const message = await client.messages
+    .stream({
+      model: "claude-opus-5",
+      max_tokens: 16000,
+      thinking: { type: "adaptive" },
+      system: SYSTEM_PROMPT,
+      output_config: {
+        effort: "high",
+        format: { type: "json_schema", schema: programSchema(CATALOG_IDS) },
+      },
+      messages: [{ role: "user", content: buildUserPrompt(answers, photos.length) }],
+    })
+    .finalMessage();
+
+  if (message.stop_reason === "refusal") {
+    throw new Error("The model declined to answer this assessment");
+  }
+
+  const text = message.content.find((block) => block.type === "text");
+  if (!text || text.type !== "text") throw new Error("No JSON in the response");
+
+  return JSON.parse(text.text) as GeneratedProgram;
+}
+
+/**
+ * Model output → the `days` shape the app already stores. Names and default
+ * rest come from the catalog rather than from the model, so a generated plan
+ * is indistinguishable from one a coach built in the plan editor.
+ */
+function toPlanDays(program: GeneratedProgram) {
+  return program.days.map((day, index) => ({
+    id: `day-${index + 1}`,
+    title: day.title,
+    exercises: day.exercises
+      .map((exercise) => {
+        const catalog = catalogEntry(exercise.exerciseId);
+        if (!catalog) return null;
+        return {
+          name: catalog.name,
+          exerciseId: catalog.id,
+          sets: exercise.sets,
+          reps: exercise.reps,
+          rest: exercise.rest || catalog.rest,
+          tempo: exercise.tempo || "2-0-2",
+          rpe: exercise.rpe,
+          alternates: (exercise.alternates ?? [])
+            .map((alternate) => {
+              const alt = catalogEntry(alternate.exerciseId);
+              if (!alt || alt.id === catalog.id) return null;
+              return {
+                name: alt.name,
+                exerciseId: alt.id,
+                sets: alternate.sets,
+                reps: alternate.reps,
+              };
+            })
+            .filter((a): a is NonNullable<typeof a> => a !== null),
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => e !== null),
+  }));
+}
+
+/**
+ * When the API is unreachable the coach still gets something to open: the
+ * closest admin-owned template for their training days. If there isn't one,
+ * the plan stays in 'awaiting_ai' with the reason attached, which is what the
+ * coach queue renders as "needs writing by hand".
+ */
+async function fallbackToTemplate(
+  admin: ReturnType<typeof createClient>,
+  plan: PlanRow,
+  reason: string,
+) {
+  const { data: assessment } = await admin
+    .from("assessments")
+    .select("answers")
+    .eq("id", plan.assessment_id ?? "")
+    .maybeSingle();
+
+  const answers = (assessment?.answers ?? {}) as Record<string, unknown>;
+  const wanted = Number(answers.days_per_week ?? 3);
+
+  const { data: templates } = await admin
+    .from("workout_templates")
+    .select("id, name, days, days_per_week, owner_role")
+    .order("owner_role", { ascending: true }); // 'admin' sorts before 'coach'
+
+  const match = (templates ?? [])
+    .filter((t) => Array.isArray(t.days) && t.days.length > 0)
+    .sort(
+      (a, b) =>
+        Math.abs((a.days_per_week ?? a.days.length) - wanted) -
+        Math.abs((b.days_per_week ?? b.days.length) - wanted),
+    )[0];
+
+  const report = {
+    summary: match
+      ? `Nova AI couldn't generate this programme, so the "${match.name}" template was loaded as a starting point. Please review it against the assessment before publishing.`
+      : "Nova AI couldn't generate this programme. The assessment is complete — this one needs writing by hand.",
+    red_flags: [],
+    considerations: [],
+    open_questions: [],
+    weekly_structure: "",
+    progression: "",
+    error: reason,
+  };
+
+  await admin
+    .from("plans")
+    .update(
+      match
+        ? { days: match.days, ai_report: report, generated_by: "fallback", status: "pending" }
+        : { ai_report: report },
+    )
+    .eq("id", plan.id);
+
+  return match
+    ? { status: "pending", generated_by: "fallback", template: match.name, reason }
+    : { status: "awaiting_ai", generated_by: null, reason };
+}

@@ -30,5 +30,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  // Supabase edge functions run on Deno with npm: specifiers, and the scripts
+  // folder is Node tooling — neither belongs to the Next.js program.
+  "exclude": ["node_modules", "supabase/functions", "scripts"]
 }

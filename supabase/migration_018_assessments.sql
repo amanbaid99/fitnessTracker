@@ -32,16 +32,23 @@ create index if not exists assessments_client_idx on public.assessments (client_
 
 alter table public.assessments enable row level security;
 
+-- The active check goes through a SECURITY DEFINER helper rather than an
+-- inline subquery, so reading an assessment doesn't drag the profiles
+-- policies in behind it.
+create or replace function public.is_active_user()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and active);
+$$;
+
 drop policy if exists "assessments: client manages own" on public.assessments;
 create policy "assessments: client manages own" on public.assessments
-  for all using (
-    auth.uid() = client_id
-    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.active)
-  )
-  with check (
-    auth.uid() = client_id
-    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.active)
-  );
+  for all using (auth.uid() = client_id and public.is_active_user())
+  with check (auth.uid() = client_id and public.is_active_user());
 
 drop policy if exists "assessments: coach reads assigned" on public.assessments;
 create policy "assessments: coach reads assigned" on public.assessments
@@ -88,12 +95,23 @@ alter table public.profiles add column if not exists welcomed_at timestamptz;
 
 -- A client must be able to read their own coach's profile card even though
 -- the roster policy only lets coaches read downward.
+--
+-- The coach lookup goes through a SECURITY DEFINER function on purpose: a
+-- policy on profiles that queries profiles re-enters its own policy set and
+-- Postgres rejects it with "infinite recursion detected". See migration 020.
+create or replace function public.my_coach_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select assigned_coach_id from public.profiles where id = auth.uid();
+$$;
+
 drop policy if exists "profiles: client reads own coach" on public.profiles;
 create policy "profiles: client reads own coach" on public.profiles
-  for select using (
-    role = 'coach'
-    and id = (select assigned_coach_id from public.profiles me where me.id = auth.uid())
-  );
+  for select using (role = 'coach' and id = public.my_coach_id());
 
 -- ---------------------------------------------------------------------------
 -- Submitting an assessment

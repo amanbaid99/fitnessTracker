@@ -104,6 +104,10 @@ $$;
 
 -- Admins manage every profile (role + active state) — but only while their
 -- own account is still active.
+-- NOTE: this inline subquery makes the policy re-enter itself, which Postgres
+-- rejects with "infinite recursion detected in policy for relation profiles".
+-- Migration 020 replaces it with public.is_active_admin(). Left here as it
+-- originally shipped so the migration history still reads true.
 create policy "profiles: admin manages all" on public.profiles
   for all using (
     exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin' and p.active)

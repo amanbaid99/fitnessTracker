@@ -22,13 +22,14 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Setting up a Supabase project
 
 1. **Run the SQL.** In the Supabase SQL editor, run the files in `supabase/` in
-   order: `schema.sql`, then `migration_002` … `migration_019`. The comment at
+   order: `schema.sql`, then `migration_002` … `migration_020`. The comment at
    the top of each explains what it adds. They're idempotent, so re-running one
    is safe.
 
    `migration_018` is the coach-first pipeline (assessments, the plan review
-   states, coach profile fields) and `migration_019` creates the private
-   `assessment-uploads` storage bucket the equipment photos go into.
+   states, coach profile fields), `migration_019` creates the private
+   `assessment-uploads` storage bucket the equipment photos go into, and
+   `migration_020` fixes the profiles policies so they don't recurse.
 
 2. **Deploy the generator.** With the [Supabase CLI](https://supabase.com/docs/guides/cli):
 

@@ -25,6 +25,7 @@ import Anthropic from "npm:@anthropic-ai/sdk";
 import { CATALOG_IDS, catalogEntry } from "./catalog.ts";
 import {
   buildUserPrompt,
+  MAX_ALTERNATES,
   programSchema,
   SYSTEM_PROMPT,
   type GeneratedProgram,
@@ -204,23 +205,30 @@ async function generate(
   return JSON.parse(text.text) as GeneratedProgram;
 }
 
+const clamp = (n: number, low: number, high: number) =>
+  Math.min(high, Math.max(low, Math.round(Number(n) || low)));
+
 /**
  * Model output → the `days` shape the app already stores. Names and default
  * rest come from the catalog rather than from the model, so a generated plan
  * is indistinguishable from one a coach built in the plan editor.
+ *
+ * This is also where the bounds the schema can't express get enforced: set
+ * counts, the alternate limit, and the length of the week.
  */
 function toPlanDays(program: GeneratedProgram) {
-  return program.days.map((day, index) => ({
+  return program.days.slice(0, 6).map((day, index) => ({
     id: `day-${index + 1}`,
     title: day.title,
     exercises: day.exercises
+      .slice(0, 10)
       .map((exercise) => {
         const catalog = catalogEntry(exercise.exerciseId);
         if (!catalog) return null;
         return {
           name: catalog.name,
           exerciseId: catalog.id,
-          sets: exercise.sets,
+          sets: clamp(exercise.sets, 1, 8),
           reps: exercise.reps,
           rest: exercise.rest || catalog.rest,
           tempo: exercise.tempo || "2-0-2",
@@ -232,15 +240,18 @@ function toPlanDays(program: GeneratedProgram) {
               return {
                 name: alt.name,
                 exerciseId: alt.id,
-                sets: alternate.sets,
+                sets: clamp(alternate.sets, 1, 8),
                 reps: alternate.reps,
               };
             })
-            .filter((a): a is NonNullable<typeof a> => a !== null),
+            .filter((a): a is NonNullable<typeof a> => a !== null)
+            .slice(0, MAX_ALTERNATES),
         };
       })
       .filter((e): e is NonNullable<typeof e> => e !== null),
-  }));
+  }))
+  // A day the catalog filter emptied out would render as a blank session.
+  .filter((day) => day.exercises.length > 0);
 }
 
 /**

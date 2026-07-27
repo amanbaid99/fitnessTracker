@@ -79,7 +79,7 @@ const EXERCISE_PROPERTIES = (catalogIds: string[]) => ({
     enum: catalogIds,
     description: "Catalog id of the exercise.",
   },
-  sets: { type: "integer", minimum: 1, maximum: 8 },
+  sets: { type: "integer", description: "Working sets, 1-8." },
   reps: {
     type: "string",
     description: 'Reps or a range, e.g. "8", "8-10", "30s" for a timed hold.',
@@ -93,6 +93,11 @@ const EXERCISE_PROPERTIES = (catalogIds: string[]) => ({
  * The response schema. `additionalProperties: false` plus a fully-required
  * property list is what structured outputs need to guarantee the shape, so the
  * function never has to defend against a half-built exercise.
+ *
+ * Structured outputs accept only a subset of JSON Schema — no `minimum`,
+ * `maximum`, `minItems` or `maxItems`. Sending them fails schema compilation
+ * with a 400 before the model ever runs, so the bounds live in the field
+ * descriptions and `toPlanDays()` is what actually enforces them.
  */
 export function programSchema(catalogIds: string[]) {
   return {
@@ -141,8 +146,7 @@ export function programSchema(catalogIds: string[]) {
       },
       days: {
         type: "array",
-        minItems: 1,
-        maxItems: 6,
+        description: "One entry per training day, between 1 and 6 of them.",
         items: {
           type: "object",
           properties: {
@@ -152,20 +156,19 @@ export function programSchema(catalogIds: string[]) {
             },
             exercises: {
               type: "array",
-              minItems: 1,
-              maxItems: 10,
+              description: "Between 1 and 10 exercises, hardest first.",
               items: {
                 type: "object",
                 properties: {
                   ...EXERCISE_PROPERTIES(catalogIds),
                   alternates: {
                     type: "array",
-                    maxItems: MAX_ALTERNATES,
+                    description: `At most ${MAX_ALTERNATES} swaps for this exercise.`,
                     items: {
                       type: "object",
                       properties: {
                         exerciseId: { type: "string", enum: catalogIds },
-                        sets: { type: "integer", minimum: 1, maximum: 8 },
+                        sets: { type: "integer" },
                         reps: { type: "string" },
                       },
                       required: ["exerciseId", "sets", "reps"],

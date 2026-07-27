@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - claude/nova-claude-code-kickoff-qikfe2
+      - claude/workout-management-custom-plans-vhsdll
   workflow_dispatch:
 
 permissions:

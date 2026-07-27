@@ -1,5 +1,5 @@
 // GENERATED FILE — do not edit.
-// Run `npm run sync:catalog` to regenerate from src/lib/exerciseLibrary.ts.
+// Run `npm run sync:edge` to regenerate from src/lib/exerciseLibrary.ts.
 
 export interface CatalogEntry {
   id: string;

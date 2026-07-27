@@ -28,6 +28,8 @@ export interface AssessmentField {
   unit?: string;
   min?: number;
   max?: number;
+  /** Date fields only: the minimum age the picker will allow. */
+  maxAge?: number;
   options?: { value: string; label: string }[];
   /** Only shown when another field holds one of these values. */
   showWhen?: { field: string; equals: string[] };
@@ -38,6 +40,16 @@ export interface AssessmentStep {
   title: string;
   intro?: string;
   fields: AssessmentField[];
+}
+
+/** Nova doesn't coach minors. */
+export const MIN_AGE = 18;
+
+/** The latest date of birth that still makes someone MIN_AGE, as yyyy-mm-dd. */
+export function latestAdultBirthDate(today = new Date()): string {
+  const d = new Date(today);
+  d.setFullYear(d.getFullYear() - MIN_AGE);
+  return d.toISOString().slice(0, 10);
 }
 
 const YES_NO = [
@@ -54,7 +66,16 @@ export const ASSESSMENT_STEPS: AssessmentStep[] = [
       { id: "full_name", label: "Full name", kind: "text", required: true, placeholder: "Aman Baid" },
       { id: "email", label: "Email address", kind: "email", required: true, placeholder: "you@example.com" },
       { id: "phone", label: "Phone number", kind: "tel", required: true, placeholder: "+91 98765 43210" },
-      { id: "date_of_birth", label: "Date of birth", kind: "date", required: true },
+      {
+        id: "date_of_birth",
+        label: "Date of birth",
+        kind: "date",
+        required: true,
+        // Nova only coaches adults, so the picker won't offer a date that
+        // would make someone under 18.
+        maxAge: MIN_AGE,
+        hint: `You must be ${MIN_AGE} or over to train with Nova.`,
+      },
       {
         id: "gender",
         label: "Gender",

@@ -12,6 +12,8 @@ import {
   ASSESSMENT_STEPS,
   assessmentProgress,
   isFieldVisible,
+  latestAdultBirthDate,
+  MIN_AGE,
   missingRequired,
   type AssessmentAnswers,
   type AssessmentField,
@@ -172,6 +174,10 @@ function Field({
             ? "tel"
             : "text";
 
+  // A date field with an age floor caps the picker rather than letting
+  // someone choose a birthday and only then be told no.
+  const maxDate = field.kind === "date" && field.maxAge ? latestAdultBirthDate() : undefined;
+
   return (
     <label className="block">
       {label}
@@ -179,7 +185,7 @@ function Field({
         type={inputType}
         inputMode={field.kind === "number" ? "decimal" : undefined}
         min={field.min}
-        max={field.max}
+        max={maxDate ?? field.max}
         value={(value as string) ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={field.placeholder}
@@ -381,6 +387,17 @@ export default function AssessmentPage() {
       setProblem({
         title: `Still needed on "${ASSESSMENT_STEPS[incompleteStep].title}":`,
         items: missing.map((field) => field.label),
+      });
+      return;
+    }
+
+    // The picker caps the date, but a typed one can still slip past it.
+    const dob = answers.date_of_birth as string | undefined;
+    if (dob && dob > latestAdultBirthDate()) {
+      goToStep(0);
+      setProblem({
+        title: "Check your date of birth:",
+        items: [`You need to be ${MIN_AGE} or over to train with Nova.`],
       });
       return;
     }

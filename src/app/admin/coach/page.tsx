@@ -215,7 +215,7 @@ export default function CoachDashboardPage() {
                         <p className="text-sm font-medium text-nova-text">{plan.full_name}</p>
                         <p className="mt-0.5 text-xs text-nova-muted">
                           {plan.status === "awaiting_ai"
-                            ? "Nova hasn't drafted this one — write it by hand"
+                            ? "Nova is still analysing this one"
                             : GOAL_LABEL[plan.goal] ?? plan.goal}{" "}
                           · Submitted {timeAgo(plan.created_at)}
                         </p>

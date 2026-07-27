@@ -23,6 +23,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { CATALOG_IDS, catalogEntry } from "./catalog.ts";
+import { pickPreset } from "./presets.ts";
 import {
   buildUserPrompt,
   MAX_ALTERNATES,
@@ -134,10 +135,24 @@ Deno.serve(async (req) => {
   // ---------------------------------------------------------------------
   // Generate
   // ---------------------------------------------------------------------
+  // The gym can turn the API off from the admin panel — no redeploy, and it
+  // takes effect on the very next assessment.
+  const { data: modeRow } = await admin
+    .from("app_settings")
+    .select("value")
+    .eq("key", "generation_mode")
+    .maybeSingle();
+
+  const mode = modeRow?.value ?? "ai";
+
+  if (mode === "static") {
+    return json(await useStaticPlan(admin, plan, "Static mode is on in the admin panel"));
+  }
+
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
   if (!apiKey) {
-    const fell = await fallbackToTemplate(admin, plan, "ANTHROPIC_API_KEY is not set");
+    const fell = await useStaticPlan(admin, plan, "ANTHROPIC_API_KEY is not set");
     return json(fell);
   }
 
@@ -162,7 +177,7 @@ Deno.serve(async (req) => {
     return json({ status: "pending", generated_by: "ai", days: days.length });
   } catch (error) {
     console.error("generate-program failed", error);
-    const fell = await fallbackToTemplate(
+    const fell = await useStaticPlan(
       admin,
       plan,
       error instanceof Error ? error.message : String(error),
@@ -255,12 +270,15 @@ function toPlanDays(program: GeneratedProgram) {
 }
 
 /**
- * When the API is unreachable the coach still gets something to open: the
- * closest admin-owned template for their training days. If there isn't one,
- * the plan stays in 'awaiting_ai' with the reason attached, which is what the
- * coach queue renders as "needs writing by hand".
+ * The no-API path, used both when static mode is switched on in the admin
+ * panel and when a generation attempt fails. Preference order:
+ *
+ *   1. the closest workout template (admin-owned first) — the gym's own work
+ *   2. the closest built-in preset, so this always produces a real programme
+ *
+ * Either way the plan lands in the coach's queue as a draft, never published.
  */
-async function fallbackToTemplate(
+async function useStaticPlan(
   admin: ReturnType<typeof createClient>,
   plan: PlanRow,
   reason: string,
@@ -273,13 +291,14 @@ async function fallbackToTemplate(
 
   const answers = (assessment?.answers ?? {}) as Record<string, unknown>;
   const wanted = Number(answers.days_per_week ?? 3);
+  const atHome = answers.training_location === "home";
 
   const { data: templates } = await admin
     .from("workout_templates")
     .select("id, name, days, days_per_week, owner_role")
     .order("owner_role", { ascending: true }); // 'admin' sorts before 'coach'
 
-  const match = (templates ?? [])
+  const template = (templates ?? [])
     .filter((t) => Array.isArray(t.days) && t.days.length > 0)
     .sort(
       (a, b) =>
@@ -287,10 +306,21 @@ async function fallbackToTemplate(
         Math.abs((b.days_per_week ?? b.days.length) - wanted),
     )[0];
 
+  const preset = template ? null : pickPreset(wanted, atHome);
+  const source = template ?? preset;
+
+  if (!source) {
+    // Can't happen — there is always a preset — but the plan should still be
+    // visible to a coach rather than vanish if it somehow did.
+    await admin
+      .from("plans")
+      .update({ ai_report: { summary: "No programme could be loaded.", error: reason } })
+      .eq("id", plan.id);
+    return { status: "awaiting_ai", generated_by: null, reason };
+  }
+
   const report = {
-    summary: match
-      ? `Nova AI couldn't generate this programme, so the "${match.name}" template was loaded as a starting point. Please review it against the assessment before publishing.`
-      : "Nova AI couldn't generate this programme. The assessment is complete — this one needs writing by hand.",
+    summary: `"${source.name}" was loaded as a starting point — no AI analysis was done. Read the assessment and adjust it to this client before publishing.`,
     red_flags: [],
     considerations: [],
     open_questions: [],
@@ -301,14 +331,18 @@ async function fallbackToTemplate(
 
   await admin
     .from("plans")
-    .update(
-      match
-        ? { days: match.days, ai_report: report, generated_by: "fallback", status: "pending" }
-        : { ai_report: report },
-    )
+    .update({
+      days: source.days,
+      ai_report: report,
+      generated_by: "fallback",
+      status: "pending",
+    })
     .eq("id", plan.id);
 
-  return match
-    ? { status: "pending", generated_by: "fallback", template: match.name, reason }
-    : { status: "awaiting_ai", generated_by: null, reason };
+  return {
+    status: "pending",
+    generated_by: "fallback",
+    source: template ? `template: ${source.name}` : `preset: ${source.name}`,
+    reason,
+  };
 }

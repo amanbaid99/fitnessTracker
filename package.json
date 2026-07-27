@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync:catalog": "node --experimental-strip-types scripts/sync-exercise-catalog.mts"
+    "sync:edge": "node --experimental-strip-types scripts/sync-edge-data.mts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.3",

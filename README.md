@@ -22,14 +22,14 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Setting up a Supabase project
 
 1. **Run the SQL.** In the Supabase SQL editor, run the files in `supabase/` in
-   order: `schema.sql`, then `migration_002` … `migration_020`. The comment at
+   order: `schema.sql`, then `migration_002` … `migration_021`. The comment at
    the top of each explains what it adds. They're idempotent, so re-running one
    is safe.
 
    `migration_018` is the coach-first pipeline (assessments, the plan review
    states, coach profile fields), `migration_019` creates the private
-   `assessment-uploads` storage bucket the equipment photos go into, and
-   `migration_020` fixes the profiles policies so they don't recurse.
+   `assessment-uploads` storage bucket the equipment photos go into, `migration_020` fixes the profiles policies so they don't recurse, and
+   `migration_021` adds the AI/templates toggle the admin panel reads.
 
 2. **Deploy the generator.** With the [Supabase CLI](https://supabase.com/docs/guides/cli):
 
@@ -88,8 +88,9 @@ alternates — and writes `days` + `ai_report` back to the plan as a draft for t
 coach.
 
 The function can't import from `src/`, since only `supabase/functions/` is
-uploaded on deploy. `npm run sync:catalog` regenerates its catalog snapshot from
-`src/lib/exerciseLibrary.ts`; run it whenever an exercise is added or renamed.
+uploaded on deploy. `npm run sync:edge` regenerates its catalog and preset snapshots from
+`src/lib/exerciseLibrary.ts` and `src/lib/planPresets.ts`; run it whenever an
+exercise or a preset changes.
 
 ## Deploying
 

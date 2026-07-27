@@ -25,10 +25,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { StatTile } from "@/components/admin/StatTile";
-import { AccountCreator, type StaffProfile } from "@/components/admin/AccountCreator";
+import {
+  AccountCreator,
+  type StaffProfile,
+} from "@/components/admin/AccountCreator";
 import { CoachRow } from "@/components/admin/CoachRow";
 import { AccountEditor } from "@/components/admin/AccountEditor";
-import { TemplateWorkshop, type WorkoutTemplate } from "@/components/plan/TemplateWorkshop";
+import {
+  TemplateWorkshop,
+  type WorkoutTemplate,
+} from "@/components/plan/TemplateWorkshop";
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";
@@ -61,7 +67,13 @@ const STATUS_LABEL: Record<string, string> = {
   changes_requested: "Changes requested",
 };
 
-type Section = "overview" | "members" | "coaches" | "assignments" | "plans" | "templates";
+type Section =
+  | "overview"
+  | "members"
+  | "coaches"
+  | "assignments"
+  | "plans"
+  | "templates";
 
 const SECTIONS: { id: Section; label: string; icon: typeof Users }[] = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
@@ -96,6 +108,9 @@ function Avatar({ name }: { name: string }) {
   );
 }
 
+/** How a new client's first programme gets drafted. */
+type GenerationMode = "ai" | "static";
+
 function SectionCard({
   title,
   description,
@@ -112,7 +127,9 @@ function SectionCard({
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-nova-border/70 px-4 py-3.5">
         <div>
           <h2 className="text-sm font-semibold text-nova-text">{title}</h2>
-          {description && <p className="mt-0.5 text-xs text-nova-muted">{description}</p>}
+          {description && (
+            <p className="mt-0.5 text-xs text-nova-muted">{description}</p>
+          )}
         </div>
         {action}
       </div>
@@ -148,8 +165,11 @@ export default function AdminPage() {
   const [previousPassword, setPreviousPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
-  const [passwordChangeSubmitting, setPasswordChangeSubmitting] = useState(false);
+  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(
+    null,
+  );
+  const [passwordChangeSubmitting, setPasswordChangeSubmitting] =
+    useState(false);
 
   // Console data.
   const [coaches, setCoaches] = useState<StaffProfile[]>([]);
@@ -162,8 +182,13 @@ export default function AdminPage() {
   const [showMemberForm, setShowMemberForm] = useState(false);
   const [showCoachForm, setShowCoachForm] = useState(false);
   const [memberQuery, setMemberQuery] = useState("");
-  const [memberFilter, setMemberFilter] = useState<"all" | "unassigned" | "removed">("all");
-  const [planFilter, setPlanFilter] = useState<"pending" | "approved" | "all">("pending");
+  const [memberFilter, setMemberFilter] = useState<
+    "all" | "unassigned" | "removed"
+  >("all");
+  const [planFilter, setPlanFilter] = useState<"pending" | "approved" | "all">(
+    "pending",
+  );
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("ai");
   const [selectedForAssign, setSelectedForAssign] = useState<string[]>([]);
   const [bulkCoachId, setBulkCoachId] = useState("");
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
@@ -181,17 +206,37 @@ export default function AdminPage() {
   }, [isAdmin]);
 
   async function refreshLists() {
-    const [{ data: coachRows }, { data: clientRows }, { data: planRows }, { data: templateRows }] =
-      await Promise.all([
-        supabase.rpc("admin_list_staff", { p_role: "coach" }),
-        supabase.rpc("admin_list_staff", { p_role: "client" }),
-        supabase.rpc("admin_list_plans"),
-        supabase.rpc("admin_list_templates"),
-      ]);
+    const [
+      { data: coachRows },
+      { data: clientRows },
+      { data: planRows },
+      { data: templateRows },
+      { data: mode },
+    ] = await Promise.all([
+      supabase.rpc("admin_list_staff", { p_role: "coach" }),
+      supabase.rpc("admin_list_staff", { p_role: "client" }),
+      supabase.rpc("admin_list_plans"),
+      supabase.rpc("admin_list_templates"),
+      supabase.rpc("admin_get_setting", { p_key: "generation_mode" }),
+    ]);
     setCoaches((coachRows as StaffProfile[]) ?? []);
     setClients((clientRows as StaffProfile[]) ?? []);
     setPlans((planRows as PlanRow[]) ?? []);
     setTemplates((templateRows as WorkoutTemplate[]) ?? []);
+    setGenerationMode(mode === "static" ? "static" : "ai");
+  }
+
+  async function handleGenerationMode(next: GenerationMode) {
+    const previous = generationMode;
+    setGenerationMode(next); // optimistic — the switch should feel instant
+    const { error } = await supabase.rpc("admin_set_setting", {
+      p_key: "generation_mode",
+      p_value: next,
+    });
+    if (error) {
+      setGenerationMode(previous);
+      setPanelError(error.message);
+    }
   }
 
   function handleAdminSubmit(e: FormEvent) {
@@ -216,7 +261,10 @@ export default function AdminPage() {
     });
 
     if (error || !data.session) {
-      setCoachError(error?.message ?? "Could not sign in. Check your details and try again.");
+      setCoachError(
+        error?.message ??
+          "Could not sign in. Check your details and try again.",
+      );
       setCoachSubmitting(false);
       return;
     }
@@ -229,7 +277,9 @@ export default function AdminPage() {
 
     if (!profile || profile.role !== "coach" || profile.active === false) {
       await supabase.auth.signOut();
-      setCoachError("These aren't valid coach credentials, or the account has been removed.");
+      setCoachError(
+        "These aren't valid coach credentials, or the account has been removed.",
+      );
       setCoachSubmitting(false);
       return;
     }
@@ -258,13 +308,17 @@ export default function AdminPage() {
       return;
     }
     if (newPassword === previousPassword) {
-      setPasswordChangeError("New password must be different from your current password.");
+      setPasswordChangeError(
+        "New password must be different from your current password.",
+      );
       return;
     }
 
     setPasswordChangeSubmitting(true);
 
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
     if (updateError) {
       setPasswordChangeError(updateError.message);
       setPasswordChangeSubmitting(false);
@@ -368,7 +422,10 @@ export default function AdminPage() {
 
   async function toggleActive(id: string, active: boolean) {
     setPanelError(null);
-    const { error } = await supabase.rpc("admin_set_active", { p_id: id, p_active: !active });
+    const { error } = await supabase.rpc("admin_set_active", {
+      p_id: id,
+      p_active: !active,
+    });
     if (error) {
       setPanelError(error.message);
       return;
@@ -397,7 +454,9 @@ export default function AdminPage() {
 
   const activeCoaches = coaches.filter((coach) => coach.active);
   const activeClients = clients.filter((client) => client.active);
-  const unassigned = activeClients.filter((client) => !client.assigned_coach_id);
+  const unassigned = activeClients.filter(
+    (client) => !client.assigned_coach_id,
+  );
   // A plan still waiting on generation needs a human just as much as one the
   // AI drafted, so both sit under "pending".
   const pendingPlans = plans.filter(
@@ -409,10 +468,14 @@ export default function AdminPage() {
     return clients
       .filter((client) => {
         if (memberFilter === "removed") return !client.active;
-        if (memberFilter === "unassigned") return client.active && !client.assigned_coach_id;
+        if (memberFilter === "unassigned")
+          return client.active && !client.assigned_coach_id;
         return client.active;
       })
-      .filter((client) => !query || (client.full_name || "").toLowerCase().includes(query));
+      .filter(
+        (client) =>
+          !query || (client.full_name || "").toLowerCase().includes(query),
+      );
   }, [clients, memberFilter, memberQuery]);
 
   const visiblePlans = useMemo(
@@ -436,15 +499,22 @@ export default function AdminPage() {
   if (forcePasswordChange) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">Nova Staff</span>
-        <h1 className="text-2xl font-semibold text-nova-text">Set a new password</h1>
+        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
+          Nova Staff
+        </span>
+        <h1 className="text-2xl font-semibold text-nova-text">
+          Set a new password
+        </h1>
         <p className="mt-2 text-sm text-nova-muted">
-          This is your first time logging in — choose a new password before continuing.
+          This is your first time logging in — choose a new password before
+          continuing.
         </p>
 
         <form onSubmit={handleSetNewPassword} className="mt-8 space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">New password</span>
+            <span className="mb-1.5 block text-sm font-medium text-nova-text">
+              New password
+            </span>
             <Input
               type="password"
               value={newPassword}
@@ -463,8 +533,14 @@ export default function AdminPage() {
               required
             />
           </label>
-          {passwordChangeError && <p className="text-sm text-nova-danger">{passwordChangeError}</p>}
-          <Button type="submit" className="w-full" disabled={passwordChangeSubmitting}>
+          {passwordChangeError && (
+            <p className="text-sm text-nova-danger">{passwordChangeError}</p>
+          )}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={passwordChangeSubmitting}
+          >
             {passwordChangeSubmitting ? "Saving…" : "Set password & continue"}
           </Button>
         </form>
@@ -475,7 +551,9 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">Nova Staff</span>
+        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
+          Nova Staff
+        </span>
 
         <Tabs defaultValue="admin">
           <TabsList>
@@ -486,7 +564,9 @@ export default function AdminPage() {
           <TabsContent value="admin" className="mt-6">
             <form onSubmit={handleAdminSubmit} className="space-y-4">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">ID</span>
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                  ID
+                </span>
                 <Input
                   value={adminUsername}
                   onChange={(e) => setAdminUsername(e.target.value)}
@@ -495,7 +575,9 @@ export default function AdminPage() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">Password</span>
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                  Password
+                </span>
                 <Input
                   type="password"
                   value={adminPassword}
@@ -503,7 +585,9 @@ export default function AdminPage() {
                   required
                 />
               </label>
-              {adminError && <p className="text-sm text-nova-danger">{adminError}</p>}
+              {adminError && (
+                <p className="text-sm text-nova-danger">{adminError}</p>
+              )}
               <Button type="submit" className="w-full">
                 Log in as admin
               </Button>
@@ -513,7 +597,9 @@ export default function AdminPage() {
           <TabsContent value="coach" className="mt-6">
             <form onSubmit={handleCoachSubmit} className="space-y-4">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">Coach ID</span>
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                  Coach ID
+                </span>
                 <Input
                   value={coachEmail}
                   onChange={(e) => setCoachEmail(e.target.value)}
@@ -522,7 +608,9 @@ export default function AdminPage() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">Password</span>
+                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                  Password
+                </span>
                 <Input
                   type="password"
                   value={coachPassword}
@@ -530,8 +618,14 @@ export default function AdminPage() {
                   required
                 />
               </label>
-              {coachError && <p className="text-sm text-nova-danger">{coachError}</p>}
-              <Button type="submit" className="w-full" disabled={coachSubmitting}>
+              {coachError && (
+                <p className="text-sm text-nova-danger">{coachError}</p>
+              )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={coachSubmitting}
+              >
                 {coachSubmitting ? "Logging in…" : "Log in as coach"}
               </Button>
             </form>
@@ -550,8 +644,9 @@ export default function AdminPage() {
               Nova Admin
             </p>
             <p className="truncate text-xs text-nova-muted">
-              {activeClients.length} member{activeClients.length === 1 ? "" : "s"} ·{" "}
-              {activeCoaches.length} coach{activeCoaches.length === 1 ? "" : "es"}
+              {activeClients.length} member
+              {activeClients.length === 1 ? "" : "s"} · {activeCoaches.length}{" "}
+              coach{activeCoaches.length === 1 ? "" : "es"}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -670,13 +765,16 @@ export default function AdminPage() {
                             <p className="truncate text-sm font-medium text-nova-text">
                               {client.full_name || "(no name)"}
                             </p>
-                            <p className="text-xs text-nova-muted">Needs a coach</p>
+                            <p className="text-xs text-nova-muted">
+                              Needs a coach
+                            </p>
                           </div>
                         </div>
                         <select
                           defaultValue=""
                           onChange={(e) =>
-                            e.target.value && handleAssignCoach(client.id, e.target.value)
+                            e.target.value &&
+                            handleAssignCoach(client.id, e.target.value)
                           }
                           className="h-9 shrink-0 rounded-md border border-nova-accent bg-nova-surface px-2 text-sm font-medium text-nova-accent outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
                         >
@@ -769,7 +867,11 @@ export default function AdminPage() {
                     variant={showMemberForm ? "outline" : "default"}
                     onClick={() => setShowMemberForm((v) => !v)}
                   >
-                    {showMemberForm ? <X className="size-3.5" /> : <UserPlus className="size-3.5" />}
+                    {showMemberForm ? (
+                      <X className="size-3.5" />
+                    ) : (
+                      <UserPlus className="size-3.5" />
+                    )}
                     {showMemberForm ? "Close" : "Add member"}
                   </Button>
                 }
@@ -796,26 +898,30 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="flex gap-1.5">
-                    {(["all", "unassigned", "removed"] as const).map((filter) => (
-                      <button
-                        key={filter}
-                        type="button"
-                        onClick={() => setMemberFilter(filter)}
-                        className={cn(
-                          "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                          memberFilter === filter
-                            ? "bg-nova-accent text-white"
-                            : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
-                        )}
-                      >
-                        {filter}
-                      </button>
-                    ))}
+                    {(["all", "unassigned", "removed"] as const).map(
+                      (filter) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          onClick={() => setMemberFilter(filter)}
+                          className={cn(
+                            "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                            memberFilter === filter
+                              ? "bg-nova-accent text-white"
+                              : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                          )}
+                        >
+                          {filter}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
 
                 <div className="mt-3 space-y-2">
-                  {visibleMembers.length === 0 && <EmptyState>No members here yet.</EmptyState>}
+                  {visibleMembers.length === 0 && (
+                    <EmptyState>No members here yet.</EmptyState>
+                  )}
 
                   {visibleMembers.map((client) => {
                     const plan = planByClient.get(client.id);
@@ -829,90 +935,100 @@ export default function AdminPage() {
                         key={client.id}
                         className="rounded-xl border border-nova-border/70 p-3"
                       >
-                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <Avatar name={client.full_name} />
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-nova-text">
-                              {client.full_name || "(no name)"}
-                            </p>
-                            <p className="flex items-center gap-1.5 overflow-hidden text-xs text-nova-muted [&>span]:whitespace-nowrap">
-                              {plan ? (
-                                <span
-                                  className={cn(
-                                    "rounded-full px-1.5 py-0.5 font-medium",
-                                    STATUS_STYLE[plan.status] ?? "bg-nova-bg",
-                                  )}
-                                >
-                                  {STATUS_LABEL[plan.status] ?? plan.status}
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <Avatar name={client.full_name} />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-nova-text">
+                                {client.full_name || "(no name)"}
+                              </p>
+                              <p className="flex items-center gap-1.5 overflow-hidden text-xs text-nova-muted [&>span]:whitespace-nowrap">
+                                {plan ? (
+                                  <span
+                                    className={cn(
+                                      "rounded-full px-1.5 py-0.5 font-medium",
+                                      STATUS_STYLE[plan.status] ?? "bg-nova-bg",
+                                    )}
+                                  >
+                                    {STATUS_LABEL[plan.status] ?? plan.status}
+                                  </span>
+                                ) : (
+                                  <span className="rounded-full bg-nova-bg px-1.5 py-0.5">
+                                    No plan yet
+                                  </span>
+                                )}
+                                <span>
+                                  ·{" "}
+                                  {assignedCoach
+                                    ? `Coach ${assignedCoach.full_name || "(no name)"}`
+                                    : "No coach"}
                                 </span>
-                              ) : (
-                                <span className="rounded-full bg-nova-bg px-1.5 py-0.5">
-                                  No plan yet
-                                </span>
-                              )}
-                              <span>
-                                ·{" "}
-                                {assignedCoach
-                                  ? `Coach ${assignedCoach.full_name || "(no name)"}`
-                                  : "No coach"}
-                              </span>
-                              {!client.active && <span>· Removed</span>}
-                            </p>
+                                {!client.active && <span>· Removed</span>}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                          <select
-                            value={client.assigned_coach_id ?? ""}
-                            onChange={(e) => handleAssignCoach(client.id, e.target.value)}
-                            aria-label={`Coach for ${client.full_name || "member"}`}
-                            className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
-                          >
-                            <option value="">— No coach —</option>
-                            {activeCoaches.map((coach) => (
-                              <option key={coach.id} value={coach.id}>
-                                {assignedCoach?.id === coach.id ? "Coach: " : "Move to: "}
-                                {coach.full_name || coach.id}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                            <select
+                              value={client.assigned_coach_id ?? ""}
+                              onChange={(e) =>
+                                handleAssignCoach(client.id, e.target.value)
+                              }
+                              aria-label={`Coach for ${client.full_name || "member"}`}
+                              className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                            >
+                              <option value="">— No coach —</option>
+                              {activeCoaches.map((coach) => (
+                                <option key={coach.id} value={coach.id}>
+                                  {assignedCoach?.id === coach.id
+                                    ? "Coach: "
+                                    : "Move to: "}
+                                  {coach.full_name || coach.id}
+                                </option>
+                              ))}
+                            </select>
 
-                          {client.assigned_coach_id && (
+                            {client.assigned_coach_id && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAssignCoach(client.id, "")}
+                              >
+                                Unassign
+                              </Button>
+                            )}
+
+                            {plan && (
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/review?id=${plan.id}`}>
+                                  {plan.status === "pending"
+                                    ? "Review"
+                                    : "Edit plan"}
+                                </Link>
+                              </Button>
+                            )}
+
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleAssignCoach(client.id, "")}
+                              onClick={() =>
+                                setEditingMemberId(editing ? null : client.id)
+                              }
                             >
-                              Unassign
+                              Edit
                             </Button>
-                          )}
 
-                          {plan && (
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`/admin/review?id=${plan.id}`}>
-                                {plan.status === "pending" ? "Review" : "Edit plan"}
-                              </Link>
+                            <Button
+                              variant={client.active ? "ghost" : "default"}
+                              size="sm"
+                              onClick={() =>
+                                toggleActive(client.id, client.active)
+                              }
+                            >
+                              {client.active ? "Remove" : "Restore"}
                             </Button>
-                          )}
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingMemberId(editing ? null : client.id)}
-                          >
-                            Edit
-                          </Button>
-
-                          <Button
-                            variant={client.active ? "ghost" : "default"}
-                            size="sm"
-                            onClick={() => toggleActive(client.id, client.active)}
-                          >
-                            {client.active ? "Remove" : "Restore"}
-                          </Button>
+                          </div>
                         </div>
-                       </div>
 
                         {editing && (
                           <div className="mt-3 border-t border-nova-border/70 pt-3">
@@ -941,19 +1057,28 @@ export default function AdminPage() {
                   variant={showCoachForm ? "outline" : "default"}
                   onClick={() => setShowCoachForm((v) => !v)}
                 >
-                  {showCoachForm ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
+                  {showCoachForm ? (
+                    <X className="size-3.5" />
+                  ) : (
+                    <Plus className="size-3.5" />
+                  )}
                   {showCoachForm ? "Close" : "Add coach"}
                 </Button>
               }
             >
               {showCoachForm && (
                 <div className="mb-4 rounded-xl border border-nova-border/70 bg-nova-bg p-4">
-                  <AccountCreator role="coach" onCreated={() => refreshLists()} />
+                  <AccountCreator
+                    role="coach"
+                    onCreated={() => refreshLists()}
+                  />
                 </div>
               )}
 
               <div className="space-y-2">
-                {coaches.length === 0 && <EmptyState>No coaches yet.</EmptyState>}
+                {coaches.length === 0 && (
+                  <EmptyState>No coaches yet.</EmptyState>
+                )}
 
                 {coaches.map((coach) => (
                   <CoachRow
@@ -961,7 +1086,9 @@ export default function AdminPage() {
                     coach={coach}
                     clientCount={
                       clients.filter(
-                        (client) => client.assigned_coach_id === coach.id && client.active,
+                        (client) =>
+                          client.assigned_coach_id === coach.id &&
+                          client.active,
                       ).length
                     }
                     onChanged={refreshLists}
@@ -1038,7 +1165,9 @@ export default function AdminPage() {
                       </select>
                       <Button
                         size="sm"
-                        disabled={!bulkCoachId || selectedForAssign.length === 0}
+                        disabled={
+                          !bulkCoachId || selectedForAssign.length === 0
+                        }
                         onClick={handleBulkAssign}
                       >
                         Assign
@@ -1048,14 +1177,21 @@ export default function AdminPage() {
                 )}
               </SectionCard>
 
-              <SectionCard title="Coach rosters" description="Who's training with whom.">
+              <SectionCard
+                title="Coach rosters"
+                description="Who's training with whom."
+              >
                 {activeCoaches.length === 0 ? (
-                  <EmptyState>Add a coach first, then you can allocate members.</EmptyState>
+                  <EmptyState>
+                    Add a coach first, then you can allocate members.
+                  </EmptyState>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {activeCoaches.map((coach) => {
                       const roster = clients.filter(
-                        (client) => client.assigned_coach_id === coach.id && client.active,
+                        (client) =>
+                          client.assigned_coach_id === coach.id &&
+                          client.active,
                       );
                       return (
                         <div
@@ -1069,14 +1205,17 @@ export default function AdminPage() {
                                 {coach.full_name || "(no name)"}
                               </p>
                               <p className="text-xs text-nova-muted">
-                                {roster.length} member{roster.length === 1 ? "" : "s"}
+                                {roster.length} member
+                                {roster.length === 1 ? "" : "s"}
                               </p>
                             </div>
                           </div>
 
                           <ul className="mt-2.5 space-y-1">
                             {roster.length === 0 && (
-                              <li className="text-xs text-nova-muted">No members yet.</li>
+                              <li className="text-xs text-nova-muted">
+                                No members yet.
+                              </li>
                             )}
                             {roster.map((client) => (
                               <li
@@ -1092,7 +1231,10 @@ export default function AdminPage() {
                                     aria-label={`Move ${client.full_name || "member"} to another coach`}
                                     onChange={(e) =>
                                       e.target.value &&
-                                      handleAssignCoach(client.id, e.target.value)
+                                      handleAssignCoach(
+                                        client.id,
+                                        e.target.value,
+                                      )
                                     }
                                     className="h-7 shrink-0 rounded-md border border-nova-border bg-nova-surface px-1.5 text-xs text-nova-muted outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
                                   >
@@ -1108,7 +1250,9 @@ export default function AdminPage() {
                                 )}
                                 <button
                                   type="button"
-                                  onClick={() => handleAssignCoach(client.id, "")}
+                                  onClick={() =>
+                                    handleAssignCoach(client.id, "")
+                                  }
                                   className="shrink-0 text-xs font-medium text-nova-muted hover:text-nova-danger"
                                 >
                                   Unassign
@@ -1135,70 +1279,134 @@ export default function AdminPage() {
           )}
 
           {section === "plans" && (
-            <SectionCard
-              title="Plans"
-              description="Review what a coach built, or edit a plan yourself."
-              action={
-                <div className="flex gap-1.5">
-                  {(["pending", "approved", "all"] as const).map((filter) => (
-                    <button
-                      key={filter}
-                      type="button"
-                      onClick={() => setPlanFilter(filter)}
-                      className={cn(
-                        "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
-                        planFilter === filter
-                          ? "bg-nova-accent text-white"
-                          : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
-                      )}
-                    >
-                      {filter}
-                    </button>
-                  ))}
-                </div>
-              }
-            >
-              <div className="space-y-2">
-                {visiblePlans.length === 0 && <EmptyState>Nothing here right now.</EmptyState>}
-
-                {visiblePlans.map((plan) => {
-                  const coach = coachById.get(
-                    clients.find((c) => c.id === plan.client_id)?.assigned_coach_id ?? "",
-                  );
-                  return (
-                    <Link
-                      key={plan.id}
-                      href={`/admin/review?id=${plan.id}`}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-nova-border/70 p-3 transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <Avatar name={plan.full_name} />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-nova-text">
-                            {plan.full_name}
-                          </p>
-                          <p className="truncate text-xs text-nova-muted">
-                            {GOAL_LABEL[plan.goal] ?? plan.goal} · {timeAgo(plan.created_at)}
-                            {coach ? ` · Coach ${coach.full_name}` : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span
-                          className={cn(
-                            "hidden rounded-full px-2 py-0.5 text-xs font-medium sm:inline",
-                            STATUS_STYLE[plan.status] ?? "bg-nova-bg text-nova-muted",
+            <div className="space-y-4">
+              <SectionCard
+                title="How plans get drafted"
+                description="Applies to every new assessment. Coaches still review and publish either way."
+              >
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {[
+                    {
+                      id: "ai" as const,
+                      title: "Nova AI",
+                      blurb:
+                        "Reads the assessment and writes a programme plus a report explaining it.",
+                    },
+                    {
+                      id: "static" as const,
+                      title: "Templates only",
+                      blurb:
+                        "No API calls. Loads the closest template, or a built-in split if there are none.",
+                    },
+                  ].map((option) => {
+                    const active = generationMode === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => handleGenerationMode(option.id)}
+                        aria-pressed={active}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-colors",
+                          active
+                            ? "border-nova-accent bg-nova-accent/[0.05] ring-1 ring-nova-accent"
+                            : "border-nova-border/70 hover:border-nova-accent/40",
+                        )}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              active ? "text-nova-accent" : "text-nova-text",
+                            )}
+                          >
+                            {option.title}
+                          </span>
+                          {active && (
+                            <span className="rounded-full bg-nova-accent px-2 py-0.5 text-[11px] font-medium text-white">
+                              On
+                            </span>
                           )}
-                        >
-                          {STATUS_LABEL[plan.status] ?? plan.status}
                         </span>
-                        <ArrowRight className="size-4 text-nova-accent" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </SectionCard>
+                        <span className="mt-1 block text-xs text-nova-muted">
+                          {option.blurb}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title="Plans"
+                description="Review what a coach built, or edit a plan yourself."
+                action={
+                  <div className="flex gap-1.5">
+                    {(["pending", "approved", "all"] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => setPlanFilter(filter)}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                          planFilter === filter
+                            ? "bg-nova-accent text-white"
+                            : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                        )}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+                }
+              >
+                <div className="space-y-2">
+                  {visiblePlans.length === 0 && (
+                    <EmptyState>Nothing here right now.</EmptyState>
+                  )}
+
+                  {visiblePlans.map((plan) => {
+                    const coach = coachById.get(
+                      clients.find((c) => c.id === plan.client_id)
+                        ?.assigned_coach_id ?? "",
+                    );
+                    return (
+                      <Link
+                        key={plan.id}
+                        href={`/admin/review?id=${plan.id}`}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-nova-border/70 p-3 transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <Avatar name={plan.full_name} />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-nova-text">
+                              {plan.full_name}
+                            </p>
+                            <p className="truncate text-xs text-nova-muted">
+                              {GOAL_LABEL[plan.goal] ?? plan.goal} ·{" "}
+                              {timeAgo(plan.created_at)}
+                              {coach ? ` · Coach ${coach.full_name}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span
+                            className={cn(
+                              "hidden rounded-full px-2 py-0.5 text-xs font-medium sm:inline",
+                              STATUS_STYLE[plan.status] ??
+                                "bg-nova-bg text-nova-muted",
+                            )}
+                          >
+                            {STATUS_LABEL[plan.status] ?? plan.status}
+                          </span>
+                          <ArrowRight className="size-4 text-nova-accent" />
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </SectionCard>
+            </div>
           )}
         </main>
       </div>

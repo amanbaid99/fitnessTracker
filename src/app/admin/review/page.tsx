@@ -1,11 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Repeat2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PlanEditor } from "@/components/plan/PlanEditor";
+import { PlanProcessing } from "@/components/plan/PlanProcessing";
+import {
+  PlanReportCard,
+  type AiReport,
+} from "@/components/plan/PlanReportCard";
 import { supabase } from "@/lib/supabase";
 import { normalizeDays, type PlanDay } from "@/lib/planTemplates";
 
@@ -28,6 +33,8 @@ interface Plan {
   days: PlanDay[] | null;
   coach_notes: string | null;
   status: string;
+  ai_report: AiReport | null;
+  generated_by: string | null;
 }
 
 interface LogRow {
@@ -94,6 +101,46 @@ function AdminReviewContent() {
     };
   }, [planId, router]);
 
+  /**
+   * The generator still owns a plan in 'awaiting_ai' and overwrites `days`
+   * when it finishes, so poll rather than let an admin edit a draft that's
+   * about to be replaced.
+   */
+  useEffect(() => {
+    if (!plan || plan.status !== "awaiting_ai") return;
+
+    let active = true;
+    const timer = setInterval(async () => {
+      const { data } = await supabase.rpc("admin_list_plans");
+      if (!active) return;
+
+      const row = ((data as Plan[]) ?? []).find((p) => p.id === plan.id);
+      if (row && row.status !== "awaiting_ai") {
+        setPlan(row);
+        setDays(normalizeDays(row.days));
+      }
+    }, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [plan]);
+
+  /**
+   * Escape hatch. There's no Regenerate here — the admin panel has no Supabase
+   * session, so it can't call the edge function. A coach can retry from their
+   * own review screen; from here the way forward is to write it.
+   */
+  const handleWriteByHand = useCallback(async () => {
+    if (!plan) return;
+    const { error } = await supabase.rpc("admin_update_plan_status", {
+      p_id: plan.id,
+      p_status: "pending",
+    });
+    if (!error) setPlan({ ...plan, status: "pending" });
+  }, [plan]);
+
   async function saveDays() {
     if (!plan) return null;
     return supabase.rpc("admin_save_plan", {
@@ -139,22 +186,30 @@ function AdminReviewContent() {
 
   const flaggedConditions = plan.medical_conditions.filter((c) => c !== "none");
   const isPending = plan.status === "pending";
+  // Nothing is editable until the generator has handed the plan over.
+  const processing = plan.status === "awaiting_ai";
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-28 md:max-w-2xl">
       <header className="flex items-center gap-3 px-5 pt-6 md:px-0 md:pt-10">
-        <Button variant="ghost" size="icon" aria-label="Back" onClick={() => router.push("/admin")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Back"
+          onClick={() => router.push("/admin")}
+        >
           <ArrowLeft className="size-5" />
         </Button>
         <h1 className="text-lg font-semibold text-nova-text md:text-xl">
-          {isPending ? "Review plan" : "Edit plan"}
+          {processing ? "Processing" : isPending ? "Review plan" : "Edit plan"}
         </h1>
       </header>
 
       <div className="mx-5 mt-4 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0">
         <p className="font-semibold text-nova-text">{plan.full_name}</p>
         <p className="text-sm text-nova-muted">
-          {plan.age ? `${plan.age} yrs · ` : ""}Goal: {GOAL_LABEL[plan.goal] ?? plan.goal}
+          {plan.age ? `${plan.age} yrs · ` : ""}Goal:{" "}
+          {GOAL_LABEL[plan.goal] ?? plan.goal}
         </p>
         {flaggedConditions.length > 0 && (
           <span className="mt-2 inline-flex items-center rounded-full bg-nova-danger/10 px-2.5 py-1 text-xs font-medium text-nova-danger">
@@ -167,92 +222,122 @@ function AdminReviewContent() {
       </div>
 
       <main className="flex-1 px-5 md:px-0">
-        <div className="mt-6">
-          <h2 className="text-sm font-semibold text-nova-text">Workout</h2>
-          <p className="mt-0.5 text-xs text-nova-muted">
-            Add days, add exercises, and give each one up to three alternates.
-          </p>
-          <div className="mt-3">
-            <PlanEditor
-              days={days}
-              showCoachFields
-              onChange={(next) => {
-                setSaved(false);
-                setDays(next);
-              }}
-            />
-          </div>
-        </div>
-
-        {logs.length > 0 && (
-          <section className="mt-8">
-            <h2 className="text-sm font-semibold text-nova-text">Recent activity</h2>
-            <ul className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface">
-              {logs.map((log, i) => (
-                <li key={`${log.logged_at}-${i}`} className="px-4 py-2.5">
-                  <p className="text-sm text-nova-text">
-                    {log.performed_name}
-                    {log.is_alternate && (
-                      <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-nova-accent/10 px-1.5 py-0.5 text-[11px] font-medium text-nova-accent">
-                        <Repeat2 className="size-3" />
-                        swapped for {log.planned_name}
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-0.5 text-xs text-nova-muted">
-                    {log.sets_completed ?? "?"} × {log.reps ?? "?"}
-                    {log.weight_kg ? ` @ ${log.weight_kg}kg` : ""} ·{" "}
-                    {new Date(log.logged_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        <div className="mt-8">
-          <label className="mb-2 block text-sm font-medium text-nova-text">
-            Coach notes (visible to the client)
-          </label>
-          <Textarea
-            value={coachNotes}
-            onChange={(e) => {
-              setSaved(false);
-              setCoachNotes(e.target.value);
-            }}
-            placeholder="Add notes about this program..."
-            rows={3}
+        {processing ? (
+          <PlanProcessing
+            clientName={plan.full_name}
+            onWriteByHand={handleWriteByHand}
+            error={plan.ai_report?.error ?? null}
           />
-        </div>
-      </main>
-
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center gap-3 border-t border-nova-border bg-nova-bg/95 px-5 py-4 backdrop-blur md:max-w-2xl md:px-0">
-        {isPending ? (
-          <>
-            <Button
-              variant="outline"
-              className="flex-1"
-              disabled={saving}
-              onClick={() => handleDecision("changes_requested")}
-            >
-              Request Changes
-            </Button>
-            <Button className="flex-1" disabled={saving} onClick={() => handleDecision("approved")}>
-              Approve &amp; Send
-            </Button>
-          </>
         ) : (
           <>
-            {saved && <span className="text-sm text-nova-success">Saved</span>}
-            <Button className="ml-auto" disabled={saving} onClick={handleSaveChanges}>
-              {saving ? "Saving…" : "Save changes"}
-            </Button>
+            <PlanReportCard
+              report={plan.ai_report}
+              generatedBy={plan.generated_by}
+            />
+
+            <div className="mt-6">
+              <h2 className="text-sm font-semibold text-nova-text">Workout</h2>
+              <p className="mt-0.5 text-xs text-nova-muted">
+                Add days, add exercises, and give each one up to three
+                alternates.
+              </p>
+              <div className="mt-3">
+                <PlanEditor
+                  days={days}
+                  showCoachFields
+                  onChange={(next) => {
+                    setSaved(false);
+                    setDays(next);
+                  }}
+                />
+              </div>
+            </div>
+
+            {logs.length > 0 && (
+              <section className="mt-8">
+                <h2 className="text-sm font-semibold text-nova-text">
+                  Recent activity
+                </h2>
+                <ul className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface">
+                  {logs.map((log, i) => (
+                    <li key={`${log.logged_at}-${i}`} className="px-4 py-2.5">
+                      <p className="text-sm text-nova-text">
+                        {log.performed_name}
+                        {log.is_alternate && (
+                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-nova-accent/10 px-1.5 py-0.5 text-[11px] font-medium text-nova-accent">
+                            <Repeat2 className="size-3" />
+                            swapped for {log.planned_name}
+                          </span>
+                        )}
+                      </p>
+                      <p className="mt-0.5 text-xs text-nova-muted">
+                        {log.sets_completed ?? "?"} × {log.reps ?? "?"}
+                        {log.weight_kg ? ` @ ${log.weight_kg}kg` : ""} ·{" "}
+                        {new Date(log.logged_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <div className="mt-8">
+              <label className="mb-2 block text-sm font-medium text-nova-text">
+                Coach notes (visible to the client)
+              </label>
+              <Textarea
+                value={coachNotes}
+                onChange={(e) => {
+                  setSaved(false);
+                  setCoachNotes(e.target.value);
+                }}
+                placeholder="Add notes about this program..."
+                rows={3}
+              />
+            </div>
           </>
         )}
-      </div>
+      </main>
+
+      {!processing && (
+        <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center gap-3 border-t border-nova-border bg-nova-bg/95 px-5 py-4 backdrop-blur md:max-w-2xl md:px-0">
+          {isPending ? (
+            <>
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={saving}
+                onClick={() => handleDecision("changes_requested")}
+              >
+                Request Changes
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={saving}
+                onClick={() => handleDecision("approved")}
+              >
+                Approve &amp; Send
+              </Button>
+            </>
+          ) : (
+            <>
+              {saved && (
+                <span className="text-sm text-nova-success">Saved</span>
+              )}
+              <Button
+                className="ml-auto"
+                disabled={saving}
+                onClick={handleSaveChanges}
+              >
+                {saving ? "Saving…" : "Save changes"}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

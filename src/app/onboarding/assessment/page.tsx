@@ -192,12 +192,15 @@ function Field({
 export default function AssessmentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [photos, setPhotos] = useState<string[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [errors, setErrors] = useState<string[]>([]);
+  // Either a list of unanswered questions or something that actually went
+  // wrong — both belong in the same banner above the buttons.
+  const [problem, setProblem] = useState<{ title: string; items: string[] } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -219,7 +222,7 @@ export default function AssessmentPage() {
 
       // Resume the draft if there is one; a submitted assessment means the
       // client is past this stage entirely.
-      const { data: existing } = await supabase
+      const { data: existing, error: readError } = await supabase
         .from("assessments")
         .select("id, answers, current_step, status, equipment_photos")
         .eq("client_id", userId)
@@ -228,6 +231,12 @@ export default function AssessmentPage() {
         .maybeSingle();
 
       if (!active) return;
+
+      if (readError) {
+        setLoadError(readError.message);
+        setLoading(false);
+        return;
+      }
 
       if (existing?.status && existing.status !== "draft") {
         router.replace("/onboarding/review");
@@ -251,14 +260,24 @@ export default function AssessmentPage() {
           email: sessionData.session.user.email ?? "",
         };
 
-        const { data: created } = await supabase
+        const { data: created, error: createError } = await supabase
           .from("assessments")
           .insert({ client_id: userId, answers: seeded })
           .select("id")
           .single();
 
         if (!active) return;
-        setAssessmentId(created?.id ?? null);
+
+        // Without a row there is nothing to autosave into and nothing to
+        // submit, so fail loudly here rather than handing over a form that
+        // quietly throws every answer away.
+        if (createError || !created) {
+          setLoadError(createError?.message ?? "Your assessment couldn't be created.");
+          setLoading(false);
+          return;
+        }
+
+        setAssessmentId(created.id);
         setAnswers(seeded);
       }
 
@@ -296,7 +315,7 @@ export default function AssessmentPage() {
   );
 
   function setAnswer(fieldId: string, value: string | string[]) {
-    setErrors([]);
+    setProblem(null);
     setAnswers((prev) => {
       const next = { ...prev, [fieldId]: value };
       scheduleSave(next, stepIndex);
@@ -336,7 +355,7 @@ export default function AssessmentPage() {
 
   function goToStep(next: number) {
     setStepIndex(next);
-    setErrors([]);
+    setProblem(null);
     scheduleSave(answers, next);
     window.scrollTo({ top: 0 });
   }
@@ -344,19 +363,35 @@ export default function AssessmentPage() {
   function handleNext() {
     const missing = missingRequired(step, answers);
     if (missing.length > 0) {
-      setErrors(missing.map((field) => field.label));
+      setProblem({ title: "Still needed:", items: missing.map((field) => field.label) });
       return;
     }
     if (stepIndex < ASSESSMENT_STEPS.length - 1) goToStep(stepIndex + 1);
   }
 
   async function handleSubmit() {
-    const missing = ASSESSMENT_STEPS.flatMap((s) => missingRequired(s, answers));
-    if (missing.length > 0) {
-      setErrors(missing.map((field) => field.label));
+    // A required answer missing three steps back can't be fixed from here, so
+    // jump to the step that's actually incomplete and name the questions.
+    const incompleteStep = ASSESSMENT_STEPS.findIndex(
+      (s) => missingRequired(s, answers).length > 0,
+    );
+    if (incompleteStep !== -1) {
+      const missing = missingRequired(ASSESSMENT_STEPS[incompleteStep], answers);
+      goToStep(incompleteStep);
+      setProblem({
+        title: `Still needed on "${ASSESSMENT_STEPS[incompleteStep].title}":`,
+        items: missing.map((field) => field.label),
+      });
       return;
     }
-    if (!assessmentId) return;
+
+    if (!assessmentId) {
+      setProblem({
+        title: "This assessment isn't saved:",
+        items: ["Reload the page and try again — nothing you typed was stored."],
+      });
+      return;
+    }
 
     setSubmitting(true);
 
@@ -373,7 +408,7 @@ export default function AssessmentPage() {
 
     if (error) {
       setSubmitting(false);
-      setErrors([error.message]);
+      setProblem({ title: "Couldn't submit:", items: [error.message] });
       return;
     }
 
@@ -391,6 +426,24 @@ export default function AssessmentPage() {
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <p className="text-sm text-nova-muted">Loading your assessment…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 md:max-w-lg">
+        <h1 className="text-xl font-semibold text-nova-text">We couldn&apos;t open your assessment</h1>
+        <p className="mt-2 text-sm text-nova-muted">
+          Nothing you type would be saved, so we&apos;ve stopped here rather than let you fill it
+          in twice. Try again in a moment — if it keeps happening, send your coach this:
+        </p>
+        <p className="mt-3 rounded-xl bg-nova-bg px-3 py-2.5 font-mono text-xs break-words text-nova-danger">
+          {loadError}
+        </p>
+        <Button className="mt-5" onClick={() => window.location.reload()}>
+          Try again
+        </Button>
       </div>
     );
   }
@@ -511,12 +564,10 @@ export default function AssessmentPage() {
         )}
       </div>
 
-      {errors.length > 0 && (
+      {problem && (
         <div className="mt-5 rounded-xl border border-nova-danger/30 bg-nova-danger/[0.05] px-3 py-2.5">
-          <p className="text-sm font-medium text-nova-danger">
-            {errors.length === 1 ? "Still needed:" : "Still needed:"}
-          </p>
-          <p className="mt-0.5 text-xs text-nova-danger">{errors.join(" · ")}</p>
+          <p className="text-sm font-medium text-nova-danger">{problem.title}</p>
+          <p className="mt-0.5 text-xs text-nova-danger">{problem.items.join(" · ")}</p>
         </div>
       )}
 

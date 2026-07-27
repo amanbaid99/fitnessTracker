@@ -54,7 +54,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/onboarding/details");
+    router.push("/onboarding/assessment");
   }
 
   return (
@@ -65,7 +65,7 @@ export default function RegisterPage() {
 
       <h1 className="text-2xl font-semibold text-nova-text">Create your account</h1>
       <p className="mt-2 text-sm text-nova-muted">
-        Takes a minute. You&apos;ll pick a training plan on the next screen.
+        Then a short assessment, and your coach builds your programme around it.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">

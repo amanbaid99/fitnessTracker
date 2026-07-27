@@ -28,25 +28,21 @@ export default function OnboardingPage() {
 
       const userId = sessionData.session.user.id;
 
-      const [{ data: profile }, { data: plan }] = await Promise.all([
-        supabase.from("profiles").select("goal").eq("id", userId).single(),
-        supabase
-          .from("plans")
-          .select("status")
-          .eq("client_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
+      const { data: plan } = await supabase
+        .from("plans")
+        .select("status")
+        .eq("client_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (!active) return;
 
-      if (plan) {
-        router.replace(plan.status === "approved" ? "/dashboard" : "/onboarding/review");
-        return;
-      }
-
-      router.replace(profile?.goal ? "/onboarding/plan" : "/onboarding/details");
+      // A published plan means training; anything else is still with the
+      // coach, and no plan at all means the assessment hasn't been sent.
+      router.replace(
+        plan ? (plan.status === "approved" ? "/dashboard" : "/onboarding/review") : "/onboarding/assessment",
+      );
     }
 
     route();

@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, LogOut, Pencil, Plus, Sparkles } from "lucide-react";
+import { CalendarDays, LogOut, Sparkles } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { WarmupCard } from "@/components/client/WarmupCard";
 import { DaySelector } from "@/components/client/DaySelector";
 import { ExerciseCard, type ExerciseLogDraft } from "@/components/client/ExerciseCard";
 import { WeekStrip } from "@/components/client/WeekStrip";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { normalizeDays, type PlanDay, type PlanSource } from "@/lib/planTemplates";
 import {
@@ -42,9 +41,6 @@ interface PlanRow {
   full_name: string;
   status: string;
   days: PlanDay[] | null;
-  custom_days: PlanDay[] | null;
-  custom_days_per_week: number | null;
-  active_plan: PlanSource | null;
   coach_notes: string | null;
   created_at: string;
   approved_at: string | null;
@@ -78,7 +74,6 @@ export default function ClientDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<PlanRow | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [source, setSource] = useState<PlanSource>("coach");
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [completedDates, setCompletedDates] = useState<Set<string>>(new Set());
   const [completedDayKeys, setCompletedDayKeys] = useState<Set<string>>(new Set());
@@ -87,7 +82,6 @@ export default function ClientDashboardPage() {
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLogRow[]>([]);
   const [records, setRecords] = useState<PersonalRecord[]>([]);
   const [marking, setMarking] = useState(false);
-  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -116,7 +110,7 @@ export default function ClientDashboardPage() {
       const { data } = await supabase
         .from("plans")
         .select(
-          "id, full_name, status, days, custom_days, custom_days_per_week, active_plan, coach_notes, created_at, approved_at",
+          "id, full_name, status, days, coach_notes, created_at, approved_at",
         )
         .eq("client_id", sessionData.session.user.id)
         .order("created_at", { ascending: false })
@@ -139,11 +133,6 @@ export default function ClientDashboardPage() {
 
       setUserId(sessionData.session.user.id);
       setPlan(planRow);
-      setSource(
-        planRow.active_plan === "custom" && (planRow.custom_days?.length ?? 0) > 0
-          ? "custom"
-          : "coach",
-      );
 
       const [{ data: logs }, { data: exLogs }, { data: prRows }] = await Promise.all([
         supabase
@@ -202,17 +191,16 @@ export default function ClientDashboardPage() {
     };
   }, [router]);
 
-  const coachDays = useMemo(() => normalizeDays(plan?.days), [plan]);
-  const customDays = useMemo(() => normalizeDays(plan?.custom_days), [plan]);
-  const days = source === "custom" ? customDays : coachDays;
-  const hasCustomPlan = customDays.length > 0;
+  // One programme, written by the coach — clients no longer author plans.
+  const source: PlanSource = "coach";
+  const days = useMemo(() => normalizeDays(plan?.days), [plan]);
 
   // Suggestion follows the rotation — the day after whatever was finished
   // last — so a skipped day never forces the wrong session on you, and
   // picking a different day just moves where the rotation carries on from.
   const historyForSource = useMemo(
-    () => workoutHistory.filter((entry) => entry.source === source),
-    [workoutHistory, source],
+    () => workoutHistory.filter((entry) => entry.source === "coach"),
+    [workoutHistory],
   );
   const suggestedDayId = useMemo(
     () => suggestNextDayId(days, historyForSource),
@@ -283,15 +271,6 @@ export default function ClientDashboardPage() {
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.replace("/");
-  }
-
-  async function handleSwitchSource(next: PlanSource) {
-    if (next === source || !plan) return;
-    setSource(next);
-    setActiveDayId(null);
-    setSwitching(true);
-    await supabase.rpc("set_active_plan", { p_active: next });
-    setSwitching(false);
   }
 
   async function handleLogExercise(plannedName: string, draft: ExerciseLogDraft) {
@@ -436,51 +415,7 @@ export default function ClientDashboardPage() {
         </header>
 
         <main className="px-5 md:px-0">
-          {/* Which program is being followed right now. */}
-          <div className="mt-3 flex items-center gap-2">
-            <div className="flex flex-1 rounded-full bg-nova-surface p-0.5 ring-1 ring-nova-border">
-              <button
-                type="button"
-                onClick={() => handleSwitchSource("coach")}
-                disabled={switching}
-                className={cn(
-                  "flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors md:text-sm",
-                  source === "coach"
-                    ? "bg-nova-accent text-white"
-                    : "text-nova-muted hover:text-nova-text",
-                )}
-              >
-                Coach plan
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSwitchSource("custom")}
-                disabled={switching || !hasCustomPlan}
-                className={cn(
-                  "flex-1 rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 md:text-sm",
-                  source === "custom"
-                    ? "bg-nova-accent text-white"
-                    : "text-nova-muted hover:text-nova-text",
-                )}
-              >
-                My plan
-              </button>
-            </div>
-
-            <Button asChild variant="outline" size="sm" className="shrink-0">
-              <Link
-                href="/dashboard/plan-builder"
-                aria-label={hasCustomPlan ? "Edit my plan" : "Build my own plan"}
-              >
-                {hasCustomPlan ? <Pencil className="size-3.5" /> : <Plus className="size-3.5" />}
-                <span className="hidden sm:inline">
-                  {hasCustomPlan ? "Edit my plan" : "Build my own"}
-                </span>
-              </Link>
-            </Button>
-          </div>
-
-          {plan.coach_notes && source === "coach" && (
+          {plan.coach_notes && (
             <div className="mt-3 rounded-xl border border-nova-accent/25 bg-nova-accent/[0.04] px-3 py-2.5">
               <p className="flex items-center gap-1.5 text-[11px] font-semibold text-nova-accent">
                 <Sparkles className="size-3" />
@@ -494,10 +429,13 @@ export default function ClientDashboardPage() {
             <div className="mt-6 rounded-2xl border border-dashed border-nova-border bg-nova-surface p-8 text-center">
               <CalendarDays className="mx-auto size-6 text-nova-muted" />
               <p className="mt-2 text-sm font-medium text-nova-text">
-                This plan has no training days yet
+                Your coach is still putting this together
               </p>
-              <Button asChild size="sm" className="mt-4">
-                <Link href="/dashboard/plan-builder">Build my own plan</Link>
+              <p className="mt-1 text-xs text-nova-muted">
+                They&apos;ll publish your programme shortly — message them if you need it sooner.
+              </p>
+              <Button asChild size="sm" variant="outline" className="mt-4">
+                <Link href="/dashboard/messages">Message your coach</Link>
               </Button>
             </div>
           ) : (
@@ -521,8 +459,7 @@ export default function ClientDashboardPage() {
 
                   {activeDay.exercises.length === 0 && (
                     <p className="mt-4 rounded-2xl border border-dashed border-nova-border bg-nova-surface px-4 py-6 text-center text-sm text-nova-muted">
-                      This day has no exercises yet — pick another day above, or add some in
-                      your plan builder.
+                      Nothing programmed for this day — pick another day above.
                     </p>
                   )}
 
@@ -572,9 +509,7 @@ export default function ClientDashboardPage() {
                 </div>
                 <div className="px-1 text-center">
                   <p className="text-sm font-semibold text-nova-text">Week {weekNumber(plan)}</p>
-                  <p className="text-[11px] text-nova-muted">
-                    {source === "custom" ? "My plan" : "Coach plan"}
-                  </p>
+                  <p className="text-[11px] text-nova-muted">Programme</p>
                 </div>
                 <div className="px-1 text-center">
                   <p className="text-sm font-semibold text-nova-text">{days.length}-day</p>

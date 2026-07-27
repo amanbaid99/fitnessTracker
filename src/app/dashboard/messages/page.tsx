@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MessageCircle, ShieldCheck } from "lucide-react";
 import { BottomNav } from "@/components/shared/BottomNav";
 import { ChatThread } from "@/components/chat/ChatThread";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
 export default function MessagesPage() {
@@ -102,12 +100,9 @@ export default function MessagesPage() {
               You don&apos;t have a coach yet
             </h2>
             <p className="mt-1.5 max-w-xs text-sm text-nova-muted">
-              Ask for a coach-built plan and you&apos;ll be paired with one — then you can
-              message them here any time.
+              You&apos;ll be paired with a coach once your assessment has been reviewed. They
+              show up here as soon as that happens.
             </p>
-            <Button asChild className="mt-5">
-              <Link href="/onboarding/coach-request">Get a coach</Link>
-            </Button>
           </div>
         )}
       </div>

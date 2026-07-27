@@ -398,7 +398,11 @@ export default function AdminPage() {
   const activeCoaches = coaches.filter((coach) => coach.active);
   const activeClients = clients.filter((client) => client.active);
   const unassigned = activeClients.filter((client) => !client.assigned_coach_id);
-  const pendingPlans = plans.filter((plan) => plan.status === "pending");
+  // A plan still waiting on generation needs a human just as much as one the
+  // AI drafted, so both sit under "pending".
+  const pendingPlans = plans.filter(
+    (plan) => plan.status === "pending" || plan.status === "awaiting_ai",
+  );
 
   const visibleMembers = useMemo(() => {
     const query = memberQuery.trim().toLowerCase();
@@ -412,8 +416,13 @@ export default function AdminPage() {
   }, [clients, memberFilter, memberQuery]);
 
   const visiblePlans = useMemo(
-    () => (planFilter === "all" ? plans : plans.filter((plan) => plan.status === planFilter)),
-    [plans, planFilter],
+    () =>
+      planFilter === "all"
+        ? plans
+        : planFilter === "pending"
+          ? pendingPlans
+          : plans.filter((plan) => plan.status === planFilter),
+    [plans, pendingPlans, planFilter],
   );
 
   if (checkingSession) {

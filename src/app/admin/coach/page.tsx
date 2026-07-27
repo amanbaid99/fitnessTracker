@@ -114,7 +114,11 @@ export default function CoachDashboardPage() {
 
     setCoachId(result.coach);
     setCoachName(result.name?.split(" ")[0] || "Coach");
-    setPending(result.rows.filter((p) => p.status === "pending"));
+    // 'awaiting_ai' belongs in the queue too: if generation failed, that plan
+    // needs writing by hand, and it would otherwise be invisible to everyone.
+    setPending(
+      result.rows.filter((p) => p.status === "pending" || p.status === "awaiting_ai"),
+    );
     setApproved(result.rows.filter((p) => p.status === "approved"));
     setWithoutPlan(result.roster.filter((client) => !clientsWithPlans.has(client.id)));
     setLoading(false);
@@ -210,8 +214,10 @@ export default function CoachDashboardPage() {
                       <div>
                         <p className="text-sm font-medium text-nova-text">{plan.full_name}</p>
                         <p className="mt-0.5 text-xs text-nova-muted">
-                          {GOAL_LABEL[plan.goal] ?? plan.goal} · Submitted{" "}
-                          {timeAgo(plan.created_at)}
+                          {plan.status === "awaiting_ai"
+                            ? "Nova hasn't drafted this one — write it by hand"
+                            : GOAL_LABEL[plan.goal] ?? plan.goal}{" "}
+                          · Submitted {timeAgo(plan.created_at)}
                         </p>
                       </div>
                       <span className="flex items-center gap-1 text-sm font-medium text-nova-accent">

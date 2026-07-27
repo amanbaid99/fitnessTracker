@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Repeat2 } from "lucide-react";
+import { ArrowLeft, Repeat2, Sparkles } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PlanEditor } from "@/components/plan/PlanEditor";
@@ -15,6 +15,18 @@ const GOAL_LABEL: Record<string, string> = {
   "general-fitness": "General fitness",
 };
 
+/** What the generator wrote about this client, for the coach's eyes. */
+interface AiReport {
+  summary?: string;
+  red_flags?: string[];
+  considerations?: string[];
+  open_questions?: string[];
+  weekly_structure?: string;
+  progression?: string;
+  /** Present only when generation fell back — why it did. */
+  error?: string;
+}
+
 interface Plan {
   id: string;
   client_id: string;
@@ -26,6 +38,8 @@ interface Plan {
   days: PlanDay[] | null;
   coach_notes: string | null;
   status: string;
+  ai_report: AiReport | null;
+  generated_by: string | null;
 }
 
 interface LogRow {
@@ -50,6 +64,8 @@ function CoachReviewContent() {
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenError, setRegenError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -68,7 +84,7 @@ function CoachReviewContent() {
       const { data } = await supabase
         .from("plans")
         .select(
-          "id, client_id, full_name, age, goal, medical_conditions, medical_notes, days, coach_notes, status",
+          "id, client_id, full_name, age, goal, medical_conditions, medical_notes, days, coach_notes, status, ai_report, generated_by",
         )
         .eq("id", planId)
         .maybeSingle();
@@ -122,6 +138,48 @@ function CoachReviewContent() {
       .eq("id", plan.id);
   }
 
+  /**
+   * Re-runs the generator over the same assessment. `force` is required
+   * because generation is otherwise idempotent — it refuses to overwrite a
+   * plan that has already left 'awaiting_ai', which is every plan a coach is
+   * looking at here.
+   */
+  async function handleRegenerate() {
+    if (!plan) return;
+    setRegenerating(true);
+    setRegenError(null);
+
+    const { error } = await supabase.functions.invoke("generate-program", {
+      body: { planId: plan.id, force: true },
+    });
+
+    if (error) {
+      setRegenerating(false);
+      setRegenError(error.message);
+      return;
+    }
+
+    const { data } = await supabase
+      .from("plans")
+      .select(
+        "id, client_id, full_name, age, goal, medical_conditions, medical_notes, days, coach_notes, status, ai_report, generated_by",
+      )
+      .eq("id", plan.id)
+      .maybeSingle();
+
+    setRegenerating(false);
+
+    if (data) {
+      const row = data as Plan;
+      setPlan(row);
+      setDays(normalizeDays(row.days));
+      setSaved(false);
+      if (row.generated_by !== "ai") {
+        setRegenError(row.ai_report?.error ?? "Nova couldn't draft this one.");
+      }
+    }
+  }
+
   async function handleSaveChanges() {
     setSaving(true);
     const result = await persist();
@@ -145,6 +203,8 @@ function CoachReviewContent() {
   }
 
   const flaggedConditions = plan.medical_conditions.filter((c) => c !== "none");
+  // The generator's own error is worth showing even before the coach retries.
+  const report = plan.ai_report;
   const isPending = plan.status === "pending";
 
   return (
@@ -179,6 +239,91 @@ function CoachReviewContent() {
       </div>
 
       <main className="flex-1 px-5 md:px-0">
+        <section className="mt-4 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-1.5 text-sm font-semibold text-nova-text">
+                <Sparkles className="size-4 text-nova-accent" />
+                Nova&apos;s read
+              </h2>
+              <p className="mt-0.5 text-xs text-nova-muted">
+                {plan.generated_by === "ai"
+                  ? "A draft for you to edit — the client sees nothing until you publish."
+                  : plan.generated_by === "fallback"
+                    ? "Generation failed, so a template was loaded instead."
+                    : "Nothing drafted yet."}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={regenerating}
+              onClick={handleRegenerate}
+              className="shrink-0"
+            >
+              {regenerating ? "Drafting…" : "Regenerate"}
+            </Button>
+          </div>
+
+          {(regenError ?? report?.error) && (
+            <p className="mt-3 rounded-xl bg-nova-danger/[0.06] px-3 py-2 font-mono text-[11px] break-words text-nova-danger">
+              {regenError ?? report?.error}
+            </p>
+          )}
+
+          {report?.summary && <p className="mt-3 text-sm text-nova-text">{report.summary}</p>}
+
+          {(report?.red_flags?.length ?? 0) > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-nova-danger">Needs your decision</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm text-nova-text">
+                {report!.red_flags!.map((flag) => (
+                  <li key={flag}>{flag}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {(report?.considerations?.length ?? 0) > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-nova-muted">Programmed around</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm text-nova-text">
+                {report!.considerations!.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {(report?.open_questions?.length ?? 0) > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-nova-muted">Worth asking them</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-sm text-nova-text">
+                {report!.open_questions!.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {(report?.weekly_structure || report?.progression) && (
+            <dl className="mt-3 space-y-1.5 border-t border-nova-border/70 pt-3 text-sm">
+              {report.weekly_structure && (
+                <div>
+                  <dt className="text-xs font-semibold text-nova-muted">The week</dt>
+                  <dd className="text-nova-text">{report.weekly_structure}</dd>
+                </div>
+              )}
+              {report.progression && (
+                <div>
+                  <dt className="text-xs font-semibold text-nova-muted">Progression</dt>
+                  <dd className="text-nova-text">{report.progression}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </section>
+
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-nova-text">Workout</h2>
           <p className="mt-0.5 text-xs text-nova-muted">

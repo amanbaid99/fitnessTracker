@@ -28,22 +28,22 @@ export function CoachRow({ coach, clientCount, onChanged, onToggleActive }: Coac
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-nova-border/70">
+    <div className="rounded-xl border border-ft-border/70">
       <div className="flex items-center gap-3 p-3">
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            coach.active ? "bg-nova-accent/10 text-nova-accent" : "bg-nova-bg text-nova-muted",
+            coach.active ? "bg-ft-accent/10 text-ft-accent" : "bg-ft-bg text-ft-muted",
           )}
         >
           {initials(coach.full_name)}
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-nova-text">
+          <p className="truncate text-sm font-medium text-ft-text">
             {coach.full_name || "(no name)"}
           </p>
-          <p className="truncate text-xs text-nova-muted">
+          <p className="truncate text-xs text-ft-muted">
             {clientCount} member{clientCount === 1 ? "" : "s"}
             {coach.email ? ` · ${coach.email}` : ""}
             {coach.active ? "" : " · Removed"}
@@ -57,18 +57,18 @@ export function CoachRow({ coach, clientCount, onChanged, onToggleActive }: Coac
       </div>
 
       {open && (
-        <div className="space-y-3 border-t border-nova-border/70 p-3">
+        <div className="space-y-3 border-t border-ft-border/70 p-3">
           <AccountEditor
             account={coach}
             mode="admin"
             onSaved={onChanged}
           />
 
-          <div className="flex justify-end border-t border-nova-border/70 pt-3">
+          <div className="flex justify-end border-t border-ft-border/70 pt-3">
             <Button
               variant={coach.active ? "ghost" : "default"}
               size="sm"
-              className={cn(coach.active && "text-nova-danger")}
+              className={cn(coach.active && "text-ft-danger")}
               onClick={onToggleActive}
             >
               {coach.active ? "Remove coach" : "Restore coach"}

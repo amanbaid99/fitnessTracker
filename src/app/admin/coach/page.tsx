@@ -167,19 +167,19 @@ export default function CoachDashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-24 md:pb-16">
       <BottomNav variant="coach" />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-5xl">
         <header className="px-5 pt-6 md:px-0 md:pt-10">
-          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Hi, {coachName} 👋</h1>
-          <p className="mt-1 text-sm text-nova-muted">
+          <h1 className="text-xl font-semibold text-ft-text md:text-2xl">Hi, {coachName} 👋</h1>
+          <p className="mt-1 text-sm text-ft-muted">
             {pending.length === 0
               ? "No plans need your review right now"
               : `${pending.length} plan${pending.length === 1 ? "" : "s"} need your review`}
@@ -187,15 +187,15 @@ export default function CoachDashboardPage() {
         </header>
 
         <main className="px-5 md:px-0">
-          {error && <p className="mt-4 text-sm text-nova-danger">{error}</p>}
+          {error && <p className="mt-4 text-sm text-ft-danger">{error}</p>}
 
           <div className="mt-6 lg:grid lg:grid-cols-3 lg:gap-8">
             <div className="lg:col-span-2">
               <section>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-nova-text">Pending Review</h2>
+                  <h2 className="text-sm font-semibold text-ft-text">Pending Review</h2>
                   {pending.length > 0 && (
-                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-nova-warning/15 text-xs font-semibold text-nova-warning">
+                    <span className="inline-flex size-5 items-center justify-center rounded-full bg-ft-warning/15 text-xs font-semibold text-ft-warning">
                       {pending.length}
                     </span>
                   )}
@@ -203,24 +203,24 @@ export default function CoachDashboardPage() {
 
                 <div className="mt-3 space-y-3">
                   {pending.length === 0 && (
-                    <p className="text-sm text-nova-muted">You&apos;re all caught up.</p>
+                    <p className="text-sm text-ft-muted">You&apos;re all caught up.</p>
                   )}
                   {pending.map((plan) => (
                     <Link
                       key={plan.id}
                       href={`/admin/coach/review?id=${plan.id}`}
-                      className="flex items-center justify-between rounded-2xl border-l-4 border-nova-warning bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors hover:bg-nova-accent/[0.03]"
+                      className="flex items-center justify-between rounded-2xl border-l-4 border-ft-warning bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors hover:bg-ft-accent/[0.03]"
                     >
                       <div>
-                        <p className="text-sm font-medium text-nova-text">{plan.full_name}</p>
-                        <p className="mt-0.5 text-xs text-nova-muted">
+                        <p className="text-sm font-medium text-ft-text">{plan.full_name}</p>
+                        <p className="mt-0.5 text-xs text-ft-muted">
                           {plan.status === "awaiting_ai"
-                            ? "Nova is still analysing this one"
+                            ? "Still being analysed"
                             : GOAL_LABEL[plan.goal] ?? plan.goal}{" "}
                           · Submitted {timeAgo(plan.created_at)}
                         </p>
                       </div>
-                      <span className="flex items-center gap-1 text-sm font-medium text-nova-accent">
+                      <span className="flex items-center gap-1 text-sm font-medium text-ft-accent">
                         Review
                         <ChevronRight className="size-4" />
                       </span>
@@ -231,17 +231,17 @@ export default function CoachDashboardPage() {
 
               {withoutPlan.length > 0 && (
                 <section className="mt-8">
-                  <h2 className="text-sm font-semibold text-nova-text">Needs a program</h2>
-                  <p className="mt-0.5 text-xs text-nova-muted">
+                  <h2 className="text-sm font-semibold text-ft-text">Needs a program</h2>
+                  <p className="mt-0.5 text-xs text-ft-muted">
                     Assigned to you, but no plan built yet.
                   </p>
-                  <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
                     {withoutPlan.map((client) => (
                       <div key={client.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-xs font-semibold text-ft-accent">
                           {initials(client.full_name)}
                         </div>
-                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-nova-text">
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-ft-text">
                           {client.full_name || "(no name)"}
                         </p>
                         <Button
@@ -259,32 +259,32 @@ export default function CoachDashboardPage() {
               )}
 
               <section className="mt-8">
-                <h2 className="text-sm font-semibold text-nova-text">Active Clients</h2>
-                <p className="mt-0.5 text-xs text-nova-muted">
+                <h2 className="text-sm font-semibold text-ft-text">Active Clients</h2>
+                <p className="mt-0.5 text-xs text-ft-muted">
                   Open a client to add workouts, swap exercises, or set alternates.
                 </p>
-                <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
                   {approved.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-nova-muted">No approved clients yet.</p>
+                    <p className="px-4 py-3 text-sm text-ft-muted">No approved clients yet.</p>
                   )}
                   {approved.map((plan) => (
                     <Link
                       key={plan.id}
                       href={`/admin/coach/review?id=${plan.id}`}
-                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-nova-accent/[0.03]"
+                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-ft-accent/[0.03]"
                     >
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-xs font-semibold text-ft-accent">
                         {initials(plan.full_name)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-nova-text">
+                        <p className="truncate text-sm font-medium text-ft-text">
                           {plan.full_name}
                         </p>
-                        <p className="text-xs text-nova-muted">
+                        <p className="text-xs text-ft-muted">
                           {GOAL_LABEL[plan.goal] ?? plan.goal}
                         </p>
                       </div>
-                      <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-nova-accent">
+                      <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-ft-accent">
                         <Pencil className="size-3.5" />
                         Edit
                       </span>

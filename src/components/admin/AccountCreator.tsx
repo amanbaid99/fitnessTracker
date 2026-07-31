@@ -55,7 +55,7 @@ export function AccountCreator({
   const isCoach = role === "coach";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState(() => generatePassword(isCoach ? "Coach" : "Nova"));
+  const [password, setPassword] = useState(() => generatePassword(isCoach ? "Coach" : "Member"));
   const [coachId, setCoachId] = useState("");
   // "" = let them choose, "preset:<id>" or "template:<uuid>" = assign now.
   const [startingPlan, setStartingPlan] = useState("");
@@ -163,7 +163,7 @@ export function AccountCreator({
     setEmail("");
     setCoachId("");
     setStartingPlan("");
-    setPassword(generatePassword(isCoach ? "Coach" : "Nova"));
+    setPassword(generatePassword(isCoach ? "Coach" : "Member"));
     onCreated();
   }
 
@@ -172,7 +172,7 @@ export function AccountCreator({
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">Full name</span>
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">Full name</span>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -181,7 +181,7 @@ export function AccountCreator({
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">Email</span>
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">Email</span>
             <Input
               type="email"
               value={email}
@@ -194,12 +194,12 @@ export function AccountCreator({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 flex items-center justify-between text-sm font-medium text-nova-text">
+            <span className="mb-1.5 flex items-center justify-between text-sm font-medium text-ft-text">
               Temporary password
               <button
                 type="button"
-                onClick={() => setPassword(generatePassword(isCoach ? "Coach" : "Nova"))}
-                className="flex items-center gap-1 text-xs font-medium text-nova-accent hover:underline"
+                onClick={() => setPassword(generatePassword(isCoach ? "Coach" : "Member"))}
+                className="flex items-center gap-1 text-xs font-medium text-ft-accent hover:underline"
               >
                 <RefreshCw className="size-3" />
                 New
@@ -210,13 +210,13 @@ export function AccountCreator({
 
           {!isCoach && !claimForSignedInCoach && (
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-nova-text">
-                Assign a coach <span className="text-nova-muted">(optional)</span>
+              <span className="mb-1.5 block text-sm font-medium text-ft-text">
+                Assign a coach <span className="text-ft-muted">(optional)</span>
               </span>
               <select
                 value={coachId}
                 onChange={(e) => setCoachId(e.target.value)}
-                className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-3 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                className="flex h-11 w-full rounded-md border border-ft-border bg-ft-surface px-3 text-sm text-ft-text outline-none focus-visible:ring-2 focus-visible:ring-ft-accent"
               >
                 <option value="">Decide later</option>
                 {coaches
@@ -233,13 +233,13 @@ export function AccountCreator({
 
         {!isCoach && (
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">
-              Starting plan <span className="text-nova-muted">(optional)</span>
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">
+              Starting plan <span className="text-ft-muted">(optional)</span>
             </span>
             <select
               value={startingPlan}
               onChange={(e) => setStartingPlan(e.target.value)}
-              className="flex h-11 w-full rounded-md border border-nova-border bg-nova-surface px-3 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+              className="flex h-11 w-full rounded-md border border-ft-border bg-ft-surface px-3 text-sm text-ft-text outline-none focus-visible:ring-2 focus-visible:ring-ft-accent"
             >
               <option value="">Let them choose</option>
               <optgroup label="Built-in splits">
@@ -262,13 +262,13 @@ export function AccountCreator({
           </label>
         )}
 
-        <p className="text-xs text-nova-muted">
+        <p className="text-xs text-ft-muted">
           {claimForSignedInCoach && "They'll be added to your clients. "}
           They&apos;ll be asked to set their own password the first time they log in
           {isCoach ? "." : ", then fill in their intake form to get a plan."}
         </p>
 
-        {error && <p className="text-sm text-nova-danger">{error}</p>}
+        {error && <p className="text-sm text-ft-danger">{error}</p>}
 
         <Button type="submit" disabled={busy}>
           {busy ? "Creating…" : isCoach ? "Create coach" : "Create member"}
@@ -276,11 +276,11 @@ export function AccountCreator({
       </form>
 
       {created && (
-        <div className="mt-4 rounded-2xl border border-nova-success/30 bg-nova-success/[0.05] p-4">
-          <p className="text-sm font-medium text-nova-text">
+        <div className="mt-4 rounded-2xl border border-ft-success/30 bg-ft-success/[0.05] p-4">
+          <p className="text-sm font-medium text-ft-text">
             Account created — copy these now, they won&apos;t be shown again.
           </p>
-          <div className="mt-2 space-y-0.5 font-mono text-sm text-nova-text">
+          <div className="mt-2 space-y-0.5 font-mono text-sm text-ft-text">
             <p>ID: {created.email}</p>
             <p>Password: {created.password}</p>
           </div>
@@ -292,7 +292,7 @@ export function AccountCreator({
               );
               setCopied(true);
             }}
-            className="mt-2 flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
+            className="mt-2 flex items-center gap-1.5 text-sm font-medium text-ft-accent hover:underline"
           >
             {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
             {copied ? "Copied" : "Copy credentials"}

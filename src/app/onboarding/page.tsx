@@ -53,7 +53,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-dvh items-center justify-center">
-      <p className="text-sm text-nova-muted">Getting you set up…</p>
+      <p className="text-sm text-ft-muted">Getting you set up…</p>
     </div>
   );
 }

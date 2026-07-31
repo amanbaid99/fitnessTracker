@@ -383,7 +383,7 @@ export default function ClientDashboardPage() {
   if (loading || !plan) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading your plan…</p>
+        <p className="text-sm text-ft-muted">Loading your plan…</p>
       </div>
     );
   }
@@ -394,21 +394,21 @@ export default function ClientDashboardPage() {
     : false;
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-24 md:pb-16">
       <BottomNav />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-4xl">
         <header className="flex items-center justify-between gap-3 px-5 pt-5 md:px-0 md:pt-10">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-nova-text md:text-2xl">
+            <h1 className="truncate text-lg font-semibold text-ft-text md:text-2xl">
               Hello, {firstName} 👋
             </h1>
-            <p className="truncate text-xs text-nova-muted md:text-sm">{today}</p>
+            <p className="truncate text-xs text-ft-muted md:text-sm">{today}</p>
           </div>
           <button
             onClick={handleSignOut}
             aria-label="Sign out"
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-nova-muted transition-colors hover:bg-nova-surface hover:text-nova-text"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full text-ft-muted transition-colors hover:bg-ft-surface hover:text-ft-text"
           >
             <LogOut className="size-4" />
           </button>
@@ -416,22 +416,22 @@ export default function ClientDashboardPage() {
 
         <main className="px-5 md:px-0">
           {plan.coach_notes && (
-            <div className="mt-3 rounded-xl border border-nova-accent/25 bg-nova-accent/[0.04] px-3 py-2.5">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-nova-accent">
+            <div className="mt-3 rounded-xl border border-ft-accent/25 bg-ft-accent/[0.04] px-3 py-2.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ft-accent">
                 <Sparkles className="size-3" />
                 Note from your coach
               </p>
-              <p className="mt-0.5 text-sm text-nova-text">{plan.coach_notes}</p>
+              <p className="mt-0.5 text-sm text-ft-text">{plan.coach_notes}</p>
             </div>
           )}
 
           {days.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-nova-border bg-nova-surface p-8 text-center">
-              <CalendarDays className="mx-auto size-6 text-nova-muted" />
-              <p className="mt-2 text-sm font-medium text-nova-text">
+            <div className="mt-6 rounded-2xl border border-dashed border-ft-border bg-ft-surface p-8 text-center">
+              <CalendarDays className="mx-auto size-6 text-ft-muted" />
+              <p className="mt-2 text-sm font-medium text-ft-text">
                 Your coach is still putting this together
               </p>
-              <p className="mt-1 text-xs text-nova-muted">
+              <p className="mt-1 text-xs text-ft-muted">
                 They&apos;ll publish your programme shortly — message them if you need it sooner.
               </p>
               <Button asChild size="sm" variant="outline" className="mt-4">
@@ -458,7 +458,7 @@ export default function ClientDashboardPage() {
                   </div>
 
                   {activeDay.exercises.length === 0 && (
-                    <p className="mt-4 rounded-2xl border border-dashed border-nova-border bg-nova-surface px-4 py-6 text-center text-sm text-nova-muted">
+                    <p className="mt-4 rounded-2xl border border-dashed border-ft-border bg-ft-surface px-4 py-6 text-center text-sm text-ft-muted">
                       Nothing programmed for this day — pick another day above.
                     </p>
                   )}
@@ -499,21 +499,21 @@ export default function ClientDashboardPage() {
           {/* Secondary by design: the session comes first on a phone, and
               the week's summary is what you scroll to afterwards. */}
           <section className="mt-8">
-            <h2 className="text-sm font-semibold text-nova-text">Your week</h2>
-            <div className="mt-2 rounded-2xl border border-nova-border/70 bg-nova-surface p-3.5 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+            <h2 className="text-sm font-semibold text-ft-text">Your week</h2>
+            <div className="mt-2 rounded-2xl border border-ft-border/70 bg-ft-surface p-3.5 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
               <WeekStrip completedDates={completedDates} />
-              <div className="mt-3 grid grid-cols-3 divide-x divide-nova-border border-t border-nova-border pt-3">
+              <div className="mt-3 grid grid-cols-3 divide-x divide-ft-border border-t border-ft-border pt-3">
                 <div className="px-1 text-center">
-                  <p className="text-sm font-semibold text-nova-text">{totalCompleted}</p>
-                  <p className="text-[11px] text-nova-muted">Workouts</p>
+                  <p className="text-sm font-semibold text-ft-text">{totalCompleted}</p>
+                  <p className="text-[11px] text-ft-muted">Workouts</p>
                 </div>
                 <div className="px-1 text-center">
-                  <p className="text-sm font-semibold text-nova-text">Week {weekNumber(plan)}</p>
-                  <p className="text-[11px] text-nova-muted">Programme</p>
+                  <p className="text-sm font-semibold text-ft-text">Week {weekNumber(plan)}</p>
+                  <p className="text-[11px] text-ft-muted">Programme</p>
                 </div>
                 <div className="px-1 text-center">
-                  <p className="text-sm font-semibold text-nova-text">{days.length}-day</p>
-                  <p className="text-[11px] text-nova-muted">Split</p>
+                  <p className="text-sm font-semibold text-ft-text">{days.length}-day</p>
+                  <p className="text-[11px] text-ft-muted">Split</p>
                 </div>
               </div>
             </div>

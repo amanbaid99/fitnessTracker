@@ -99,7 +99,7 @@ export default function ProgressPage() {
   if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
@@ -111,13 +111,13 @@ export default function ProgressPage() {
   ).length;
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-24 md:pb-16">
       <BottomNav />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl">
         <header className="px-5 pt-6 md:px-0 md:pt-10">
-          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Progress</h1>
-          <p className="mt-1 text-sm text-nova-muted">
+          <h1 className="text-xl font-semibold text-ft-text md:text-2xl">Progress</h1>
+          <p className="mt-1 text-sm text-ft-muted">
             Your training history and personal records.
           </p>
         </header>
@@ -129,42 +129,42 @@ export default function ProgressPage() {
               <TabsTrigger value="records">
                 Records
                 {records.length > 0 && (
-                  <span className="ml-1.5 text-xs text-nova-muted">{records.length}</span>
+                  <span className="ml-1.5 text-xs text-ft-muted">{records.length}</span>
                 )}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="activity" className="mt-5">
-              <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
                 <WeekStrip completedDates={completedDates} />
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-                  <p className="text-2xl font-semibold text-nova-text">{logs.length}</p>
-                  <p className="mt-0.5 text-xs text-nova-muted">Workouts</p>
+                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <p className="text-2xl font-semibold text-ft-text">{logs.length}</p>
+                  <p className="mt-0.5 text-xs text-ft-muted">Workouts</p>
                 </div>
-                <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-                  <p className="text-2xl font-semibold text-nova-text">{streak}</p>
-                  <p className="mt-0.5 text-xs text-nova-muted">Day streak</p>
+                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <p className="text-2xl font-semibold text-ft-text">{streak}</p>
+                  <p className="mt-0.5 text-xs text-ft-muted">Day streak</p>
                 </div>
-                <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-                  <p className="text-2xl font-semibold text-nova-text">{recordsThisMonth}</p>
-                  <p className="mt-0.5 text-xs text-nova-muted">PRs this month</p>
+                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <p className="text-2xl font-semibold text-ft-text">{recordsThisMonth}</p>
+                  <p className="mt-0.5 text-xs text-ft-muted">PRs this month</p>
                 </div>
               </div>
 
               <div className="mt-6">
-                <h2 className="text-sm font-semibold text-nova-text">Recent workouts</h2>
-                <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <h2 className="text-sm font-semibold text-ft-text">Recent workouts</h2>
+                <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
                   {logs.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-nova-muted">
+                    <p className="px-4 py-3 text-sm text-ft-muted">
                       No workouts logged yet — complete one from your dashboard.
                     </p>
                   )}
                   {logs.slice(0, 10).map((log, i) => (
                     <div key={`${log.completed_at}-${i}`} className="px-4 py-3">
-                      <p className="text-sm font-medium text-nova-text">
+                      <p className="text-sm font-medium text-ft-text">
                         {new Date(log.completed_at).toLocaleDateString("en-US", {
                           weekday: "long",
                           month: "short",

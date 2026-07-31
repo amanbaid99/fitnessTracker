@@ -25,17 +25,17 @@
   --input: #e8e9f0;
   --ring: #6366f1;
 
-  /* Nova design tokens */
-  --nova-bg: #f8f9fc;
-  --nova-surface: #ffffff;
-  --nova-border: #e8e9f0;
-  --nova-accent: #6366f1;
-  --nova-accent-hover: #4f46e5;
-  --nova-success: #16a34a;
-  --nova-warning: #d97706;
-  --nova-danger: #e11d48;
-  --nova-text: #1c1e26;
-  --nova-muted: #6b7280;
+  /* FitnessTracker design tokens */
+  --ft-bg: #f8f9fc;
+  --ft-surface: #ffffff;
+  --ft-border: #e8e9f0;
+  --ft-accent: #6366f1;
+  --ft-accent-hover: #4f46e5;
+  --ft-success: #16a34a;
+  --ft-warning: #d97706;
+  --ft-danger: #e11d48;
+  --ft-text: #1c1e26;
+  --ft-muted: #6b7280;
 }
 
 @theme inline {
@@ -62,23 +62,23 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --color-nova-bg: var(--nova-bg);
-  --color-nova-surface: var(--nova-surface);
-  --color-nova-border: var(--nova-border);
-  --color-nova-accent: var(--nova-accent);
-  --color-nova-accent-hover: var(--nova-accent-hover);
-  --color-nova-success: var(--nova-success);
-  --color-nova-warning: var(--nova-warning);
-  --color-nova-danger: var(--nova-danger);
-  --color-nova-text: var(--nova-text);
-  --color-nova-muted: var(--nova-muted);
+  --color-ft-bg: var(--ft-bg);
+  --color-ft-surface: var(--ft-surface);
+  --color-ft-border: var(--ft-border);
+  --color-ft-accent: var(--ft-accent);
+  --color-ft-accent-hover: var(--ft-accent-hover);
+  --color-ft-success: var(--ft-success);
+  --color-ft-warning: var(--ft-warning);
+  --color-ft-danger: var(--ft-danger);
+  --color-ft-text: var(--ft-text);
+  --color-ft-muted: var(--ft-muted);
 
   --font-sans: var(--font-inter);
 }
 
 body {
-  background: var(--nova-bg);
-  color: var(--nova-text);
+  background: var(--ft-bg);
+  color: var(--ft-text);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -97,12 +97,12 @@ body {
    of the element's bounding box.
 --------------------------------------------------------------------------- */
 
-.nova-art [class*="nova-anim-"] {
+.ft-art [class*="ft-anim-"] {
   transform-box: view-box;
   transform-origin: 32px 32px;
 }
 
-@keyframes nova-press {
+@keyframes ft-press {
   0%,
   100% {
     transform: translateY(0);
@@ -112,7 +112,7 @@ body {
   }
 }
 
-@keyframes nova-lift {
+@keyframes ft-lift {
   0%,
   100% {
     transform: translateY(7px);
@@ -122,7 +122,7 @@ body {
   }
 }
 
-@keyframes nova-dip {
+@keyframes ft-dip {
   0%,
   100% {
     transform: translateY(0);
@@ -132,7 +132,7 @@ body {
   }
 }
 
-@keyframes nova-hinge {
+@keyframes ft-hinge {
   0%,
   100% {
     transform: rotate(0deg);
@@ -142,7 +142,7 @@ body {
   }
 }
 
-@keyframes nova-slide {
+@keyframes ft-slide {
   0%,
   100% {
     transform: translateX(0);
@@ -152,7 +152,7 @@ body {
   }
 }
 
-@keyframes nova-curl-left {
+@keyframes ft-curl-left {
   0%,
   100% {
     transform: rotate(0deg);
@@ -162,7 +162,7 @@ body {
   }
 }
 
-@keyframes nova-curl-right {
+@keyframes ft-curl-right {
   0%,
   100% {
     transform: rotate(0deg);
@@ -172,7 +172,7 @@ body {
   }
 }
 
-@keyframes nova-raise-left {
+@keyframes ft-raise-left {
   0%,
   100% {
     transform: rotate(0deg);
@@ -182,7 +182,7 @@ body {
   }
 }
 
-@keyframes nova-raise-right {
+@keyframes ft-raise-right {
   0%,
   100% {
     transform: rotate(0deg);
@@ -192,7 +192,7 @@ body {
   }
 }
 
-@keyframes nova-hop {
+@keyframes ft-hop {
   0%,
   100% {
     transform: translateY(2px);
@@ -202,7 +202,7 @@ body {
   }
 }
 
-@keyframes nova-stride-front {
+@keyframes ft-stride-front {
   0%,
   100% {
     transform: rotate(24deg);
@@ -212,7 +212,7 @@ body {
   }
 }
 
-@keyframes nova-stride-back {
+@keyframes ft-stride-back {
   0%,
   100% {
     transform: rotate(-26deg);
@@ -222,7 +222,7 @@ body {
   }
 }
 
-@keyframes nova-sway {
+@keyframes ft-sway {
   0%,
   100% {
     transform: rotate(-9deg);
@@ -232,7 +232,7 @@ body {
   }
 }
 
-@keyframes nova-drift {
+@keyframes ft-drift {
   0%,
   100% {
     transform: translateX(-3px);
@@ -242,7 +242,7 @@ body {
   }
 }
 
-@keyframes nova-breathe {
+@keyframes ft-breathe {
   0%,
   100% {
     opacity: 0.35;
@@ -254,70 +254,70 @@ body {
   }
 }
 
-.nova-anim-press {
-  animation: nova-press 2.4s ease-in-out infinite;
+.ft-anim-press {
+  animation: ft-press 2.4s ease-in-out infinite;
 }
-.nova-anim-lift {
-  animation: nova-lift 2.4s ease-in-out infinite;
+.ft-anim-lift {
+  animation: ft-lift 2.4s ease-in-out infinite;
 }
-.nova-anim-dip {
-  animation: nova-dip 2.2s ease-in-out infinite;
+.ft-anim-dip {
+  animation: ft-dip 2.2s ease-in-out infinite;
 }
-.nova-anim-hinge {
-  animation: nova-hinge 2.8s ease-in-out infinite;
+.ft-anim-hinge {
+  animation: ft-hinge 2.8s ease-in-out infinite;
   transform-origin: 32px 34px;
 }
-.nova-anim-slide {
-  animation: nova-slide 2.2s ease-in-out infinite;
+.ft-anim-slide {
+  animation: ft-slide 2.2s ease-in-out infinite;
 }
-.nova-anim-curl-left {
-  animation: nova-curl-left 2.2s ease-in-out infinite;
+.ft-anim-curl-left {
+  animation: ft-curl-left 2.2s ease-in-out infinite;
   transform-origin: 24px 33px;
 }
-.nova-anim-curl-right {
-  animation: nova-curl-right 2.2s ease-in-out infinite;
+.ft-anim-curl-right {
+  animation: ft-curl-right 2.2s ease-in-out infinite;
   transform-origin: 40px 33px;
 }
-.nova-anim-raise-left {
-  animation: nova-raise-left 2.6s ease-in-out infinite;
+.ft-anim-raise-left {
+  animation: ft-raise-left 2.6s ease-in-out infinite;
   transform-origin: 30px 26px;
 }
-.nova-anim-raise-right {
-  animation: nova-raise-right 2.6s ease-in-out infinite;
+.ft-anim-raise-right {
+  animation: ft-raise-right 2.6s ease-in-out infinite;
   transform-origin: 34px 26px;
 }
-.nova-anim-fly-left {
-  animation: nova-raise-left 2.8s ease-in-out infinite;
+.ft-anim-fly-left {
+  animation: ft-raise-left 2.8s ease-in-out infinite;
   transform-origin: 32px 34px;
 }
-.nova-anim-fly-right {
-  animation: nova-raise-right 2.8s ease-in-out infinite;
+.ft-anim-fly-right {
+  animation: ft-raise-right 2.8s ease-in-out infinite;
   transform-origin: 32px 34px;
 }
-.nova-anim-hop {
-  animation: nova-hop 1.2s ease-in-out infinite;
+.ft-anim-hop {
+  animation: ft-hop 1.2s ease-in-out infinite;
 }
-.nova-anim-stride-front {
-  animation: nova-stride-front 0.9s ease-in-out infinite;
+.ft-anim-stride-front {
+  animation: ft-stride-front 0.9s ease-in-out infinite;
   transform-origin: 32px 38px;
 }
-.nova-anim-stride-back {
-  animation: nova-stride-back 0.9s ease-in-out infinite;
+.ft-anim-stride-back {
+  animation: ft-stride-back 0.9s ease-in-out infinite;
   transform-origin: 32px 38px;
 }
-.nova-anim-sway {
-  animation: nova-sway 3.2s ease-in-out infinite;
+.ft-anim-sway {
+  animation: ft-sway 3.2s ease-in-out infinite;
   transform-origin: 32px 46px;
 }
-.nova-anim-drift {
-  animation: nova-drift 2.6s ease-in-out infinite;
+.ft-anim-drift {
+  animation: ft-drift 2.6s ease-in-out infinite;
 }
-.nova-anim-breathe {
-  animation: nova-breathe 3s ease-in-out infinite;
+.ft-anim-breathe {
+  animation: ft-breathe 3s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nova-art [class*="nova-anim-"] {
+  .ft-art [class*="ft-anim-"] {
     animation: none !important;
   }
 }

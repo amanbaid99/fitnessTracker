@@ -184,10 +184,10 @@ export function ChatThread({
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-1 py-2">
-        {loading && <p className="py-6 text-center text-sm text-nova-muted">Loading messages…</p>}
+        {loading && <p className="py-6 text-center text-sm text-ft-muted">Loading messages…</p>}
 
         {!loading && messages.length === 0 && (
-          <p className="py-8 text-center text-sm text-nova-muted">{emptyHint}</p>
+          <p className="py-8 text-center text-sm text-ft-muted">{emptyHint}</p>
         )}
 
         {rows.map(({ message, showDay }) => {
@@ -196,7 +196,7 @@ export function ChatThread({
           return (
             <div key={message.id}>
               {showDay && (
-                <p className="py-2 text-center text-[11px] font-medium uppercase tracking-wide text-nova-muted">
+                <p className="py-2 text-center text-[11px] font-medium uppercase tracking-wide text-ft-muted">
                   {dayLabel(message.created_at)}
                 </p>
               )}
@@ -205,15 +205,15 @@ export function ChatThread({
                   className={cn(
                     "max-w-[78%] rounded-2xl px-3.5 py-2",
                     mine
-                      ? "rounded-br-md bg-nova-accent text-white"
-                      : "rounded-bl-md bg-nova-surface text-nova-text ring-1 ring-nova-border",
+                      ? "rounded-br-md bg-ft-accent text-white"
+                      : "rounded-bl-md bg-ft-surface text-ft-text ring-1 ring-ft-border",
                   )}
                 >
                   <p className="whitespace-pre-wrap break-words text-sm">{message.body}</p>
                   <p
                     className={cn(
                       "mt-0.5 text-[10px]",
-                      mine ? "text-white/70" : "text-nova-muted",
+                      mine ? "text-white/70" : "text-ft-muted",
                     )}
                   >
                     {timeLabel(message.created_at)}
@@ -227,9 +227,9 @@ export function ChatThread({
         <div ref={bottomRef} />
       </div>
 
-      {error && <p className="px-1 pb-1 text-xs text-nova-danger">{error}</p>}
+      {error && <p className="px-1 pb-1 text-xs text-ft-danger">{error}</p>}
 
-      <form onSubmit={handleSend} className="flex items-end gap-2 border-t border-nova-border pt-3">
+      <form onSubmit={handleSend} className="flex items-end gap-2 border-t border-ft-border pt-3">
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -243,7 +243,7 @@ export function ChatThread({
           rows={1}
           placeholder="Write a message…"
           aria-label="Message"
-          className="max-h-32 min-h-11 flex-1 resize-y rounded-xl border border-nova-border bg-nova-surface px-3 py-2.5 text-sm text-nova-text outline-none placeholder:text-nova-muted focus-visible:ring-2 focus-visible:ring-nova-accent"
+          className="max-h-32 min-h-11 flex-1 resize-y rounded-xl border border-ft-border bg-ft-surface px-3 py-2.5 text-sm text-ft-text outline-none placeholder:text-ft-muted focus-visible:ring-2 focus-visible:ring-ft-accent"
         />
         <Button type="submit" size="icon" className="size-11 shrink-0" disabled={sending || !draft.trim()}>
           <SendHorizonal className="size-4" />

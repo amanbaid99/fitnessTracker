@@ -56,25 +56,25 @@ export default function MessagesPage() {
   if (loading || !userId) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-20 md:pb-6">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-20 md:pb-6">
       <BottomNav />
 
       <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col px-5 md:max-w-2xl md:px-0">
         <header className="flex items-center gap-3 py-4 md:pt-8">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-nova-accent">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-ft-accent">
             {coachName ? <ShieldCheck className="size-5" /> : <MessageCircle className="size-5" />}
           </span>
           <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold text-nova-text">
+            <h1 className="truncate text-base font-semibold text-ft-text">
               {coachName ?? "Messages"}
             </h1>
-            <p className="text-xs text-nova-muted">
+            <p className="text-xs text-ft-muted">
               {coachName ? "Your coach" : "No coach assigned yet"}
             </p>
           </div>
@@ -93,13 +93,13 @@ export default function MessagesPage() {
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-nova-accent/10 text-nova-accent">
+            <div className="flex size-12 items-center justify-center rounded-full bg-ft-accent/10 text-ft-accent">
               <MessageCircle className="size-6" />
             </div>
-            <h2 className="mt-4 text-base font-semibold text-nova-text">
+            <h2 className="mt-4 text-base font-semibold text-ft-text">
               You don&apos;t have a coach yet
             </h2>
-            <p className="mt-1.5 max-w-xs text-sm text-nova-muted">
+            <p className="mt-1.5 max-w-xs text-sm text-ft-muted">
               You&apos;ll be paired with a coach once your assessment has been reviewed. They
               show up here as soon as that happens.
             </p>

@@ -30,17 +30,17 @@ export function WeekStrip({ completedDates }: { completedDates: Set<string> }) {
         const isDone = completedDates.has(key);
         return (
           <div key={key} className="flex flex-col items-center gap-1.5">
-            <span className="text-[10px] font-medium uppercase text-nova-muted">
+            <span className="text-[10px] font-medium uppercase text-ft-muted">
               {d.toLocaleDateString("en-US", { weekday: "narrow" })}
             </span>
             <div
               className={cn(
                 "flex size-8 items-center justify-center rounded-full text-xs font-medium",
                 isDone
-                  ? "bg-nova-success text-white"
+                  ? "bg-ft-success text-white"
                   : isToday
-                    ? "border-2 border-nova-accent text-nova-accent"
-                    : "bg-nova-border/40 text-nova-muted",
+                    ? "border-2 border-ft-accent text-ft-accent"
+                    : "bg-ft-border/40 text-ft-muted",
               )}
             >
               {d.getDate()}

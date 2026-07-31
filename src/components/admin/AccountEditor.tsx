@@ -26,7 +26,7 @@ interface AccountEditorProps {
 
 function generatePassword() {
   const suffix = Math.random().toString(36).slice(2, 8);
-  return `Nova-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
+  return `FT-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 /**
@@ -90,7 +90,7 @@ export function AccountEditor({ account, mode, onSaved }: AccountEditorProps) {
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-nova-text">Name</span>
+          <span className="mb-1.5 block text-xs font-medium text-ft-text">Name</span>
           <Input
             value={name}
             onChange={(e) => {
@@ -102,7 +102,7 @@ export function AccountEditor({ account, mode, onSaved }: AccountEditorProps) {
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-xs font-medium text-nova-text">
+          <span className="mb-1.5 block text-xs font-medium text-ft-text">
             Login email
           </span>
           <Input
@@ -119,7 +119,7 @@ export function AccountEditor({ account, mode, onSaved }: AccountEditorProps) {
       </div>
 
       <div>
-        <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-nova-text">
+        <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-ft-text">
           New password
           <span className="flex items-center gap-2">
             <button
@@ -129,7 +129,7 @@ export function AccountEditor({ account, mode, onSaved }: AccountEditorProps) {
                 setShowPassword(true);
                 setSaved(false);
               }}
-              className="flex items-center gap-1 text-xs font-medium text-nova-accent hover:underline"
+              className="flex items-center gap-1 text-xs font-medium text-ft-accent hover:underline"
             >
               <RefreshCw className="size-3" />
               Generate
@@ -141,7 +141,7 @@ export function AccountEditor({ account, mode, onSaved }: AccountEditorProps) {
                   navigator.clipboard.writeText(password);
                   setCopied(true);
                 }}
-                className="flex items-center gap-1 text-xs font-medium text-nova-accent hover:underline"
+                className="flex items-center gap-1 text-xs font-medium text-ft-accent hover:underline"
               >
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
                 {copied ? "Copied" : "Copy"}
@@ -165,39 +165,39 @@ export function AccountEditor({ account, mode, onSaved }: AccountEditorProps) {
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-nova-muted hover:text-nova-text"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-ft-muted hover:text-ft-text"
           >
             {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
           </button>
         </div>
-        <p className="mt-1 text-[11px] text-nova-muted">
+        <p className="mt-1 text-[11px] text-ft-muted">
           Copy it before saving — it can&apos;t be read back afterwards.
         </p>
       </div>
 
       {password && (
-        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-nova-bg p-2.5">
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-ft-bg p-2.5">
           <input
             type="checkbox"
             checked={mustChange}
             onChange={(e) => setMustChange(e.target.checked)}
-            className="mt-0.5 size-4 accent-[var(--nova-accent)]"
+            className="mt-0.5 size-4 accent-[var(--ft-accent)]"
           />
-          <span className="flex items-center gap-1.5 text-xs text-nova-text">
-            <KeyRound className="size-3.5 shrink-0 text-nova-muted" />
+          <span className="flex items-center gap-1.5 text-xs text-ft-text">
+            <KeyRound className="size-3.5 shrink-0 text-ft-muted" />
             Ask them to set their own password at next login
           </span>
         </label>
       )}
 
-      {error && <p className="text-xs text-nova-danger">{error}</p>}
+      {error && <p className="text-xs text-ft-danger">{error}</p>}
 
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={handleSave} disabled={saving || !dirty}>
           {saving ? "Saving…" : "Save changes"}
         </Button>
-        {saved && !dirty && <span className="text-xs text-nova-success">Saved</span>}
-        <span className={cn("text-[11px] text-nova-muted", !dirty && "hidden")}>
+        {saved && !dirty && <span className="text-xs text-ft-success">Saved</span>}
+        <span className={cn("text-[11px] text-ft-muted", !dirty && "hidden")}>
           Unsaved changes
         </span>
       </div>

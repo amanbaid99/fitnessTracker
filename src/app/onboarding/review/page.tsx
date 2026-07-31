@@ -9,7 +9,7 @@ import Link from "next/link";
 /** The pipeline from the workflow doc, so the wait feels like progress. */
 const STAGES = [
   { title: "Assessment submitted", done: true },
-  { title: "Nova AI preparing your programme", done: false },
+  { title: "AI preparing your programme", done: false },
   { title: "Coach reviews and approves", done: false },
   { title: "Programme published to your dashboard", done: false },
 ];
@@ -60,7 +60,7 @@ export default function PlanUnderReviewPage() {
   if (status !== "pending") {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
@@ -68,19 +68,19 @@ export default function PlanUnderReviewPage() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center px-6 py-12 text-center md:max-w-xl">
       <div className="relative flex size-24 items-center justify-center">
-        <span className="absolute inset-0 animate-pulse rounded-full border-2 border-nova-accent/40" />
-        <span className="absolute inset-3 animate-pulse rounded-full border-2 border-nova-accent/70 [animation-delay:150ms]" />
-        <div className="relative flex size-14 items-center justify-center rounded-full bg-nova-accent">
+        <span className="absolute inset-0 animate-pulse rounded-full border-2 border-ft-accent/40" />
+        <span className="absolute inset-3 animate-pulse rounded-full border-2 border-ft-accent/70 [animation-delay:150ms]" />
+        <div className="relative flex size-14 items-center justify-center rounded-full bg-ft-accent">
           <Check className="size-7 text-white" />
         </div>
       </div>
 
-      <h1 className="mt-8 text-2xl font-semibold text-nova-text">Assessment received</h1>
-      <p className="mt-3 text-sm leading-relaxed text-nova-muted">
-        Thank you for completing your assessment. Nova AI is analysing your information and
+      <h1 className="mt-8 text-2xl font-semibold text-ft-text">Assessment received</h1>
+      <p className="mt-3 text-sm leading-relaxed text-ft-muted">
+        Thank you for completing your assessment. Our AI is analysing your information and
         preparing your personalised training programme.
       </p>
-      <p className="mt-3 text-sm leading-relaxed text-nova-muted">
+      <p className="mt-3 text-sm leading-relaxed text-ft-muted">
         Your coach will carefully review the programme before it is published. Your workout
         plan will be available within the next 24 hours.
       </p>
@@ -91,13 +91,13 @@ export default function PlanUnderReviewPage() {
             <span
               className={
                 stage.done
-                  ? "flex size-7 shrink-0 items-center justify-center rounded-full bg-nova-success text-white"
-                  : "flex size-7 shrink-0 items-center justify-center rounded-full bg-nova-surface text-xs font-semibold text-nova-muted ring-1 ring-nova-border"
+                  ? "flex size-7 shrink-0 items-center justify-center rounded-full bg-ft-success text-white"
+                  : "flex size-7 shrink-0 items-center justify-center rounded-full bg-ft-surface text-xs font-semibold text-ft-muted ring-1 ring-ft-border"
               }
             >
               {stage.done ? <Check className="size-4" /> : i + 1}
             </span>
-            <span className={stage.done ? "text-sm font-medium text-nova-text" : "text-sm text-nova-muted"}>
+            <span className={stage.done ? "text-sm font-medium text-ft-text" : "text-sm text-ft-muted"}>
               {stage.title}
             </span>
           </li>
@@ -106,7 +106,7 @@ export default function PlanUnderReviewPage() {
 
       <Link
         href="/dashboard/messages"
-        className="mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-nova-accent hover:underline"
+        className="mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-ft-accent hover:underline"
       >
         Got a question? Message your coach
         <ArrowRight className="size-4" />

@@ -8,7 +8,7 @@ import {
 /**
  * Animated placeholder illustration for an exercise.
  *
- * Everything is inline SVG driven by the `nova-anim-*` keyframes in
+ * Everything is inline SVG driven by the `ft-anim-*` keyframes in
  * globals.css — no image assets to ship or load, and the whole set stays
  * consistent because each movement pattern reuses the same stick figure.
  * Motion is disabled automatically under `prefers-reduced-motion`.
@@ -97,7 +97,7 @@ function HorizontalPressScene(p: SceneProps) {
   return (
     <>
       <LyingBody {...p} />
-      <g className="nova-anim-press">
+      <g className="ft-anim-press">
         <Barbell y={24} {...p} />
         <line x1="26" y1="36" x2="26" y2="26" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
         <line x1="38" y1="36" x2="38" y2="26" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
@@ -110,11 +110,11 @@ function FlyScene(p: SceneProps) {
   return (
     <>
       <LyingBody {...p} />
-      <g className="nova-anim-fly-left">
+      <g className="ft-anim-fly-left">
         <line x1="32" y1="34" x2="18" y2="26" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <circle cx="16" cy="25" r="3.5" fill={p.accent} />
       </g>
-      <g className="nova-anim-fly-right">
+      <g className="ft-anim-fly-right">
         <line x1="32" y1="34" x2="46" y2="26" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <circle cx="48" cy="25" r="3.5" fill={p.accent} />
       </g>
@@ -127,7 +127,7 @@ function VerticalPressScene(p: SceneProps) {
     <>
       <Ground accent={p.accent} />
       <StandingBody {...p} />
-      <g className="nova-anim-lift">
+      <g className="ft-anim-lift">
         <Barbell y={11} {...p} />
         <line x1="26" y1="26" x2="26" y2="13" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
         <line x1="38" y1="26" x2="38" y2="13" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
@@ -140,7 +140,7 @@ function PulldownScene(p: SceneProps) {
   return (
     <>
       <line x1="12" y1="10" x2="52" y2="10" stroke={p.accent} strokeWidth="3" strokeLinecap="round" />
-      <g className="nova-anim-lift">
+      <g className="ft-anim-lift">
         <line x1="24" y1="10" x2="27" y2="22" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
         <line x1="40" y1="10" x2="37" y2="22" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
         <circle cx="32" cy="26" r="4.5" stroke={p.ink} strokeWidth="2.5" fill="none" />
@@ -160,7 +160,7 @@ function RowScene(p: SceneProps) {
       <line x1="23" y1="25" x2="39" y2="33" stroke={p.ink} strokeWidth="3" strokeLinecap="round" />
       <line x1="39" y1="33" x2="36" y2="53" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       <line x1="39" y1="33" x2="43" y2="53" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
-      <g className="nova-anim-press">
+      <g className="ft-anim-press">
         <line x1="30" y1="29" x2="30" y2="40" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
         <line x1="22" y1="42" x2="38" y2="42" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <circle cx="22" cy="42" r="4" fill={p.accent} />
@@ -174,7 +174,7 @@ function SquatScene(p: SceneProps) {
   return (
     <>
       <Ground accent={p.accent} />
-      <g className="nova-anim-dip">
+      <g className="ft-anim-dip">
         <Barbell y={22} {...p} />
         <circle cx="32" cy="15" r="4.5" stroke={p.ink} strokeWidth="2.5" fill="none" />
         <line x1="32" y1="22" x2="32" y2="36" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
@@ -205,7 +205,7 @@ function HingeScene(p: SceneProps) {
       <Ground accent={p.accent} />
       <line x1="32" y1="34" x2="27" y2="54" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       <line x1="32" y1="34" x2="37" y2="54" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
-      <g className="nova-anim-hinge">
+      <g className="ft-anim-hinge">
         <circle cx="32" cy="14" r="4.5" stroke={p.ink} strokeWidth="2.5" fill="none" />
         <line x1="32" y1="19" x2="32" y2="34" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <line x1="32" y1="25" x2="32" y2="40" stroke={p.ink} strokeWidth="2" strokeLinecap="round" />
@@ -219,7 +219,7 @@ function LungeScene(p: SceneProps) {
   return (
     <>
       <Ground accent={p.accent} />
-      <g className="nova-anim-dip">
+      <g className="ft-anim-dip">
         <circle cx="32" cy="16" r="4.5" stroke={p.ink} strokeWidth="2.5" fill="none" />
         <line x1="32" y1="21" x2="32" y2="36" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <polyline
@@ -250,7 +250,7 @@ function CalfScene(p: SceneProps) {
     <>
       <Ground accent={p.accent} />
       <rect x="18" y="49" width="28" height="5" rx="2.5" fill={p.accent} opacity="0.3" />
-      <g className="nova-anim-hop">
+      <g className="ft-anim-hop">
         <StandingBody {...p} />
         <rect x="20" y="28" width="8" height="4" rx="2" fill={p.accent} />
         <rect x="36" y="28" width="8" height="4" rx="2" fill={p.accent} />
@@ -264,11 +264,11 @@ function LateralRaiseScene(p: SceneProps) {
     <>
       <Ground accent={p.accent} />
       <StandingBody {...p} />
-      <g className="nova-anim-raise-left">
+      <g className="ft-anim-raise-left">
         <line x1="30" y1="26" x2="21" y2="39" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <rect x="16" y="38" width="9" height="4" rx="2" fill={p.accent} />
       </g>
-      <g className="nova-anim-raise-right">
+      <g className="ft-anim-raise-right">
         <line x1="34" y1="26" x2="43" y2="39" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <rect x="39" y="38" width="9" height="4" rx="2" fill={p.accent} />
       </g>
@@ -283,11 +283,11 @@ function CurlScene(p: SceneProps) {
       <StandingBody {...p} />
       <line x1="27" y1="25" x2="24" y2="33" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       <line x1="37" y1="25" x2="40" y2="33" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
-      <g className="nova-anim-curl-left">
+      <g className="ft-anim-curl-left">
         <line x1="24" y1="33" x2="22" y2="44" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <rect x="17" y="43" width="9" height="4" rx="2" fill={p.accent} />
       </g>
-      <g className="nova-anim-curl-right">
+      <g className="ft-anim-curl-right">
         <line x1="40" y1="33" x2="42" y2="44" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <rect x="38" y="43" width="9" height="4" rx="2" fill={p.accent} />
       </g>
@@ -306,7 +306,7 @@ function TricepsScene(p: SceneProps) {
       <line x1="26" y1="22" x2="26" y2="38" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       <line x1="26" y1="38" x2="21" y2="54" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       <line x1="26" y1="38" x2="31" y2="54" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
-      <g className="nova-anim-press">
+      <g className="ft-anim-press">
         <line x1="50" y1="20" x2="38" y2="26" stroke={p.accent} strokeWidth="2" strokeLinecap="round" />
         <line x1="30" y1="26" x2="38" y2="26" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <rect x="34" y="24" width="10" height="4" rx="2" fill={p.accent} />
@@ -319,7 +319,7 @@ function CoreScene(p: SceneProps) {
   return (
     <>
       <Ground accent={p.accent} />
-      <g className="nova-anim-hop">
+      <g className="ft-anim-hop">
         <circle cx="47" cy="30" r="4" stroke={p.ink} strokeWidth="2.5" fill="none" />
         <line x1="43" y1="33" x2="18" y2="43" stroke={p.ink} strokeWidth="3" strokeLinecap="round" />
         <line x1="42" y1="34" x2="41" y2="47" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
@@ -336,16 +336,16 @@ function CardioScene(p: SceneProps) {
       <Ground accent={p.accent} />
       <circle cx="32" cy="15" r="4.5" stroke={p.ink} strokeWidth="2.5" fill="none" />
       <line x1="32" y1="20" x2="32" y2="38" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
-      <g className="nova-anim-stride-front">
+      <g className="ft-anim-stride-front">
         <line x1="32" y1="38" x2="24" y2="52" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       </g>
-      <g className="nova-anim-stride-back">
+      <g className="ft-anim-stride-back">
         <line x1="32" y1="38" x2="40" y2="52" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       </g>
-      <g className="nova-anim-stride-back">
+      <g className="ft-anim-stride-back">
         <line x1="32" y1="25" x2="23" y2="32" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       </g>
-      <g className="nova-anim-stride-front">
+      <g className="ft-anim-stride-front">
         <line x1="32" y1="25" x2="41" y2="32" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
       </g>
     </>
@@ -356,7 +356,7 @@ function CarryScene(p: SceneProps) {
   return (
     <>
       <Ground accent={p.accent} />
-      <g className="nova-anim-drift">
+      <g className="ft-anim-drift">
         <StandingBody {...p} />
         <line x1="26" y1="25" x2="23" y2="36" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <line x1="38" y1="25" x2="41" y2="36" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
@@ -371,7 +371,7 @@ function MobilityScene(p: SceneProps) {
   return (
     <>
       <Ground accent={p.accent} />
-      <g className="nova-anim-sway">
+      <g className="ft-anim-sway">
         <circle cx="32" cy="20" r="4.5" stroke={p.ink} strokeWidth="2.5" fill="none" />
         <line x1="32" y1="25" x2="32" y2="40" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
         <line x1="32" y1="40" x2="27" y2="54" stroke={p.ink} strokeWidth="2.5" strokeLinecap="round" />
@@ -430,12 +430,12 @@ export function ExerciseArt({
   const { pattern, group } = resolveExercise(name, exerciseId);
   const palette = PALETTES[group];
   const Scene = SCENES[pattern];
-  const gradientId = `nova-art-${group}`;
+  const gradientId = `ft-art-${group}`;
 
   return (
     <div
       className={cn(
-        "nova-art shrink-0 overflow-hidden rounded-xl",
+        "ft-art shrink-0 overflow-hidden rounded-xl",
         SIZES[size],
         className,
       )}
@@ -450,7 +450,7 @@ export function ExerciseArt({
           </radialGradient>
         </defs>
         <circle
-          className="nova-anim-breathe"
+          className="ft-anim-breathe"
           cx="32"
           cy="32"
           r="26"

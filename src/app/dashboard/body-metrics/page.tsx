@@ -90,7 +90,7 @@ export default function BodyMetricsPage() {
   if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
@@ -98,43 +98,43 @@ export default function BodyMetricsPage() {
   const latest = metrics[0];
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-24 md:pb-16">
       <BottomNav />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl">
         <header className="px-5 pt-6 md:px-0 md:pt-10">
-          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Body Metrics</h1>
-          <p className="mt-1 text-sm text-nova-muted">Track your weight and body fat over time.</p>
+          <h1 className="text-xl font-semibold text-ft-text md:text-2xl">Body Metrics</h1>
+          <p className="mt-1 text-sm text-ft-muted">Track your weight and body fat over time.</p>
         </header>
 
         <main className="px-5 md:px-0">
           {latest && (
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-                <p className="text-2xl font-semibold text-nova-text">
+              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <p className="text-2xl font-semibold text-ft-text">
                   {latest.weight_kg ?? "—"}
                   {latest.weight_kg ? " kg" : ""}
                 </p>
-                <p className="mt-0.5 text-xs text-nova-muted">Latest weight</p>
+                <p className="mt-0.5 text-xs text-ft-muted">Latest weight</p>
               </div>
-              <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-                <p className="text-2xl font-semibold text-nova-text">
+              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <p className="text-2xl font-semibold text-ft-text">
                   {latest.body_fat_pct ?? "—"}
                   {latest.body_fat_pct ? "%" : ""}
                 </p>
-                <p className="mt-0.5 text-xs text-nova-muted">Latest body fat</p>
+                <p className="mt-0.5 text-xs text-ft-muted">Latest body fat</p>
               </div>
             </div>
           )}
 
           <form
             onSubmit={handleSubmit}
-            className="mt-6 space-y-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
+            className="mt-6 space-y-3 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
           >
-            <h2 className="text-sm font-semibold text-nova-text">Log a new entry</h2>
+            <h2 className="text-sm font-semibold text-ft-text">Log a new entry</h2>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-nova-text">
+                <label className="mb-1.5 block text-sm font-medium text-ft-text">
                   Weight (kg)
                 </label>
                 <Input
@@ -146,7 +146,7 @@ export default function BodyMetricsPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-nova-text">
+                <label className="mb-1.5 block text-sm font-medium text-ft-text">
                   Body fat (%)
                 </label>
                 <Input
@@ -158,30 +158,30 @@ export default function BodyMetricsPage() {
                 />
               </div>
             </div>
-            {error && <p className="text-sm text-nova-danger">{error}</p>}
+            {error && <p className="text-sm text-ft-danger">{error}</p>}
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Saving…" : "Log entry"}
             </Button>
           </form>
 
           <div className="mt-6">
-            <h2 className="text-sm font-semibold text-nova-text">History</h2>
-            <div className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+            <h2 className="text-sm font-semibold text-ft-text">History</h2>
+            <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
               {metrics.length === 0 && (
-                <p className="px-4 py-3 text-sm text-nova-muted">
+                <p className="px-4 py-3 text-sm text-ft-muted">
                   No entries yet — log your first one above.
                 </p>
               )}
               {metrics.map((m) => (
                 <div key={m.id} className="flex items-center justify-between px-4 py-3">
-                  <p className="text-sm text-nova-text">
+                  <p className="text-sm text-ft-text">
                     {new Date(m.logged_at).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
                   </p>
-                  <p className="text-sm text-nova-muted">
+                  <p className="text-sm text-ft-muted">
                     {m.weight_kg ? `${m.weight_kg} kg` : ""}
                     {m.weight_kg && m.body_fat_pct ? " · " : ""}
                     {m.body_fat_pct ? `${m.body_fat_pct}%` : ""}

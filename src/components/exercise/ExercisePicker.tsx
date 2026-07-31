@@ -114,7 +114,7 @@ export function ExercisePicker({
   return (
     <div className={cn("relative", className)}>
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-nova-muted" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ft-muted" />
         <input
           ref={inputRef}
           value={query}
@@ -134,7 +134,7 @@ export function ExercisePicker({
           aria-controls={listId}
           aria-autocomplete="list"
           placeholder={placeholder}
-          className="flex h-11 w-full rounded-xl border border-nova-border bg-nova-surface pl-9 pr-3 text-sm text-nova-text outline-none placeholder:text-nova-muted focus-visible:ring-2 focus-visible:ring-nova-accent"
+          className="flex h-11 w-full rounded-xl border border-ft-border bg-ft-surface pl-9 pr-3 text-sm text-ft-text outline-none placeholder:text-ft-muted focus-visible:ring-2 focus-visible:ring-ft-accent"
         />
       </div>
 
@@ -143,7 +143,7 @@ export function ExercisePicker({
           id={listId}
           role="listbox"
           className={cn(
-            "absolute z-40 max-h-80 w-full overflow-y-auto rounded-xl border border-nova-border bg-nova-surface p-1 shadow-lg shadow-nova-text/5",
+            "absolute z-40 max-h-80 w-full overflow-y-auto rounded-xl border border-ft-border bg-ft-surface p-1 shadow-lg shadow-ft-text/5",
             dropUp ? "bottom-full mb-1.5" : "mt-1.5",
           )}
         >
@@ -159,21 +159,21 @@ export function ExercisePicker({
                   onClick={() => pickCatalog(result)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
-                    i === highlight ? "bg-nova-accent/[0.07]" : "hover:bg-nova-accent/[0.05]",
+                    i === highlight ? "bg-ft-accent/[0.07]" : "hover:bg-ft-accent/[0.05]",
                   )}
                 >
                   <ExerciseArt name={result.name} exerciseId={result.id} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-nova-text">
+                    <span className="block truncate text-sm font-medium text-ft-text">
                       {result.name}
                     </span>
-                    <span className="block truncate text-xs text-nova-muted">
+                    <span className="block truncate text-xs text-ft-muted">
                       {MUSCLE_GROUP_LABEL[result.group]} · {EQUIPMENT_LABEL[result.equipment]} ·{" "}
                       {result.defaultSets} × {result.defaultReps}
                     </span>
                   </span>
                   {added && (
-                    <span className="shrink-0 text-xs font-medium text-nova-muted">Added</span>
+                    <span className="shrink-0 text-xs font-medium text-ft-muted">Added</span>
                   )}
                 </button>
               </li>
@@ -191,18 +191,18 @@ export function ExercisePicker({
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
                   highlight === results.length
-                    ? "bg-nova-accent/[0.07]"
-                    : "hover:bg-nova-accent/[0.05]",
+                    ? "bg-ft-accent/[0.07]"
+                    : "hover:bg-ft-accent/[0.05]",
                 )}
               >
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-nova-accent/50 text-nova-accent">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-dashed border-ft-accent/50 text-ft-accent">
                   <Plus className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-nova-text">
+                  <span className="block truncate text-sm font-medium text-ft-text">
                     Create &ldquo;{trimmed}&rdquo;
                   </span>
-                  <span className="block text-xs text-nova-muted">
+                  <span className="block text-xs text-ft-muted">
                     Not in the library — add it as your own exercise
                   </span>
                 </span>

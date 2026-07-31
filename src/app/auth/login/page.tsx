@@ -101,17 +101,17 @@ export default function LoginPage() {
   if (forcePasswordChange) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-          Nova
+        <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
+          FitnessTracker
         </Link>
-        <h1 className="text-2xl font-semibold text-nova-text">Set a new password</h1>
-        <p className="mt-2 text-sm text-nova-muted">
+        <h1 className="text-2xl font-semibold text-ft-text">Set a new password</h1>
+        <p className="mt-2 text-sm text-ft-muted">
           This is your first time logging in — choose a new password before continuing.
         </p>
 
         <form onSubmit={handleSetNewPassword} className="mt-8 space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-nova-text">
+            <label className="mb-1.5 block text-sm font-medium text-ft-text">
               New password
             </label>
             <Input
@@ -122,7 +122,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-nova-text">
+            <label className="mb-1.5 block text-sm font-medium text-ft-text">
               Confirm new password
             </label>
             <Input
@@ -133,7 +133,7 @@ export default function LoginPage() {
             />
           </div>
           {passwordChangeError && (
-            <p className="text-sm text-nova-danger">{passwordChangeError}</p>
+            <p className="text-sm text-ft-danger">{passwordChangeError}</p>
           )}
           <Button type="submit" className="w-full" disabled={passwordChangeSubmitting}>
             {passwordChangeSubmitting ? "Saving…" : "Set password & continue"}
@@ -145,18 +145,18 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-      <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-        Nova
+      <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
+        FitnessTracker
       </Link>
 
-      <h1 className="text-2xl font-semibold text-nova-text">Welcome back</h1>
-      <p className="mt-2 text-sm text-nova-muted">
+      <h1 className="text-2xl font-semibold text-ft-text">Welcome back</h1>
+      <p className="mt-2 text-sm text-ft-muted">
         Log in to see your plan and track today&apos;s workout.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-nova-text">
+          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ft-text">
             Email
           </label>
           <Input
@@ -170,7 +170,7 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-nova-text">
+          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ft-text">
             Password
           </label>
           <Input
@@ -183,16 +183,16 @@ export default function LoginPage() {
           />
         </div>
 
-        {error && <p className="text-sm text-nova-danger">{error}</p>}
+        {error && <p className="text-sm text-ft-danger">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Logging in…" : "Log in"}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-nova-muted">
-        New to Nova?{" "}
-        <Link href="/auth/register" className="font-medium text-nova-accent hover:underline">
+      <p className="mt-6 text-center text-sm text-ft-muted">
+        New to FitnessTracker?{" "}
+        <Link href="/auth/register" className="font-medium text-ft-accent hover:underline">
           Create an account
         </Link>
       </p>

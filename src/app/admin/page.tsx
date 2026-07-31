@@ -38,7 +38,7 @@ import {
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin123";
-const ADMIN_SESSION_KEY = "nova_admin_session";
+const ADMIN_SESSION_KEY = "ft_admin_session";
 
 interface PlanRow {
   id: string;
@@ -56,9 +56,9 @@ const GOAL_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-nova-warning/10 text-nova-warning",
-  approved: "bg-nova-success/10 text-nova-success",
-  changes_requested: "bg-nova-danger/10 text-nova-danger",
+  pending: "bg-ft-warning/10 text-ft-warning",
+  approved: "bg-ft-success/10 text-ft-success",
+  changes_requested: "bg-ft-danger/10 text-ft-danger",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -102,7 +102,7 @@ function timeAgo(iso: string) {
 
 function Avatar({ name }: { name: string }) {
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-xs font-semibold text-ft-accent">
       {initials(name)}
     </span>
   );
@@ -123,12 +123,12 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-nova-border/70 px-4 py-3.5">
+    <section className="rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-ft-border/70 px-4 py-3.5">
         <div>
-          <h2 className="text-sm font-semibold text-nova-text">{title}</h2>
+          <h2 className="text-sm font-semibold text-ft-text">{title}</h2>
           {description && (
-            <p className="mt-0.5 text-xs text-nova-muted">{description}</p>
+            <p className="mt-0.5 text-xs text-ft-muted">{description}</p>
           )}
         </div>
         {action}
@@ -140,7 +140,7 @@ function SectionCard({
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl border border-dashed border-nova-border px-4 py-6 text-center text-sm text-nova-muted">
+    <p className="rounded-xl border border-dashed border-ft-border px-4 py-6 text-center text-sm text-ft-muted">
       {children}
     </p>
   );
@@ -344,8 +344,8 @@ export default function AdminPage() {
 
     const suffix = Math.random().toString(36).slice(2, 8);
     const name = `Test User ${suffix}`;
-    const email = `test-${suffix}@nova.local`;
-    const dummyPassword = `Nova-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const email = `test-${suffix}@fitnesstracker.local`;
+    const dummyPassword = `FT-${suffix}-${Math.floor(1000 + Math.random() * 9000)}`;
     const goals: Goal[] = ["build-muscle", "fat-loss", "general-fitness"];
     const goal = goals[Math.floor(Math.random() * goals.length)];
 
@@ -491,7 +491,7 @@ export default function AdminPage() {
   if (checkingSession) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
@@ -499,20 +499,20 @@ export default function AdminPage() {
   if (forcePasswordChange) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-          Nova Staff
+        <span className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
+          FitnessTracker Staff
         </span>
-        <h1 className="text-2xl font-semibold text-nova-text">
+        <h1 className="text-2xl font-semibold text-ft-text">
           Set a new password
         </h1>
-        <p className="mt-2 text-sm text-nova-muted">
+        <p className="mt-2 text-sm text-ft-muted">
           This is your first time logging in — choose a new password before
           continuing.
         </p>
 
         <form onSubmit={handleSetNewPassword} className="mt-8 space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">
               New password
             </span>
             <Input
@@ -523,7 +523,7 @@ export default function AdminPage() {
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">
               Confirm new password
             </span>
             <Input
@@ -534,7 +534,7 @@ export default function AdminPage() {
             />
           </label>
           {passwordChangeError && (
-            <p className="text-sm text-nova-danger">{passwordChangeError}</p>
+            <p className="text-sm text-ft-danger">{passwordChangeError}</p>
           )}
           <Button
             type="submit"
@@ -551,8 +551,8 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <span className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-          Nova Staff
+        <span className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
+          FitnessTracker Staff
         </span>
 
         <Tabs defaultValue="admin">
@@ -564,7 +564,7 @@ export default function AdminPage() {
           <TabsContent value="admin" className="mt-6">
             <form onSubmit={handleAdminSubmit} className="space-y-4">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                <span className="mb-1.5 block text-sm font-medium text-ft-text">
                   ID
                 </span>
                 <Input
@@ -575,7 +575,7 @@ export default function AdminPage() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                <span className="mb-1.5 block text-sm font-medium text-ft-text">
                   Password
                 </span>
                 <Input
@@ -586,7 +586,7 @@ export default function AdminPage() {
                 />
               </label>
               {adminError && (
-                <p className="text-sm text-nova-danger">{adminError}</p>
+                <p className="text-sm text-ft-danger">{adminError}</p>
               )}
               <Button type="submit" className="w-full">
                 Log in as admin
@@ -597,7 +597,7 @@ export default function AdminPage() {
           <TabsContent value="coach" className="mt-6">
             <form onSubmit={handleCoachSubmit} className="space-y-4">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                <span className="mb-1.5 block text-sm font-medium text-ft-text">
                   Coach ID
                 </span>
                 <Input
@@ -608,7 +608,7 @@ export default function AdminPage() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-nova-text">
+                <span className="mb-1.5 block text-sm font-medium text-ft-text">
                   Password
                 </span>
                 <Input
@@ -619,7 +619,7 @@ export default function AdminPage() {
                 />
               </label>
               {coachError && (
-                <p className="text-sm text-nova-danger">{coachError}</p>
+                <p className="text-sm text-ft-danger">{coachError}</p>
               )}
               <Button
                 type="submit"
@@ -636,14 +636,14 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-nova-bg">
-      <header className="sticky top-0 z-40 border-b border-nova-border bg-nova-surface/90 backdrop-blur">
+    <div className="min-h-dvh bg-ft-bg">
+      <header className="sticky top-0 z-40 border-b border-ft-border bg-ft-surface/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-5 py-3.5">
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold tracking-tight text-nova-text">
-              Nova Admin
+            <p className="truncate text-base font-semibold tracking-tight text-ft-text">
+              FitnessTracker Admin
             </p>
-            <p className="truncate text-xs text-nova-muted">
+            <p className="truncate text-xs text-ft-muted">
               {activeClients.length} member
               {activeClients.length === 1 ? "" : "s"} · {activeCoaches.length}{" "}
               coach{activeCoaches.length === 1 ? "" : "es"}
@@ -655,7 +655,7 @@ export default function AdminPage() {
             </Button>
             <button
               onClick={handleAdminSignOut}
-              className="text-sm font-medium text-nova-muted hover:text-nova-text"
+              className="text-sm font-medium text-ft-muted hover:text-ft-text"
             >
               Sign out
             </button>
@@ -683,14 +683,14 @@ export default function AdminPage() {
                     className={cn(
                       "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                       active
-                        ? "bg-nova-accent/10 text-nova-accent"
-                        : "text-nova-muted hover:bg-nova-surface hover:text-nova-text",
+                        ? "bg-ft-accent/10 text-ft-accent"
+                        : "text-ft-muted hover:bg-ft-surface hover:text-ft-text",
                     )}
                   >
                     <Icon className="size-4 shrink-0" />
                     {label}
                     {badge > 0 && (
-                      <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-nova-warning/15 px-1.5 text-xs font-semibold text-nova-warning">
+                      <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-ft-warning/15 px-1.5 text-xs font-semibold text-ft-warning">
                         {badge}
                       </span>
                     )}
@@ -703,7 +703,7 @@ export default function AdminPage() {
 
         <main className="space-y-5">
           {panelError && (
-            <p className="rounded-xl border border-nova-danger/30 bg-nova-danger/[0.05] px-4 py-2.5 text-sm text-nova-danger">
+            <p className="rounded-xl border border-ft-danger/30 bg-ft-danger/[0.05] px-4 py-2.5 text-sm text-ft-danger">
               {panelError}
             </p>
           )}
@@ -748,7 +748,7 @@ export default function AdminPage() {
                 description="Everything waiting on you, in one place."
               >
                 {unassigned.length === 0 && pendingPlans.length === 0 ? (
-                  <p className="flex items-center gap-2 rounded-xl bg-nova-success/[0.06] px-4 py-4 text-sm text-nova-success">
+                  <p className="flex items-center gap-2 rounded-xl bg-ft-success/[0.06] px-4 py-4 text-sm text-ft-success">
                     <CheckCircle2 className="size-4" />
                     All clear — nothing needs your attention.
                   </p>
@@ -757,15 +757,15 @@ export default function AdminPage() {
                     {unassigned.map((client) => (
                       <li
                         key={client.id}
-                        className="flex flex-col gap-2 rounded-xl border border-nova-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                        className="flex flex-col gap-2 rounded-xl border border-ft-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <Avatar name={client.full_name} />
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-nova-text">
+                            <p className="truncate text-sm font-medium text-ft-text">
                               {client.full_name || "(no name)"}
                             </p>
-                            <p className="text-xs text-nova-muted">
+                            <p className="text-xs text-ft-muted">
                               Needs a coach
                             </p>
                           </div>
@@ -776,7 +776,7 @@ export default function AdminPage() {
                             e.target.value &&
                             handleAssignCoach(client.id, e.target.value)
                           }
-                          className="h-9 shrink-0 rounded-md border border-nova-accent bg-nova-surface px-2 text-sm font-medium text-nova-accent outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                          className="h-9 shrink-0 rounded-md border border-ft-accent bg-ft-surface px-2 text-sm font-medium text-ft-accent outline-none focus-visible:ring-2 focus-visible:ring-ft-accent"
                         >
                           <option value="" disabled>
                             Assign a coach
@@ -794,21 +794,21 @@ export default function AdminPage() {
                       <li key={plan.id}>
                         <Link
                           href={`/admin/review?id=${plan.id}`}
-                          className="flex items-center justify-between rounded-xl border border-nova-border/70 p-3 transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]"
+                          className="flex items-center justify-between rounded-xl border border-ft-border/70 p-3 transition-colors hover:border-ft-accent/40 hover:bg-ft-accent/[0.03]"
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <Avatar name={plan.full_name} />
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-nova-text">
+                              <p className="truncate text-sm font-medium text-ft-text">
                                 {plan.full_name}
                               </p>
-                              <p className="text-xs text-nova-muted">
+                              <p className="text-xs text-ft-muted">
                                 {GOAL_LABEL[plan.goal] ?? plan.goal} · submitted{" "}
                                 {timeAgo(plan.created_at)}
                               </p>
                             </div>
                           </div>
-                          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-nova-accent">
+                          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-ft-accent">
                             Review
                             <ArrowRight className="size-4" />
                           </span>
@@ -877,7 +877,7 @@ export default function AdminPage() {
                 }
               >
                 {showMemberForm && (
-                  <div className="mb-4 rounded-xl border border-nova-border/70 bg-nova-bg p-4">
+                  <div className="mb-4 rounded-xl border border-ft-border/70 bg-ft-bg p-4">
                     <AccountCreator
                       role="client"
                       coaches={coaches}
@@ -889,12 +889,12 @@ export default function AdminPage() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative min-w-0 flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-nova-muted" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ft-muted" />
                     <input
                       value={memberQuery}
                       onChange={(e) => setMemberQuery(e.target.value)}
                       placeholder="Search members"
-                      className="flex h-10 w-full rounded-xl border border-nova-border bg-nova-surface pl-9 pr-3 text-sm text-nova-text outline-none placeholder:text-nova-muted focus-visible:ring-2 focus-visible:ring-nova-accent"
+                      className="flex h-10 w-full rounded-xl border border-ft-border bg-ft-surface pl-9 pr-3 text-sm text-ft-text outline-none placeholder:text-ft-muted focus-visible:ring-2 focus-visible:ring-ft-accent"
                     />
                   </div>
                   <div className="flex gap-1.5">
@@ -907,8 +907,8 @@ export default function AdminPage() {
                           className={cn(
                             "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
                             memberFilter === filter
-                              ? "bg-nova-accent text-white"
-                              : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                              ? "bg-ft-accent text-white"
+                              : "bg-ft-bg text-ft-muted ring-1 ring-ft-border hover:text-ft-text",
                           )}
                         >
                           {filter}
@@ -933,27 +933,27 @@ export default function AdminPage() {
                     return (
                       <div
                         key={client.id}
-                        className="rounded-xl border border-nova-border/70 p-3"
+                        className="rounded-xl border border-ft-border/70 p-3"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                           <div className="flex min-w-0 flex-1 items-center gap-3">
                             <Avatar name={client.full_name} />
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-nova-text">
+                              <p className="truncate text-sm font-medium text-ft-text">
                                 {client.full_name || "(no name)"}
                               </p>
-                              <p className="flex items-center gap-1.5 overflow-hidden text-xs text-nova-muted [&>span]:whitespace-nowrap">
+                              <p className="flex items-center gap-1.5 overflow-hidden text-xs text-ft-muted [&>span]:whitespace-nowrap">
                                 {plan ? (
                                   <span
                                     className={cn(
                                       "rounded-full px-1.5 py-0.5 font-medium",
-                                      STATUS_STYLE[plan.status] ?? "bg-nova-bg",
+                                      STATUS_STYLE[plan.status] ?? "bg-ft-bg",
                                     )}
                                   >
                                     {STATUS_LABEL[plan.status] ?? plan.status}
                                   </span>
                                 ) : (
-                                  <span className="rounded-full bg-nova-bg px-1.5 py-0.5">
+                                  <span className="rounded-full bg-ft-bg px-1.5 py-0.5">
                                     No plan yet
                                   </span>
                                 )}
@@ -975,7 +975,7 @@ export default function AdminPage() {
                                 handleAssignCoach(client.id, e.target.value)
                               }
                               aria-label={`Coach for ${client.full_name || "member"}`}
-                              className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                              className="h-9 rounded-md border border-ft-border bg-ft-surface px-2 text-sm text-ft-text outline-none focus-visible:ring-2 focus-visible:ring-ft-accent"
                             >
                               <option value="">— No coach —</option>
                               {activeCoaches.map((coach) => (
@@ -1031,7 +1031,7 @@ export default function AdminPage() {
                         </div>
 
                         {editing && (
-                          <div className="mt-3 border-t border-nova-border/70 pt-3">
+                          <div className="mt-3 border-t border-ft-border/70 pt-3">
                             <AccountEditor
                               account={client}
                               mode="admin"
@@ -1067,7 +1067,7 @@ export default function AdminPage() {
               }
             >
               {showCoachForm && (
-                <div className="mb-4 rounded-xl border border-nova-border/70 bg-nova-bg p-4">
+                <div className="mb-4 rounded-xl border border-ft-border/70 bg-ft-bg p-4">
                   <AccountCreator
                     role="coach"
                     onCreated={() => refreshLists()}
@@ -1106,7 +1106,7 @@ export default function AdminPage() {
                 description="Pick members, then assign them to a coach in one go."
               >
                 {unassigned.length === 0 ? (
-                  <p className="flex items-center gap-2 rounded-xl bg-nova-success/[0.06] px-4 py-4 text-sm text-nova-success">
+                  <p className="flex items-center gap-2 rounded-xl bg-ft-success/[0.06] px-4 py-4 text-sm text-ft-success">
                     <CheckCircle2 className="size-4" />
                     Every member has a coach.
                   </p>
@@ -1121,8 +1121,8 @@ export default function AdminPage() {
                               className={cn(
                                 "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors",
                                 checked
-                                  ? "border-nova-accent bg-nova-accent/[0.04]"
-                                  : "border-nova-border/70 hover:bg-nova-bg",
+                                  ? "border-ft-accent bg-ft-accent/[0.04]"
+                                  : "border-ft-border/70 hover:bg-ft-bg",
                               )}
                             >
                               <input
@@ -1135,10 +1135,10 @@ export default function AdminPage() {
                                       : prev.filter((id) => id !== client.id),
                                   )
                                 }
-                                className="size-4 accent-[var(--nova-accent)]"
+                                className="size-4 accent-[var(--ft-accent)]"
                               />
                               <Avatar name={client.full_name} />
-                              <span className="min-w-0 flex-1 truncate text-sm font-medium text-nova-text">
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium text-ft-text">
                                 {client.full_name || "(no name)"}
                               </span>
                             </label>
@@ -1147,14 +1147,14 @@ export default function AdminPage() {
                       })}
                     </ul>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-nova-bg p-3">
-                      <span className="text-sm text-nova-muted">
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-ft-bg p-3">
+                      <span className="text-sm text-ft-muted">
                         {selectedForAssign.length} selected
                       </span>
                       <select
                         value={bulkCoachId}
                         onChange={(e) => setBulkCoachId(e.target.value)}
-                        className="h-9 rounded-md border border-nova-border bg-nova-surface px-2 text-sm text-nova-text outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                        className="h-9 rounded-md border border-ft-border bg-ft-surface px-2 text-sm text-ft-text outline-none focus-visible:ring-2 focus-visible:ring-ft-accent"
                       >
                         <option value="">Choose a coach…</option>
                         {activeCoaches.map((coach) => (
@@ -1196,15 +1196,15 @@ export default function AdminPage() {
                       return (
                         <div
                           key={coach.id}
-                          className="rounded-xl border border-nova-border/70 p-3"
+                          className="rounded-xl border border-ft-border/70 p-3"
                         >
                           <div className="flex items-center gap-2.5">
                             <Avatar name={coach.full_name} />
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-nova-text">
+                              <p className="truncate text-sm font-medium text-ft-text">
                                 {coach.full_name || "(no name)"}
                               </p>
-                              <p className="text-xs text-nova-muted">
+                              <p className="text-xs text-ft-muted">
                                 {roster.length} member
                                 {roster.length === 1 ? "" : "s"}
                               </p>
@@ -1213,16 +1213,16 @@ export default function AdminPage() {
 
                           <ul className="mt-2.5 space-y-1">
                             {roster.length === 0 && (
-                              <li className="text-xs text-nova-muted">
+                              <li className="text-xs text-ft-muted">
                                 No members yet.
                               </li>
                             )}
                             {roster.map((client) => (
                               <li
                                 key={client.id}
-                                className="flex items-center gap-2 rounded-lg bg-nova-bg px-2.5 py-1.5"
+                                className="flex items-center gap-2 rounded-lg bg-ft-bg px-2.5 py-1.5"
                               >
-                                <span className="min-w-0 flex-1 truncate text-sm text-nova-text">
+                                <span className="min-w-0 flex-1 truncate text-sm text-ft-text">
                                   {client.full_name || "(no name)"}
                                 </span>
                                 {activeCoaches.length > 1 && (
@@ -1236,7 +1236,7 @@ export default function AdminPage() {
                                         e.target.value,
                                       )
                                     }
-                                    className="h-7 shrink-0 rounded-md border border-nova-border bg-nova-surface px-1.5 text-xs text-nova-muted outline-none focus-visible:ring-2 focus-visible:ring-nova-accent"
+                                    className="h-7 shrink-0 rounded-md border border-ft-border bg-ft-surface px-1.5 text-xs text-ft-muted outline-none focus-visible:ring-2 focus-visible:ring-ft-accent"
                                   >
                                     <option value="">Move…</option>
                                     {activeCoaches
@@ -1253,7 +1253,7 @@ export default function AdminPage() {
                                   onClick={() =>
                                     handleAssignCoach(client.id, "")
                                   }
-                                  className="shrink-0 text-xs font-medium text-nova-muted hover:text-nova-danger"
+                                  className="shrink-0 text-xs font-medium text-ft-muted hover:text-ft-danger"
                                 >
                                   Unassign
                                 </button>
@@ -1288,7 +1288,7 @@ export default function AdminPage() {
                   {[
                     {
                       id: "ai" as const,
-                      title: "Nova AI",
+                      title: "AI drafting",
                       blurb:
                         "Reads the assessment and writes a programme plus a report explaining it.",
                     },
@@ -1309,26 +1309,26 @@ export default function AdminPage() {
                         className={cn(
                           "rounded-xl border p-3 text-left transition-colors",
                           active
-                            ? "border-nova-accent bg-nova-accent/[0.05] ring-1 ring-nova-accent"
-                            : "border-nova-border/70 hover:border-nova-accent/40",
+                            ? "border-ft-accent bg-ft-accent/[0.05] ring-1 ring-ft-accent"
+                            : "border-ft-border/70 hover:border-ft-accent/40",
                         )}
                       >
                         <span className="flex items-center justify-between gap-2">
                           <span
                             className={cn(
                               "text-sm font-medium",
-                              active ? "text-nova-accent" : "text-nova-text",
+                              active ? "text-ft-accent" : "text-ft-text",
                             )}
                           >
                             {option.title}
                           </span>
                           {active && (
-                            <span className="rounded-full bg-nova-accent px-2 py-0.5 text-[11px] font-medium text-white">
+                            <span className="rounded-full bg-ft-accent px-2 py-0.5 text-[11px] font-medium text-white">
                               On
                             </span>
                           )}
                         </span>
-                        <span className="mt-1 block text-xs text-nova-muted">
+                        <span className="mt-1 block text-xs text-ft-muted">
                           {option.blurb}
                         </span>
                       </button>
@@ -1350,8 +1350,8 @@ export default function AdminPage() {
                         className={cn(
                           "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors",
                           planFilter === filter
-                            ? "bg-nova-accent text-white"
-                            : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                            ? "bg-ft-accent text-white"
+                            : "bg-ft-bg text-ft-muted ring-1 ring-ft-border hover:text-ft-text",
                         )}
                       >
                         {filter}
@@ -1374,15 +1374,15 @@ export default function AdminPage() {
                       <Link
                         key={plan.id}
                         href={`/admin/review?id=${plan.id}`}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-nova-border/70 p-3 transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-ft-border/70 p-3 transition-colors hover:border-ft-accent/40 hover:bg-ft-accent/[0.03]"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <Avatar name={plan.full_name} />
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-nova-text">
+                            <p className="truncate text-sm font-medium text-ft-text">
                               {plan.full_name}
                             </p>
-                            <p className="truncate text-xs text-nova-muted">
+                            <p className="truncate text-xs text-ft-muted">
                               {GOAL_LABEL[plan.goal] ?? plan.goal} ·{" "}
                               {timeAgo(plan.created_at)}
                               {coach ? ` · Coach ${coach.full_name}` : ""}
@@ -1394,12 +1394,12 @@ export default function AdminPage() {
                             className={cn(
                               "hidden rounded-full px-2 py-0.5 text-xs font-medium sm:inline",
                               STATUS_STYLE[plan.status] ??
-                                "bg-nova-bg text-nova-muted",
+                                "bg-ft-bg text-ft-muted",
                             )}
                           >
                             {STATUS_LABEL[plan.status] ?? plan.status}
                           </span>
-                          <ArrowRight className="size-4 text-nova-accent" />
+                          <ArrowRight className="size-4 text-ft-accent" />
                         </div>
                       </Link>
                     );

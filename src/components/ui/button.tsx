@@ -9,13 +9,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-nova-accent text-white hover:bg-nova-accent-hover",
-        success: "bg-nova-success text-white hover:bg-nova-success/90",
-        destructive: "bg-nova-danger text-white hover:bg-nova-danger/90",
+        default: "bg-ft-accent text-white hover:bg-ft-accent-hover",
+        success: "bg-ft-success text-white hover:bg-ft-success/90",
+        destructive: "bg-ft-danger text-white hover:bg-ft-danger/90",
         outline:
-          "border border-nova-border bg-transparent text-nova-text hover:bg-nova-surface",
-        ghost: "bg-transparent text-nova-text hover:bg-nova-surface",
-        link: "text-nova-accent underline-offset-4 hover:underline",
+          "border border-ft-border bg-transparent text-ft-text hover:bg-ft-surface",
+        ghost: "bg-transparent text-ft-text hover:bg-ft-surface",
+        link: "text-ft-accent underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 py-2",

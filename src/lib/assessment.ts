@@ -1,5 +1,5 @@
 /**
- * Nova's medical assessment.
+ * The medical assessment.
  *
  * The whole intake lives here as data rather than markup so the form, the
  * coach's read-only view, and the AI prompt all describe the same questions.
@@ -42,7 +42,7 @@ export interface AssessmentStep {
   fields: AssessmentField[];
 }
 
-/** Nova doesn't coach minors. */
+/** We don't coach minors. */
 export const MIN_AGE = 18;
 
 /** The latest date of birth that still makes someone MIN_AGE, as yyyy-mm-dd. */
@@ -71,10 +71,10 @@ export const ASSESSMENT_STEPS: AssessmentStep[] = [
         label: "Date of birth",
         kind: "date",
         required: true,
-        // Nova only coaches adults, so the picker won't offer a date that
+        // We only coach adults, so the picker won't offer a date that
         // would make someone under 18.
         maxAge: MIN_AGE,
-        hint: `You must be ${MIN_AGE} or over to train with Nova.`,
+        hint: `You must be ${MIN_AGE} or over to train with us.`,
       },
       {
         id: "gender",

@@ -174,7 +174,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-nova-text">
+          <h2 className="text-sm font-semibold text-ft-text">
             {draft.id ? "Edit template" : "New template"}
           </h2>
           <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
@@ -184,7 +184,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
         </div>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-nova-text">Name</span>
+          <span className="mb-1.5 block text-sm font-medium text-ft-text">Name</span>
           <Input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
@@ -193,8 +193,8 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-nova-text">
-            Description <span className="text-nova-muted">(optional)</span>
+          <span className="mb-1.5 block text-sm font-medium text-ft-text">
+            Description <span className="text-ft-muted">(optional)</span>
           </span>
           <Textarea
             value={draft.description}
@@ -210,7 +210,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
           onChange={(days) => setDraft({ ...draft, days })}
         />
 
-        {error && <p className="text-sm text-nova-danger">{error}</p>}
+        {error && <p className="text-sm text-ft-danger">{error}</p>}
 
         <div className="flex items-center gap-2">
           <Button onClick={save} disabled={saving}>
@@ -226,14 +226,14 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
 
   return (
     <div className="space-y-4">
-      {error && <p className="text-sm text-nova-danger">{error}</p>}
+      {error && <p className="text-sm text-ft-danger">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={() => startNew()}>
           <Plus className="size-3.5" />
           New template
         </Button>
-        <span className="text-xs text-nova-muted">or start from a built-in split:</span>
+        <span className="text-xs text-ft-muted">or start from a built-in split:</span>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -248,7 +248,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
                 preset.tagline,
               )
             }
-            className="rounded-full bg-nova-surface px-3 py-1.5 text-xs font-medium text-nova-muted ring-1 ring-nova-border transition-colors hover:text-nova-text"
+            className="rounded-full bg-ft-surface px-3 py-1.5 text-xs font-medium text-ft-muted ring-1 ring-ft-border transition-colors hover:text-ft-text"
           >
             <Copy className="mr-1 inline size-3" />
             {preset.name}
@@ -257,9 +257,9 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
       </div>
 
       {loading ? (
-        <p className="text-sm text-nova-muted">Loading templates…</p>
+        <p className="text-sm text-ft-muted">Loading templates…</p>
       ) : templates.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-nova-border px-4 py-6 text-center text-sm text-nova-muted">
+        <p className="rounded-xl border border-dashed border-ft-border px-4 py-6 text-center text-sm text-ft-muted">
           No templates yet. Create one and every coach can assign it.
         </p>
       ) : (
@@ -271,18 +271,18 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
             return (
               <li
                 key={template.id}
-                className="rounded-xl border border-nova-border/70 bg-nova-surface p-3"
+                className="rounded-xl border border-ft-border/70 bg-ft-surface p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 text-sm font-medium text-nova-text">
+                    <p className="flex items-center gap-1.5 text-sm font-medium text-ft-text">
                       <span className="truncate">{template.name}</span>
                       <span
                         className={cn(
                           "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                           template.owner_role === "admin"
-                            ? "bg-nova-accent/10 text-nova-accent"
-                            : "bg-nova-bg text-nova-muted",
+                            ? "bg-ft-accent/10 text-ft-accent"
+                            : "bg-ft-bg text-ft-muted",
                         )}
                       >
                         {template.owner_role === "admin"
@@ -290,7 +290,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
                           : (template.owner_name ?? "Coach")}
                       </span>
                     </p>
-                    <p className="mt-0.5 text-xs text-nova-muted">
+                    <p className="mt-0.5 text-xs text-ft-muted">
                       {dayCount} day{dayCount === 1 ? "" : "s"}
                       {template.description ? ` · ${template.description}` : ""}
                     </p>
@@ -306,7 +306,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
                           type="button"
                           aria-label={`Delete ${template.name}`}
                           onClick={() => remove(template)}
-                          className="rounded-md p-2 text-nova-muted transition-colors hover:bg-nova-bg hover:text-nova-danger"
+                          className="rounded-md p-2 text-ft-muted transition-colors hover:bg-ft-bg hover:text-ft-danger"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -314,7 +314,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
                     ) : (
                       <>
                         <span
-                          className="flex items-center gap-1 text-xs text-nova-muted"
+                          className="flex items-center gap-1 text-xs text-ft-muted"
                           title="Only its owner or an admin can edit this template"
                         >
                           <Lock className="size-3" />

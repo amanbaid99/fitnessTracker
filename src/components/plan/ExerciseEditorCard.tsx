@@ -38,7 +38,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-medium text-nova-muted">{label}</span>
+      <span className="mb-1 block text-[11px] font-medium text-ft-muted">{label}</span>
       <Input
         type={type}
         value={value}
@@ -76,7 +76,7 @@ export function ExerciseEditorCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+    <div className="overflow-hidden rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
       <div className="flex items-center gap-3 p-3">
         <ExerciseArt name={exercise.name} exerciseId={exercise.exerciseId} size="md" />
 
@@ -86,12 +86,12 @@ export function ExerciseEditorCard({
           aria-expanded={open}
           className="min-w-0 flex-1 text-left"
         >
-          <p className="truncate text-sm font-semibold text-nova-text">{exercise.name}</p>
-          <p className="mt-0.5 text-xs text-nova-muted">
+          <p className="truncate text-sm font-semibold text-ft-text">{exercise.name}</p>
+          <p className="mt-0.5 text-xs text-ft-muted">
             {exercise.sets} × {exercise.reps} · Rest {exercise.rest}
           </p>
           {alternates.length > 0 && (
-            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-nova-accent/10 px-2 py-0.5 text-[11px] font-medium text-nova-accent">
+            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ft-accent/10 px-2 py-0.5 text-[11px] font-medium text-ft-accent">
               <Repeat2 className="size-3" />
               {alternates.length} alternate{alternates.length === 1 ? "" : "s"}
             </span>
@@ -106,7 +106,7 @@ export function ExerciseEditorCard({
                 aria-label="Move up"
                 disabled={!canMoveUp}
                 onClick={() => onMove(-1)}
-                className="text-nova-muted transition-colors hover:text-nova-text disabled:opacity-30"
+                className="text-ft-muted transition-colors hover:text-ft-text disabled:opacity-30"
               >
                 <ChevronUp className="size-4" />
               </button>
@@ -115,7 +115,7 @@ export function ExerciseEditorCard({
                 aria-label="Move down"
                 disabled={!canMoveDown}
                 onClick={() => onMove(1)}
-                className="text-nova-muted transition-colors hover:text-nova-text disabled:opacity-30"
+                className="text-ft-muted transition-colors hover:text-ft-text disabled:opacity-30"
               >
                 <ChevronDown className="size-4" />
               </button>
@@ -125,7 +125,7 @@ export function ExerciseEditorCard({
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Collapse" : "Edit exercise"}
-            className="ml-1 rounded-md p-1.5 text-nova-muted transition-colors hover:bg-nova-bg hover:text-nova-text"
+            className="ml-1 rounded-md p-1.5 text-ft-muted transition-colors hover:bg-ft-bg hover:text-ft-text"
           >
             <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
           </button>
@@ -133,9 +133,9 @@ export function ExerciseEditorCard({
       </div>
 
       {open && (
-        <div className="space-y-4 border-t border-nova-border/70 px-3 py-3">
+        <div className="space-y-4 border-t border-ft-border/70 px-3 py-3">
           <label className="block">
-            <span className="mb-1 block text-[11px] font-medium text-nova-muted">
+            <span className="mb-1 block text-[11px] font-medium text-ft-muted">
               Exercise name
             </span>
             <Input
@@ -164,10 +164,10 @@ export function ExerciseEditorCard({
           )}
 
           <div>
-            <p className="text-[11px] font-medium text-nova-muted">
+            <p className="text-[11px] font-medium text-ft-muted">
               Alternate exercises ({alternates.length}/{MAX_ALTERNATES})
             </p>
-            <p className="mt-0.5 text-[11px] text-nova-muted">
+            <p className="mt-0.5 text-[11px] text-ft-muted">
               Swaps you can log instead of {exercise.name} on any given week.
             </p>
 
@@ -176,21 +176,21 @@ export function ExerciseEditorCard({
                 {alternates.map((alternate, i) => (
                   <li
                     key={`${alternate.name}-${i}`}
-                    className="flex items-center gap-2 rounded-xl border border-nova-border/70 bg-nova-bg px-2 py-1.5"
+                    className="flex items-center gap-2 rounded-xl border border-ft-border/70 bg-ft-bg px-2 py-1.5"
                   >
                     <ExerciseArt
                       name={alternate.name}
                       exerciseId={alternate.exerciseId}
                       size="sm"
                     />
-                    <span className="min-w-0 flex-1 truncate text-sm text-nova-text">
+                    <span className="min-w-0 flex-1 truncate text-sm text-ft-text">
                       {alternate.name}
                     </span>
                     <button
                       type="button"
                       aria-label={`Remove ${alternate.name}`}
                       onClick={() => removeAlternate(i)}
-                      className="rounded-md p-1.5 text-nova-muted transition-colors hover:bg-nova-surface hover:text-nova-danger"
+                      className="rounded-md p-1.5 text-ft-muted transition-colors hover:bg-ft-surface hover:text-ft-danger"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
@@ -218,7 +218,7 @@ export function ExerciseEditorCard({
           </div>
 
           <div className="flex justify-end">
-            <Button variant="ghost" size="sm" onClick={onRemove} className="text-nova-danger">
+            <Button variant="ghost" size="sm" onClick={onRemove} className="text-ft-danger">
               <Trash2 className="size-3.5" />
               Remove exercise
             </Button>

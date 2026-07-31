@@ -11,9 +11,9 @@ interface StatTileProps {
 }
 
 const TONES = {
-  default: "text-nova-accent bg-nova-accent/10",
-  warning: "text-nova-warning bg-nova-warning/10",
-  success: "text-nova-success bg-nova-success/10",
+  default: "text-ft-accent bg-ft-accent/10",
+  warning: "text-ft-warning bg-ft-warning/10",
+  success: "text-ft-success bg-ft-success/10",
 } as const;
 
 export function StatTile({
@@ -30,16 +30,16 @@ export function StatTile({
     <Wrapper
       {...(onClick ? { type: "button" as const, onClick } : {})}
       className={cn(
-        "flex items-center gap-3 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 text-left shadow-[0_1px_2px_rgba(28,30,38,0.04)]",
-        onClick && "transition-colors hover:border-nova-accent/40 hover:bg-nova-accent/[0.03]",
+        "flex items-center gap-3 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-left shadow-[0_1px_2px_rgba(28,30,38,0.04)]",
+        onClick && "transition-colors hover:border-ft-accent/40 hover:bg-ft-accent/[0.03]",
       )}
     >
       <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", TONES[tone])}>
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block text-xl font-semibold leading-tight text-nova-text">{value}</span>
-        <span className="block truncate text-xs text-nova-muted">{hint ?? label}</span>
+        <span className="block text-xl font-semibold leading-tight text-ft-text">{value}</span>
+        <span className="block truncate text-xs text-ft-muted">{hint ?? label}</span>
       </span>
     </Wrapper>
   );

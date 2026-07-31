@@ -106,11 +106,11 @@ export function CoachClientsPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-      <div className="flex items-start justify-between gap-2 border-b border-nova-border/70 px-4 py-3.5">
+    <section className="rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+      <div className="flex items-start justify-between gap-2 border-b border-ft-border/70 px-4 py-3.5">
         <div>
-          <h2 className="text-sm font-semibold text-nova-text">My Clients</h2>
-          <p className="mt-0.5 text-xs text-nova-muted">
+          <h2 className="text-sm font-semibold text-ft-text">My Clients</h2>
+          <p className="mt-0.5 text-xs text-ft-muted">
             {loading ? "Loading…" : `${clients.filter((c) => c.active).length} active`}
           </p>
         </div>
@@ -126,7 +126,7 @@ export function CoachClientsPanel({
 
       <div className="p-4">
         {showForm && (
-          <div className="mb-4 rounded-xl border border-nova-border/70 bg-nova-bg p-4">
+          <div className="mb-4 rounded-xl border border-ft-border/70 bg-ft-bg p-4">
             <AccountCreator
               role="client"
               claimForSignedInCoach
@@ -139,10 +139,10 @@ export function CoachClientsPanel({
           </div>
         )}
 
-        {error && <p className="mb-3 text-sm text-nova-danger">{error}</p>}
+        {error && <p className="mb-3 text-sm text-ft-danger">{error}</p>}
 
         {!loading && clients.length === 0 && (
-          <p className="rounded-xl border border-dashed border-nova-border px-4 py-6 text-center text-sm text-nova-muted">
+          <p className="rounded-xl border border-dashed border-ft-border px-4 py-6 text-center text-sm text-ft-muted">
             No clients yet. Add one, or ask your admin to assign you some.
           </p>
         )}
@@ -155,17 +155,17 @@ export function CoachClientsPanel({
                   className={cn(
                     "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                     client.active
-                      ? "bg-nova-accent/10 text-nova-accent"
-                      : "bg-nova-bg text-nova-muted",
+                      ? "bg-ft-accent/10 text-ft-accent"
+                      : "bg-ft-bg text-ft-muted",
                   )}
                 >
                   {initials(client.full_name)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-nova-text">
+                  <span className="block truncate text-sm font-medium text-ft-text">
                     {client.full_name || "(no name)"}
                   </span>
-                  {!client.active && <span className="text-xs text-nova-muted">Removed</span>}
+                  {!client.active && <span className="text-xs text-ft-muted">Removed</span>}
                 </span>
                 <Button
                   variant="outline"
@@ -184,7 +184,7 @@ export function CoachClientsPanel({
               </div>
 
               {editingId === client.id && (
-                <div className="mt-2 rounded-xl border border-nova-border/70 bg-nova-bg p-3">
+                <div className="mt-2 rounded-xl border border-ft-border/70 bg-ft-bg p-3">
                   <AccountEditor
                     account={client}
                     mode="coach"

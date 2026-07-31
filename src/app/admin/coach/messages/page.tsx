@@ -127,7 +127,7 @@ export default function CoachMessagesPage() {
   if (loading || !coachId) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function CoachMessagesPage() {
   const openClient = clients.find((client) => client.id === openClientId);
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-20 md:pb-6">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-20 md:pb-6">
       <BottomNav variant="coach" />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 px-5 md:max-w-4xl md:px-0">
@@ -143,16 +143,16 @@ export default function CoachMessagesPage() {
             both side by side. */}
         <div className="md:grid md:grid-cols-[260px_1fr] md:gap-6 md:pt-8">
           <aside className={cn(openClient && "hidden md:block")}>
-            <h1 className="py-4 text-lg font-semibold text-nova-text md:py-0 md:pb-3">
+            <h1 className="py-4 text-lg font-semibold text-ft-text md:py-0 md:pb-3">
               Messages
             </h1>
 
             {clients.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-nova-border px-4 py-8 text-center text-sm text-nova-muted">
+              <p className="rounded-xl border border-dashed border-ft-border px-4 py-8 text-center text-sm text-ft-muted">
                 No clients assigned to you yet.
               </p>
             ) : (
-              <ul className="divide-y divide-nova-border overflow-hidden rounded-2xl border border-nova-border/70 bg-nova-surface">
+              <ul className="divide-y divide-ft-border overflow-hidden rounded-2xl border border-ft-border/70 bg-ft-surface">
                 {clients.map((client) => {
                   const summary = summaries[client.id];
                   return (
@@ -161,30 +161,30 @@ export default function CoachMessagesPage() {
                         type="button"
                         onClick={() => setOpenClientId(client.id)}
                         className={cn(
-                          "flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-nova-accent/[0.03]",
-                          openClientId === client.id && "bg-nova-accent/[0.06]",
+                          "flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-ft-accent/[0.03]",
+                          openClientId === client.id && "bg-ft-accent/[0.06]",
                         )}
                       >
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-xs font-semibold text-ft-accent">
                           {initials(client.full_name)}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-baseline justify-between gap-2">
-                            <span className="truncate text-sm font-medium text-nova-text">
+                            <span className="truncate text-sm font-medium text-ft-text">
                               {client.full_name || "(no name)"}
                             </span>
                             {summary && (
-                              <span className="shrink-0 text-[11px] text-nova-muted">
+                              <span className="shrink-0 text-[11px] text-ft-muted">
                                 {shortTime(summary.lastAt)}
                               </span>
                             )}
                           </span>
-                          <span className="block truncate text-xs text-nova-muted">
+                          <span className="block truncate text-xs text-ft-muted">
                             {summary?.lastBody ?? "No messages yet"}
                           </span>
                         </span>
                         {summary && summary.unread > 0 && (
-                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-nova-accent text-[11px] font-semibold text-white">
+                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-ft-accent text-[11px] font-semibold text-white">
                             {summary.unread}
                           </span>
                         )}
@@ -204,14 +204,14 @@ export default function CoachMessagesPage() {
                     type="button"
                     onClick={() => setOpenClientId(null)}
                     aria-label="Back to conversations"
-                    className="rounded-md p-1.5 text-nova-muted transition-colors hover:bg-nova-surface hover:text-nova-text md:hidden"
+                    className="rounded-md p-1.5 text-ft-muted transition-colors hover:bg-ft-surface hover:text-ft-text md:hidden"
                   >
                     <ArrowLeft className="size-5" />
                   </button>
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-nova-accent/10 text-xs font-semibold text-nova-accent">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-xs font-semibold text-ft-accent">
                     {initials(openClient.full_name)}
                   </span>
-                  <p className="truncate text-sm font-semibold text-nova-text">
+                  <p className="truncate text-sm font-semibold text-ft-text">
                     {openClient.full_name || "(no name)"}
                   </p>
                 </header>
@@ -226,9 +226,9 @@ export default function CoachMessagesPage() {
                 </div>
               </>
             ) : (
-              <div className="hidden flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-nova-border py-20 text-center md:flex">
-                <MessageCircle className="size-6 text-nova-muted" />
-                <p className="mt-2 text-sm text-nova-muted">
+              <div className="hidden flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-ft-border py-20 text-center md:flex">
+                <MessageCircle className="size-6 text-ft-muted" />
+                <p className="mt-2 text-sm text-ft-muted">
                   Pick a client to open the conversation.
                 </p>
               </div>

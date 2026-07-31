@@ -48,19 +48,19 @@ export default function CoachTemplatesPage() {
   if (loading || !coachId) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-nova-bg pb-24 md:pb-16">
+    <div className="flex min-h-dvh w-full flex-col bg-ft-bg pb-24 md:pb-16">
       <BottomNav variant="coach" />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-4xl">
         <header className="px-5 pt-6 md:px-0 md:pt-10">
-          <h1 className="text-xl font-semibold text-nova-text md:text-2xl">Workout templates</h1>
-          <p className="mt-1 text-sm text-nova-muted">
+          <h1 className="text-xl font-semibold text-ft-text md:text-2xl">Workout templates</h1>
+          <p className="mt-1 text-sm text-ft-muted">
             Build programs once, then assign them to any client. Templates from your admin and
             other coaches are here to use or copy — only their owner can change them.
           </p>

@@ -56,9 +56,9 @@ function ChartTooltip({
   const point = payload[0].payload;
 
   return (
-    <div className="rounded-xl border border-nova-border bg-nova-surface px-3 py-2 shadow-lg">
-      <p className="text-xs font-medium text-nova-text">{point.label}</p>
-      <p className="mt-0.5 text-xs text-nova-muted">
+    <div className="rounded-xl border border-ft-border bg-ft-surface px-3 py-2 shadow-lg">
+      <p className="text-xs font-medium text-ft-text">{point.label}</p>
+      <p className="mt-0.5 text-xs text-ft-muted">
         {point.weight ? `${point.weight} kg` : "—"}
         {point.reps ? ` × ${point.reps}` : ""} · est. 1RM {point.oneRm} kg
       </p>
@@ -119,7 +119,7 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
 
   if (records.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-nova-border bg-nova-surface px-4 py-8 text-center text-sm text-nova-muted">
+      <p className="rounded-2xl border border-dashed border-ft-border bg-ft-surface px-4 py-8 text-center text-sm text-ft-muted">
         No records yet. Log your sets on the home tab, or add your starting numbers in
         the plan builder.
       </p>
@@ -128,11 +128,11 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-        <h3 className="text-sm font-semibold text-nova-text">
+      <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+        <h3 className="text-sm font-semibold text-ft-text">
           {activeRecord?.exercise_name ?? "Progress"}
         </h3>
-        <p className="mt-0.5 text-xs text-nova-muted">
+        <p className="mt-0.5 text-xs text-ft-muted">
           Estimated one-rep max, kg — each point is a new record.
         </p>
 
@@ -145,8 +145,8 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
               className={cn(
                 "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
                 record.exercise_key === activeKey
-                  ? "bg-nova-accent text-white"
-                  : "bg-nova-bg text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                  ? "bg-ft-accent text-white"
+                  : "bg-ft-bg text-ft-muted ring-1 ring-ft-border hover:text-ft-text",
               )}
             >
               {record.exercise_name}
@@ -155,7 +155,7 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
         </div>
 
         {series.length < 2 ? (
-          <p className="mt-4 rounded-xl bg-nova-bg px-4 py-6 text-center text-xs text-nova-muted">
+          <p className="mt-4 rounded-xl bg-ft-bg px-4 py-6 text-center text-xs text-ft-muted">
             {series.length === 1
               ? "One record so far — beat it to start the trend line."
               : "No history for this exercise yet."}
@@ -198,24 +198,24 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-nova-text">Personal records</h3>
-        <ul className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+        <h3 className="text-sm font-semibold text-ft-text">Personal records</h3>
+        <ul className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
           {sortedRecords.map((record) => (
             <li key={record.exercise_key} className="flex items-center gap-3 px-4 py-3">
               <ExerciseArt name={record.exercise_name} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-nova-text">
+                <p className="truncate text-sm font-medium text-ft-text">
                   {record.exercise_name}
                 </p>
-                <p className="text-xs text-nova-muted">
+                <p className="text-xs text-ft-muted">
                   {record.source === "starting"
                     ? "Starting number"
                     : relativeDay(record.achieved_at)}
                   {record.estimated_1rm ? ` · est. 1RM ${record.estimated_1rm} kg` : ""}
                 </p>
               </div>
-              <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-nova-text">
-                <Trophy className="size-3.5 text-nova-warning" />
+              <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-ft-text">
+                <Trophy className="size-3.5 text-ft-warning" />
                 {formatRecord(record)}
               </span>
             </li>

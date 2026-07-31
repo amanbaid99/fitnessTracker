@@ -91,12 +91,12 @@ export function PlanEditor({
               className={cn(
                 "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-nova-accent text-white"
-                  : "bg-nova-surface text-nova-muted ring-1 ring-nova-border hover:text-nova-text",
+                  ? "bg-ft-accent text-white"
+                  : "bg-ft-surface text-ft-muted ring-1 ring-ft-border hover:text-ft-text",
               )}
             >
               {day.title.split("—")[0].trim() || "Untitled"}
-              <span className={cn("ml-1.5 text-xs", active ? "text-white/70" : "text-nova-muted")}>
+              <span className={cn("ml-1.5 text-xs", active ? "text-white/70" : "text-ft-muted")}>
                 {day.exercises.length}
               </span>
             </button>
@@ -107,7 +107,7 @@ export function PlanEditor({
           <button
             type="button"
             onClick={addDay}
-            className="flex items-center gap-1 rounded-full border border-dashed border-nova-accent/50 px-3 py-1.5 text-sm font-medium text-nova-accent transition-colors hover:bg-nova-accent/[0.06]"
+            className="flex items-center gap-1 rounded-full border border-dashed border-ft-accent/50 px-3 py-1.5 text-sm font-medium text-ft-accent transition-colors hover:bg-ft-accent/[0.06]"
           >
             <Plus className="size-3.5" />
             Add day
@@ -116,10 +116,10 @@ export function PlanEditor({
       </div>
 
       {!activeDay ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-nova-border bg-nova-surface p-8 text-center">
-          <Dumbbell className="mx-auto size-6 text-nova-muted" />
-          <p className="mt-2 text-sm font-medium text-nova-text">No training days yet</p>
-          <p className="mt-1 text-xs text-nova-muted">
+        <div className="mt-4 rounded-2xl border border-dashed border-ft-border bg-ft-surface p-8 text-center">
+          <Dumbbell className="mx-auto size-6 text-ft-muted" />
+          <p className="mt-2 text-sm font-medium text-ft-text">No training days yet</p>
+          <p className="mt-1 text-xs text-ft-muted">
             Add a day to start building this program.
           </p>
           <Button size="sm" className="mt-4" onClick={addDay}>
@@ -141,7 +141,7 @@ export function PlanEditor({
               size="icon"
               aria-label={`Delete ${activeDay.title}`}
               onClick={() => removeDay(activeDay.id)}
-              className="shrink-0 text-nova-muted hover:text-nova-danger"
+              className="shrink-0 text-ft-muted hover:text-ft-danger"
             >
               <Trash2 className="size-4" />
             </Button>
@@ -149,7 +149,7 @@ export function PlanEditor({
 
           <div className="mt-3 space-y-2.5">
             {activeDay.exercises.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-nova-border bg-nova-surface px-4 py-6 text-center text-sm text-nova-muted">
+              <p className="rounded-2xl border border-dashed border-ft-border bg-ft-surface px-4 py-6 text-center text-sm text-ft-muted">
                 Nothing here yet — search below to add the first exercise.
               </p>
             )}

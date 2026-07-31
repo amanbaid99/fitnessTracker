@@ -49,14 +49,14 @@ export function DaySelector({
     activeDone && suggestedDay && suggestedDay.id !== activeDay.id ? suggestedDay : null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-nova-border/70 bg-nova-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+    <div className="overflow-hidden rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p
               className={cn(
                 "flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide",
-                activeDone ? "text-nova-success" : "text-nova-accent",
+                activeDone ? "text-ft-success" : "text-ft-accent",
               )}
             >
               {activeDone ? (
@@ -77,13 +77,13 @@ export function DaySelector({
               )}
             </p>
 
-            <h2 className="mt-0.5 truncate text-base font-semibold text-nova-text md:text-lg">
+            <h2 className="mt-0.5 truncate text-base font-semibold text-ft-text md:text-lg">
               {dayLabel(activeDay)}
             </h2>
             {daySubtitle(activeDay) && (
-              <p className="truncate text-xs text-nova-muted md:text-sm">{daySubtitle(activeDay)}</p>
+              <p className="truncate text-xs text-ft-muted md:text-sm">{daySubtitle(activeDay)}</p>
             )}
-            <p className="mt-0.5 text-xs text-nova-muted">
+            <p className="mt-0.5 text-xs text-ft-muted">
               {activeDay.exercises.length} exercise
               {activeDay.exercises.length === 1 ? "" : "s"} ·{" "}
               {relativeDay(lastCompleted.get(activeDay.id))}
@@ -107,7 +107,7 @@ export function DaySelector({
           <button
             type="button"
             onClick={() => onSelect(suggestedDay.id)}
-            className="mt-3 flex w-full items-center gap-1.5 rounded-xl bg-nova-accent/[0.06] px-3 py-2 text-left text-xs font-medium text-nova-accent"
+            className="mt-3 flex w-full items-center gap-1.5 rounded-xl bg-ft-accent/[0.06] px-3 py-2 text-left text-xs font-medium text-ft-accent"
           >
             <Sparkles className="size-3.5 shrink-0" />
             Suggested next: {dayLabel(suggestedDay)} — tap to switch back
@@ -118,25 +118,25 @@ export function DaySelector({
           <button
             type="button"
             onClick={() => onSelect(upNext.id)}
-            className="mt-3 flex w-full items-center gap-2 rounded-xl bg-nova-accent/[0.06] px-3 py-2.5 text-left"
+            className="mt-3 flex w-full items-center gap-2 rounded-xl bg-ft-accent/[0.06] px-3 py-2.5 text-left"
           >
-            <Play className="size-4 shrink-0 text-nova-accent" />
+            <Play className="size-4 shrink-0 text-ft-accent" />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-nova-text">
+              <span className="block truncate text-sm font-medium text-ft-text">
                 Next up: {dayLabel(upNext)}
               </span>
-              <span className="block text-xs text-nova-muted">
+              <span className="block text-xs text-ft-muted">
                 {upNext.exercises.length} exercise{upNext.exercises.length === 1 ? "" : "s"} ·{" "}
                 {relativeDay(lastCompleted.get(upNext.id))}
               </span>
             </span>
-            <span className="shrink-0 text-xs font-semibold text-nova-accent">Start</span>
+            <span className="shrink-0 text-xs font-semibold text-ft-accent">Start</span>
           </button>
         )}
       </div>
 
       {open && (
-        <ul className="border-t border-nova-border/70 p-2">
+        <ul className="border-t border-ft-border/70 p-2">
           {days.map((day, index) => {
             const isActive = day.id === activeDay.id;
             const isSuggested = day.id === suggestedDayId;
@@ -152,17 +152,17 @@ export function DaySelector({
                   }}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors",
-                    isActive ? "bg-nova-accent/[0.07]" : "hover:bg-nova-bg",
+                    isActive ? "bg-ft-accent/[0.07]" : "hover:bg-ft-bg",
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                       doneToday
-                        ? "bg-nova-success text-white"
+                        ? "bg-ft-success text-white"
                         : isActive
-                          ? "bg-nova-accent text-white"
-                          : "bg-nova-bg text-nova-muted ring-1 ring-nova-border",
+                          ? "bg-ft-accent text-white"
+                          : "bg-ft-bg text-ft-muted ring-1 ring-ft-border",
                     )}
                   >
                     {doneToday ? <Check className="size-4" /> : index + 1}
@@ -170,22 +170,22 @@ export function DaySelector({
 
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-medium text-nova-text">
+                      <span className="truncate text-sm font-medium text-ft-text">
                         {dayLabel(day)}
                       </span>
                       {isSuggested && (
-                        <span className="shrink-0 rounded-full bg-nova-accent/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-nova-accent">
+                        <span className="shrink-0 rounded-full bg-ft-accent/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ft-accent">
                           Suggested
                         </span>
                       )}
                     </span>
-                    <span className="block truncate text-xs text-nova-muted">
+                    <span className="block truncate text-xs text-ft-muted">
                       {daySubtitle(day) ? `${daySubtitle(day)} · ` : ""}
                       {day.exercises.length} exercise{day.exercises.length === 1 ? "" : "s"}
                     </span>
                   </span>
 
-                  <span className="shrink-0 text-xs text-nova-muted">
+                  <span className="shrink-0 text-xs text-ft-muted">
                     {relativeDay(lastCompleted.get(day.id))}
                   </span>
                 </button>

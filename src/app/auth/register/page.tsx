@@ -59,19 +59,19 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-      <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-nova-text">
-        Nova
+      <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
+        FitnessTracker
       </Link>
 
-      <h1 className="text-2xl font-semibold text-nova-text">Create your account</h1>
-      <p className="mt-2 text-sm text-nova-muted">
+      <h1 className="text-2xl font-semibold text-ft-text">Create your account</h1>
+      <p className="mt-2 text-sm text-ft-muted">
         Then a short assessment, and your coach builds your programme around it.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">First name</span>
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">First name</span>
             <Input
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -81,7 +81,7 @@ export default function RegisterPage() {
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">Last name</span>
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">Last name</span>
             <Input
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -93,7 +93,7 @@ export default function RegisterPage() {
         </div>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-nova-text">Email</span>
+          <span className="mb-1.5 block text-sm font-medium text-ft-text">Email</span>
           <Input
             type="email"
             value={email}
@@ -105,7 +105,7 @@ export default function RegisterPage() {
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium text-nova-text">Password</span>
+          <span className="mb-1.5 block text-sm font-medium text-ft-text">Password</span>
           <Input
             type="password"
             value={password}
@@ -117,17 +117,17 @@ export default function RegisterPage() {
           />
         </label>
 
-        {error && <p className="text-sm text-nova-danger">{error}</p>}
-        {notice && <p className="text-sm text-nova-success">{notice}</p>}
+        {error && <p className="text-sm text-ft-danger">{error}</p>}
+        {notice && <p className="text-sm text-ft-success">{notice}</p>}
 
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Creating your account…" : "Create account"}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-nova-muted">
+      <p className="mt-6 text-center text-sm text-ft-muted">
         Already have an account?{" "}
-        <Link href="/auth/login" className="font-medium text-nova-accent hover:underline">
+        <Link href="/auth/login" className="font-medium text-ft-accent hover:underline">
           Log in
         </Link>
       </p>

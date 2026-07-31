@@ -1,7 +1,7 @@
-# Nova
+# FitnessTracker
 
 Coach-first fitness platform. A member signs up, fills in a medical and
-lifestyle assessment, and Nova's AI drafts an assessment report and a training
+lifestyle assessment, and the AI drafts an assessment report and a training
 programme. The assigned coach edits and publishes it — nothing reaches a member
 until a human has signed it off.
 

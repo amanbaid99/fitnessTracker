@@ -36,10 +36,10 @@ export function BottomNav({
   return (
     <>
       {/* Desktop / tablet: sticky top nav */}
-      <header className="sticky top-0 z-50 hidden border-b border-nova-border bg-nova-surface/90 backdrop-blur md:block">
+      <header className="sticky top-0 z-50 hidden border-b border-ft-border bg-ft-surface/90 backdrop-blur md:block">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-6 py-3.5">
-          <Link href={tabs[0].href} className="text-base font-semibold tracking-tight text-nova-text">
-            Nova
+          <Link href={tabs[0].href} className="text-base font-semibold tracking-tight text-ft-text">
+            FitnessTracker
           </Link>
           <nav>
             <ul className="flex items-center gap-1">
@@ -52,8 +52,8 @@ export function BottomNav({
                       className={cn(
                         "flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
                         active
-                          ? "bg-nova-accent/10 text-nova-accent"
-                          : "text-nova-muted hover:text-nova-text",
+                          ? "bg-ft-accent/10 text-ft-accent"
+                          : "text-ft-muted hover:text-ft-text",
                       )}
                     >
                       <Icon className="size-4" />
@@ -68,7 +68,7 @@ export function BottomNav({
       </header>
 
       {/* Mobile: fixed bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[430px] border-t border-nova-border bg-nova-surface md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[430px] border-t border-ft-border bg-ft-surface md:hidden">
         <ul className="flex items-center justify-around">
           {tabs.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
@@ -78,7 +78,7 @@ export function BottomNav({
                   href={href}
                   className={cn(
                     "flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors",
-                    active ? "text-nova-accent" : "text-nova-muted",
+                    active ? "text-ft-accent" : "text-ft-muted",
                   )}
                 >
                   <Icon className="size-5" />

@@ -28,8 +28,8 @@ export function PlanProcessing({
   error?: string | null;
 }) {
   return (
-    <section className="mt-4 rounded-2xl border border-nova-border/70 bg-nova-surface p-6 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-      <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-nova-accent/10 text-nova-accent">
+    <section className="mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-6 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+      <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-ft-accent/10 text-ft-accent">
         {retrying ? (
           <Loader2 className="size-6 animate-spin" />
         ) : (
@@ -37,21 +37,21 @@ export function PlanProcessing({
         )}
       </span>
 
-      <h2 className="mt-4 text-base font-semibold text-nova-text">
-        Nova is analysing this assessment
+      <h2 className="mt-4 text-base font-semibold text-ft-text">
+        Analysing this assessment
       </h2>
-      <p className="mx-auto mt-1.5 max-w-sm text-sm text-nova-muted">
+      <p className="mx-auto mt-1.5 max-w-sm text-sm text-ft-muted">
         {clientName.split(" ")[0]}&apos;s programme and report are being written. This page
         updates on its own — usually within a minute.
       </p>
 
-      <p className="mt-4 flex items-center justify-center gap-2 text-xs text-nova-muted">
+      <p className="mt-4 flex items-center justify-center gap-2 text-xs text-ft-muted">
         <Loader2 className="size-3.5 animate-spin" />
         Checking for the draft…
       </p>
 
       {error && (
-        <p className="mt-4 rounded-xl bg-nova-danger/[0.06] px-3 py-2 font-mono text-[11px] break-words text-nova-danger">
+        <p className="mt-4 rounded-xl bg-ft-danger/[0.06] px-3 py-2 font-mono text-[11px] break-words text-ft-danger">
           {error}
         </p>
       )}
@@ -68,7 +68,7 @@ export function PlanProcessing({
         </Button>
       </div>
 
-      <p className="mt-3 text-xs text-nova-muted">
+      <p className="mt-3 text-xs text-ft-muted">
         Taking too long? Writing it by hand skips the draft — nothing is lost.
       </p>
     </section>

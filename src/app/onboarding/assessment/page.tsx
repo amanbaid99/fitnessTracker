@@ -33,15 +33,15 @@ function Field({
   onChange: (value: string | string[]) => void;
 }) {
   const label = (
-    <span className="mb-1.5 block text-sm font-medium text-nova-text">
+    <span className="mb-1.5 block text-sm font-medium text-ft-text">
       {field.label}
-      {field.required && <span className="ml-1 text-nova-danger">*</span>}
-      {field.unit && <span className="ml-1 font-normal text-nova-muted">({field.unit})</span>}
+      {field.required && <span className="ml-1 text-ft-danger">*</span>}
+      {field.unit && <span className="ml-1 font-normal text-ft-muted">({field.unit})</span>}
     </span>
   );
 
   const hint = field.hint && (
-    <span className="mt-1 block text-xs text-nova-muted">{field.hint}</span>
+    <span className="mt-1 block text-xs text-ft-muted">{field.hint}</span>
   );
 
   if (field.kind === "choice") {
@@ -65,10 +65,10 @@ function Field({
               onClick={() => onChange(option.value)}
               aria-pressed={value === option.value}
               className={cn(
-                "rounded-xl border bg-nova-surface px-3 py-2.5 text-left text-sm transition-colors",
+                "rounded-xl border bg-ft-surface px-3 py-2.5 text-left text-sm transition-colors",
                 value === option.value
-                  ? "border-nova-accent text-nova-text ring-1 ring-nova-accent"
-                  : "border-nova-border/70 text-nova-muted hover:text-nova-text",
+                  ? "border-ft-accent text-ft-text ring-1 ring-ft-accent"
+                  : "border-ft-border/70 text-ft-muted hover:text-ft-text",
               )}
             >
               {option.label}
@@ -105,8 +105,8 @@ function Field({
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-sm transition-colors",
                   on
-                    ? "border-nova-accent bg-nova-accent/[0.06] text-nova-accent"
-                    : "border-nova-border/70 bg-nova-surface text-nova-muted hover:text-nova-text",
+                    ? "border-ft-accent bg-ft-accent/[0.06] text-ft-accent"
+                    : "border-ft-border/70 bg-ft-surface text-ft-muted hover:text-ft-text",
                 )}
               >
                 {option.label}
@@ -135,8 +135,8 @@ function Field({
               className={cn(
                 "h-11 flex-1 rounded-xl border text-sm font-medium transition-colors",
                 value === n
-                  ? "border-nova-accent bg-nova-accent text-white"
-                  : "border-nova-border/70 bg-nova-surface text-nova-muted hover:text-nova-text",
+                  ? "border-ft-accent bg-ft-accent text-white"
+                  : "border-ft-border/70 bg-ft-surface text-ft-muted hover:text-ft-text",
               )}
             >
               {n}
@@ -397,7 +397,7 @@ export default function AssessmentPage() {
       goToStep(0);
       setProblem({
         title: "Check your date of birth:",
-        items: [`You need to be ${MIN_AGE} or over to train with Nova.`],
+        items: [`You need to be ${MIN_AGE} or over to train with us.`],
       });
       return;
     }
@@ -442,7 +442,7 @@ export default function AssessmentPage() {
   if (loading) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading your assessment…</p>
+        <p className="text-sm text-ft-muted">Loading your assessment…</p>
       </div>
     );
   }
@@ -450,12 +450,12 @@ export default function AssessmentPage() {
   if (loadError) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 md:max-w-lg">
-        <h1 className="text-xl font-semibold text-nova-text">We couldn&apos;t open your assessment</h1>
-        <p className="mt-2 text-sm text-nova-muted">
+        <h1 className="text-xl font-semibold text-ft-text">We couldn&apos;t open your assessment</h1>
+        <p className="mt-2 text-sm text-ft-muted">
           Nothing you type would be saved, so we&apos;ve stopped here rather than let you fill it
           in twice. Try again in a moment — if it keeps happening, send your coach this:
         </p>
-        <p className="mt-3 rounded-xl bg-nova-bg px-3 py-2.5 font-mono text-xs break-words text-nova-danger">
+        <p className="mt-3 rounded-xl bg-ft-bg px-3 py-2.5 font-mono text-xs break-words text-ft-danger">
           {loadError}
         </p>
         <Button className="mt-5" onClick={() => window.location.reload()}>
@@ -476,12 +476,12 @@ export default function AssessmentPage() {
           type="button"
           onClick={() => (stepIndex === 0 ? router.push("/") : goToStep(stepIndex - 1))}
           aria-label="Back"
-          className="flex size-9 items-center justify-center rounded-full text-nova-muted hover:bg-nova-surface hover:text-nova-text"
+          className="flex size-9 items-center justify-center rounded-full text-ft-muted hover:bg-ft-surface hover:text-ft-text"
         >
           <ArrowLeft className="size-5" />
         </button>
 
-        <p className="flex items-center gap-1.5 text-xs text-nova-muted">
+        <p className="flex items-center gap-1.5 text-xs text-ft-muted">
           {saveState === "saving" && (
             <>
               <Loader2 className="size-3 animate-spin" />
@@ -490,13 +490,13 @@ export default function AssessmentPage() {
           )}
           {saveState === "saved" && (
             <>
-              <Check className="size-3 text-nova-success" />
+              <Check className="size-3 text-ft-success" />
               Progress saved
             </>
           )}
           {saveState === "error" && (
             <>
-              <CloudOff className="size-3 text-nova-danger" />
+              <CloudOff className="size-3 text-ft-danger" />
               Offline — we&apos;ll retry
             </>
           )}
@@ -504,22 +504,22 @@ export default function AssessmentPage() {
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between text-xs text-nova-muted">
+        <div className="flex items-center justify-between text-xs text-ft-muted">
           <span>
             Step {stepIndex + 1} of {ASSESSMENT_STEPS.length}
           </span>
           <span>{progress}% complete</span>
         </div>
-        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-nova-border">
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ft-border">
           <div
-            className="h-full rounded-full bg-nova-accent transition-all"
+            className="h-full rounded-full bg-ft-accent transition-all"
             style={{ width: `${Math.max(4, progress)}%` }}
           />
         </div>
       </div>
 
-      <h1 className="mt-5 text-xl font-semibold text-nova-text">{step.title}</h1>
-      {step.intro && <p className="mt-1 text-sm text-nova-muted">{step.intro}</p>}
+      <h1 className="mt-5 text-xl font-semibold text-ft-text">{step.title}</h1>
+      {step.intro && <p className="mt-1 text-sm text-ft-muted">{step.intro}</p>}
 
       <div className="mt-5 flex-1 space-y-4">
         {step.fields
@@ -535,11 +535,11 @@ export default function AssessmentPage() {
 
         {showEquipmentPhotos && (
           <div>
-            <span className="mb-1.5 block text-sm font-medium text-nova-text">
+            <span className="mb-1.5 block text-sm font-medium text-ft-text">
               Photos of your equipment
             </span>
-            <p className="mb-2 text-xs text-nova-muted">
-              Optional, but it helps Nova identify exactly what you have and build around it.
+            <p className="mb-2 text-xs text-ft-muted">
+              Optional, but it helps us identify exactly what you have and build around it.
             </p>
 
             {photos.length > 0 && (
@@ -547,17 +547,17 @@ export default function AssessmentPage() {
                 {photos.map((path) => (
                   <li
                     key={path}
-                    className="flex items-center gap-2 rounded-lg border border-nova-border/70 bg-nova-surface px-3 py-2"
+                    className="flex items-center gap-2 rounded-lg border border-ft-border/70 bg-ft-surface px-3 py-2"
                   >
-                    <Camera className="size-3.5 shrink-0 text-nova-muted" />
-                    <span className="min-w-0 flex-1 truncate text-xs text-nova-text">
+                    <Camera className="size-3.5 shrink-0 text-ft-muted" />
+                    <span className="min-w-0 flex-1 truncate text-xs text-ft-text">
                       {path.split("/").pop()}
                     </span>
                     <button
                       type="button"
                       onClick={() => removePhoto(path)}
                       aria-label="Remove photo"
-                      className="text-nova-muted hover:text-nova-danger"
+                      className="text-ft-muted hover:text-ft-danger"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -566,7 +566,7 @@ export default function AssessmentPage() {
               </ul>
             )}
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-nova-accent/50 py-3 text-sm font-medium text-nova-accent">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-ft-accent/50 py-3 text-sm font-medium text-ft-accent">
               <Camera className="size-4" />
               {uploading ? "Uploading…" : "Add photos"}
               <input
@@ -582,9 +582,9 @@ export default function AssessmentPage() {
       </div>
 
       {problem && (
-        <div className="mt-5 rounded-xl border border-nova-danger/30 bg-nova-danger/[0.05] px-3 py-2.5">
-          <p className="text-sm font-medium text-nova-danger">{problem.title}</p>
-          <p className="mt-0.5 text-xs text-nova-danger">{problem.items.join(" · ")}</p>
+        <div className="mt-5 rounded-xl border border-ft-danger/30 bg-ft-danger/[0.05] px-3 py-2.5">
+          <p className="text-sm font-medium text-ft-danger">{problem.title}</p>
+          <p className="mt-0.5 text-xs text-ft-danger">{problem.items.join(" · ")}</p>
         </div>
       )}
 
@@ -605,7 +605,7 @@ export default function AssessmentPage() {
         )}
       </div>
 
-      <p className="mt-4 text-center text-xs text-nova-muted">
+      <p className="mt-4 text-center text-xs text-ft-muted">
         Your answers save as you go — you can close this and pick up where you left off.
       </p>
     </div>

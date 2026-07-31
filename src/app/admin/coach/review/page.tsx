@@ -208,7 +208,7 @@ function CoachReviewContent() {
       setDays(normalizeDays(row.days));
       setSaved(false);
       if (row.generated_by !== "ai") {
-        setRegenError(row.ai_report?.error ?? "Nova couldn't draft this one.");
+        setRegenError(row.ai_report?.error ?? "The AI couldn't draft this one.");
       }
     }
   }
@@ -230,7 +230,7 @@ function CoachReviewContent() {
   if (loading || !plan) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <p className="text-sm text-nova-muted">Loading…</p>
+        <p className="text-sm text-ft-muted">Loading…</p>
       </div>
     );
   }
@@ -241,7 +241,7 @@ function CoachReviewContent() {
   const processing = plan.status === "awaiting_ai";
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-nova-bg pb-28 md:max-w-2xl">
+    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-ft-bg pb-28 md:max-w-2xl">
       <header className="flex items-center gap-3 px-5 pt-6 md:px-0 md:pt-10">
         <Button
           variant="ghost"
@@ -251,24 +251,24 @@ function CoachReviewContent() {
         >
           <ArrowLeft className="size-5" />
         </Button>
-        <h1 className="text-lg font-semibold text-nova-text md:text-xl">
+        <h1 className="text-lg font-semibold text-ft-text md:text-xl">
           {processing ? "Processing" : isPending ? "Review Plan" : "Edit Plan"}
         </h1>
       </header>
 
-      <div className="mx-5 mt-4 rounded-2xl border border-nova-border/70 bg-nova-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0">
-        <p className="font-semibold text-nova-text">{plan.full_name}</p>
-        <p className="text-sm text-nova-muted">
+      <div className="mx-5 mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0">
+        <p className="font-semibold text-ft-text">{plan.full_name}</p>
+        <p className="text-sm text-ft-muted">
           {plan.age ? `${plan.age} yrs · ` : ""}Goal:{" "}
           {GOAL_LABEL[plan.goal] ?? plan.goal}
         </p>
         {flaggedConditions.length > 0 && (
-          <span className="mt-2 inline-flex items-center rounded-full bg-nova-danger/10 px-2.5 py-1 text-xs font-medium text-nova-danger">
+          <span className="mt-2 inline-flex items-center rounded-full bg-ft-danger/10 px-2.5 py-1 text-xs font-medium text-ft-danger">
             ⚠ {flaggedConditions.join(", ")}
           </span>
         )}
         {plan.medical_notes && (
-          <p className="mt-2 text-sm text-nova-muted">{plan.medical_notes}</p>
+          <p className="mt-2 text-sm text-ft-muted">{plan.medical_notes}</p>
         )}
       </div>
 
@@ -292,8 +292,8 @@ function CoachReviewContent() {
             />
 
             <div className="mt-6">
-              <h2 className="text-sm font-semibold text-nova-text">Workout</h2>
-              <p className="mt-0.5 text-xs text-nova-muted">
+              <h2 className="text-sm font-semibold text-ft-text">Workout</h2>
+              <p className="mt-0.5 text-xs text-ft-muted">
                 Add days, add exercises from the library or your own, and give
                 each one up to three alternates the client can swap in.
               </p>
@@ -311,22 +311,22 @@ function CoachReviewContent() {
 
             {logs.length > 0 && (
               <section className="mt-8">
-                <h2 className="text-sm font-semibold text-nova-text">
+                <h2 className="text-sm font-semibold text-ft-text">
                   Recent activity
                 </h2>
-                <ul className="mt-3 divide-y divide-nova-border rounded-2xl border border-nova-border/70 bg-nova-surface">
+                <ul className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface">
                   {logs.map((log, i) => (
                     <li key={`${log.logged_at}-${i}`} className="px-4 py-2.5">
-                      <p className="text-sm text-nova-text">
+                      <p className="text-sm text-ft-text">
                         {log.performed_name}
                         {log.is_alternate && (
-                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-nova-accent/10 px-1.5 py-0.5 text-[11px] font-medium text-nova-accent">
+                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-ft-accent/10 px-1.5 py-0.5 text-[11px] font-medium text-ft-accent">
                             <Repeat2 className="size-3" />
                             swapped for {log.planned_name}
                           </span>
                         )}
                       </p>
-                      <p className="mt-0.5 text-xs text-nova-muted">
+                      <p className="mt-0.5 text-xs text-ft-muted">
                         {log.sets_completed ?? "?"} × {log.reps ?? "?"}
                         {log.weight_kg ? ` @ ${log.weight_kg}kg` : ""} ·{" "}
                         {new Date(log.logged_at).toLocaleDateString("en-US", {
@@ -341,7 +341,7 @@ function CoachReviewContent() {
             )}
 
             <div className="mt-8">
-              <label className="mb-2 block text-sm font-medium text-nova-text">
+              <label className="mb-2 block text-sm font-medium text-ft-text">
                 Coach notes (visible to the client)
               </label>
               <Textarea
@@ -359,7 +359,7 @@ function CoachReviewContent() {
       </main>
 
       {!processing && (
-        <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center gap-3 border-t border-nova-border bg-nova-bg/95 px-5 py-4 backdrop-blur md:max-w-2xl md:px-0">
+        <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] items-center gap-3 border-t border-ft-border bg-ft-bg/95 px-5 py-4 backdrop-blur md:max-w-2xl md:px-0">
           {isPending ? (
             <>
               <Button
@@ -381,7 +381,7 @@ function CoachReviewContent() {
           ) : (
             <>
               {saved && (
-                <span className="text-sm text-nova-success">Saved</span>
+                <span className="text-sm text-ft-success">Saved</span>
               )}
               <Button
                 className="ml-auto"
@@ -403,7 +403,7 @@ export default function CoachReviewPage() {
     <Suspense
       fallback={
         <div className="flex min-h-dvh items-center justify-center">
-          <p className="text-sm text-nova-muted">Loading…</p>
+          <p className="text-sm text-ft-muted">Loading…</p>
         </div>
       }
     >

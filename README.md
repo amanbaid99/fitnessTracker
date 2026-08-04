@@ -22,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Setting up a Supabase project
 
 1. **Run the SQL.** In the Supabase SQL editor, run the files in `supabase/` in
-   order: `schema.sql`, then `migration_002` … `migration_022`. The comment at
+   order: `schema.sql`, then `migration_002` … `migration_023`. The comment at
    the top of each explains what it adds. They're idempotent, so re-running one
    is safe.
 
@@ -59,10 +59,16 @@ admin can call it.
 `/admin` (two tabs on the same screen); coaches land on `/admin/coach`. Members
 log in at `/auth/login`. There are no credentials in the client bundle.
 
-**Creating the first admin.** Sign up as a normal member, then run
-`select public.claim_first_admin();` in the SQL editor while signed in as that
-account — or run it as the service role after setting the session. It only
-works while no admin exists. After that, an admin promotes others with
+**Creating the first admin.** Sign up at `/auth/register` with the email you
+want, then in the SQL editor run:
+
+```sql
+select public.bootstrap_admin('you@example.com');
+```
+
+It refuses once any admin exists, and only the service role can call it — so
+the SQL editor works and the browser can't. After that, an admin promotes
+others from a signed-in session with
 `select public.admin_grant_admin('them@example.com');`.
 
 **Admin console** (`/admin`) is split into Overview, Members, Coaches,

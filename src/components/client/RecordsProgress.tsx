@@ -128,7 +128,7 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+      <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4">
         <h3 className="text-sm font-semibold text-ft-text">
           {activeRecord?.exercise_name ?? "Progress"}
         </h3>
@@ -199,7 +199,7 @@ export function RecordsProgress({ records, history }: RecordsProgressProps) {
 
       <div>
         <h3 className="text-sm font-semibold text-ft-text">Personal records</h3>
-        <ul className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+        <ul className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface">
           {sortedRecords.map((record) => (
             <li key={record.exercise_key} className="flex items-center gap-3 px-4 py-3">
               <ExerciseArt name={record.exercise_name} size="sm" />

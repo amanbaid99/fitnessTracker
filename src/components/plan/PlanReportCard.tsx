@@ -58,7 +58,7 @@ export function PlanReportCard({
   const shown = error ?? report?.error;
 
   return (
-    <section className="mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+    <section className="mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ft-text">

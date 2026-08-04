@@ -49,14 +49,14 @@ export function DaySelector({
     activeDone && suggestedDay && suggestedDay.id !== activeDay.id ? suggestedDay : null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-      <div className="p-3.5">
+    <div className="overflow-hidden rounded-3xl border border-ft-border/70 bg-ft-surface">
+      <div className="p-4 md:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p
               className={cn(
                 "flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide",
-                activeDone ? "text-ft-success" : "text-ft-accent",
+                activeDone ? "text-ft-success" : "text-ft-muted",
               )}
             >
               {activeDone ? (
@@ -77,7 +77,7 @@ export function DaySelector({
               )}
             </p>
 
-            <h2 className="mt-0.5 truncate text-base font-semibold text-ft-text md:text-lg">
+            <h2 className="ft-display mt-1 truncate text-2xl text-ft-text md:text-3xl">
               {dayLabel(activeDay)}
             </h2>
             {daySubtitle(activeDay) && (
@@ -107,7 +107,7 @@ export function DaySelector({
           <button
             type="button"
             onClick={() => onSelect(suggestedDay.id)}
-            className="mt-3 flex w-full items-center gap-1.5 rounded-xl bg-ft-accent/[0.06] px-3 py-2 text-left text-xs font-medium text-ft-accent"
+            className="mt-3 flex w-full items-center gap-1.5 rounded-xl bg-ft-highlight-soft px-3 py-2.5 text-left text-xs font-medium text-ft-ink"
           >
             <Sparkles className="size-3.5 shrink-0" />
             Suggested next: {dayLabel(suggestedDay)} — tap to switch back

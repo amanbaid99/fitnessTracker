@@ -110,14 +110,14 @@ export default function BodyMetricsPage() {
         <main className="px-5 md:px-0">
           {latest && (
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center">
                 <p className="text-2xl font-semibold text-ft-text">
                   {latest.weight_kg ?? "—"}
                   {latest.weight_kg ? " kg" : ""}
                 </p>
                 <p className="mt-0.5 text-xs text-ft-muted">Latest weight</p>
               </div>
-              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center">
                 <p className="text-2xl font-semibold text-ft-text">
                   {latest.body_fat_pct ?? "—"}
                   {latest.body_fat_pct ? "%" : ""}
@@ -129,7 +129,7 @@ export default function BodyMetricsPage() {
 
           <form
             onSubmit={handleSubmit}
-            className="mt-6 space-y-3 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]"
+            className="mt-6 space-y-3 rounded-2xl border border-ft-border/70 bg-ft-surface p-4"
           >
             <h2 className="text-sm font-semibold text-ft-text">Log a new entry</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -166,7 +166,7 @@ export default function BodyMetricsPage() {
 
           <div className="mt-6">
             <h2 className="text-sm font-semibold text-ft-text">History</h2>
-            <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+            <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface">
               {metrics.length === 0 && (
                 <p className="px-4 py-3 text-sm text-ft-muted">
                   No entries yet — log your first one above.

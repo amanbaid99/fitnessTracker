@@ -135,20 +135,20 @@ export default function ProgressPage() {
             </TabsList>
 
             <TabsContent value="activity" className="mt-5">
-              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+              <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4">
                 <WeekStrip completedDates={completedDates} />
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center">
                   <p className="text-2xl font-semibold text-ft-text">{logs.length}</p>
                   <p className="mt-0.5 text-xs text-ft-muted">Workouts</p>
                 </div>
-                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center">
                   <p className="text-2xl font-semibold text-ft-text">{streak}</p>
                   <p className="mt-0.5 text-xs text-ft-muted">Day streak</p>
                 </div>
-                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <div className="rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-center">
                   <p className="text-2xl font-semibold text-ft-text">{recordsThisMonth}</p>
                   <p className="mt-0.5 text-xs text-ft-muted">PRs this month</p>
                 </div>
@@ -156,7 +156,7 @@ export default function ProgressPage() {
 
               <div className="mt-6">
                 <h2 className="text-sm font-semibold text-ft-text">Recent workouts</h2>
-                <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface">
                   {logs.length === 0 && (
                     <p className="px-4 py-3 text-sm text-ft-muted">
                       No workouts logged yet — complete one from your dashboard.

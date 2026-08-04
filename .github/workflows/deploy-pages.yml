@@ -1,9 +1,15 @@
 name: Deploy to GitHub Pages
 
+# Builds the static export and publishes it to the repository's Pages site.
+#
+# Triggers read from the branch that was pushed, so this list has to name
+# whatever branch is actually the default — a mismatch means pushes deploy
+# nothing, silently.
+
 on:
   push:
     branches:
-      - claude/workout-management-custom-plans-vhsdll
+      - main
   workflow_dispatch:
 
 permissions:

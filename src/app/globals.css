@@ -4,38 +4,58 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.875rem;
+  --radius: 1rem;
+
+  /* ---------------------------------------------------------------------
+     Palette — warm neutrals, near-black ink, one soft-yellow highlight.
+     ---------------------------------------------------------------------
+     The canvas is bone rather than blue-white, so photography and skin
+     tones sit on it without turning cold. Primary actions are ink, not
+     colour: yellow is reserved for the one thing on a screen that should
+     pull the eye, which is what keeps it feeling expensive rather than
+     loud.
+  --------------------------------------------------------------------- */
+  --ft-bg: #f7f5f0;
+  --ft-surface: #ffffff;
+  /* A second, warmer surface for blocks that need to separate from the
+     canvas without a border. */
+  --ft-surface-alt: #efebe2;
+  --ft-border: #e3ded3;
+
+  --ft-ink: #191713;
+  --ft-text: #191713;
+  --ft-muted: #6e675c;
+
+  /* Primary action colour. Ink, deliberately — see above. */
+  --ft-accent: #191713;
+  --ft-accent-hover: #34302a;
+
+  --ft-highlight: #f2d24b;
+  --ft-highlight-hover: #e8c62f;
+  --ft-highlight-soft: #fbf2cf;
+
+  --ft-success: #3f7d54;
+  --ft-warning: #b57a1d;
+  --ft-danger: #b3402f;
 
   --background: #ffffff;
-  --foreground: #1c1e26;
+  --foreground: var(--ft-text);
   --card: #ffffff;
-  --card-foreground: #1c1e26;
+  --card-foreground: var(--ft-text);
   --popover: #ffffff;
-  --popover-foreground: #1c1e26;
-  --primary: #6366f1;
+  --popover-foreground: var(--ft-text);
+  --primary: var(--ft-ink);
   --primary-foreground: #ffffff;
-  --secondary: #f1f2f8;
-  --secondary-foreground: #1c1e26;
-  --muted: #f5f6fa;
-  --muted-foreground: #6b7280;
-  --accent: #eef0ff;
-  --accent-foreground: #1c1e26;
-  --destructive: #e11d48;
-  --border: #e8e9f0;
-  --input: #e8e9f0;
-  --ring: #6366f1;
-
-  /* FitnessTracker design tokens */
-  --ft-bg: #f8f9fc;
-  --ft-surface: #ffffff;
-  --ft-border: #e8e9f0;
-  --ft-accent: #6366f1;
-  --ft-accent-hover: #4f46e5;
-  --ft-success: #16a34a;
-  --ft-warning: #d97706;
-  --ft-danger: #e11d48;
-  --ft-text: #1c1e26;
-  --ft-muted: #6b7280;
+  --secondary: var(--ft-surface-alt);
+  --secondary-foreground: var(--ft-text);
+  --muted: var(--ft-surface-alt);
+  --muted-foreground: var(--ft-muted);
+  --accent: var(--ft-highlight-soft);
+  --accent-foreground: var(--ft-text);
+  --destructive: var(--ft-danger);
+  --border: var(--ft-border);
+  --input: var(--ft-border);
+  --ring: var(--ft-ink);
 }
 
 @theme inline {
@@ -64,7 +84,12 @@
 
   --color-ft-bg: var(--ft-bg);
   --color-ft-surface: var(--ft-surface);
+  --color-ft-surface-alt: var(--ft-surface-alt);
   --color-ft-border: var(--ft-border);
+  --color-ft-ink: var(--ft-ink);
+  --color-ft-highlight: var(--ft-highlight);
+  --color-ft-highlight-hover: var(--ft-highlight-hover);
+  --color-ft-highlight-soft: var(--ft-highlight-soft);
   --color-ft-accent: var(--ft-accent);
   --color-ft-accent-hover: var(--ft-accent-hover);
   --color-ft-success: var(--ft-success);
@@ -74,12 +99,47 @@
   --color-ft-muted: var(--ft-muted);
 
   --font-sans: var(--font-inter);
+  --font-display: var(--font-display);
 }
 
 body {
   background: var(--ft-bg);
   color: var(--ft-text);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Warm neutrals show banding on large flat areas without this. */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------------------
+   Editorial type
+   ---------------------------------------------------------------------------
+   Display headings are set tight and large: at these sizes Inter's default
+   tracking reads loose and web-app-ish rather than considered.
+--------------------------------------------------------------------------- */
+
+.ft-display {
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  font-weight: 600;
+}
+
+/* A serif italic for the one or two words per page that carry the promise.
+   Borrowed from editorial layouts — it stops an all-sans page reading like
+   a dashboard. */
+.ft-accentuate {
+  font-family: var(--font-display), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Eyebrow labels above section headings. */
+.ft-eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ft-muted);
 }
 
 @layer base {

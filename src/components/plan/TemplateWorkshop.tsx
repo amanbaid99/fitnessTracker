@@ -281,7 +281,7 @@ export function TemplateWorkshop({ mode, coachId }: TemplateWorkshopProps) {
                         className={cn(
                           "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                           template.owner_role === "admin"
-                            ? "bg-ft-accent/10 text-ft-accent"
+                            ? "bg-ft-ink text-white"
                             : "bg-ft-bg text-ft-muted",
                         )}
                       >

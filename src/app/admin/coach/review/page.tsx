@@ -256,7 +256,7 @@ function CoachReviewContent() {
         </h1>
       </header>
 
-      <div className="mx-5 mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] md:mx-0">
+      <div className="mx-5 mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 md:mx-0">
         <p className="font-semibold text-ft-text">{plan.full_name}</p>
         <p className="text-sm text-ft-muted">
           {plan.age ? `${plan.age} yrs · ` : ""}Goal:{" "}

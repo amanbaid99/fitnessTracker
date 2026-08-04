@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Photo } from "@/components/marketing/Photo";
 import { PosterArt } from "@/components/marketing/PosterArt";
+import { Reveal } from "@/components/marketing/Reveal";
 
 const STEPS = [
   {
@@ -138,7 +139,7 @@ export default function HomePage() {
 
         {/* Photo band — the emotional register the copy can't carry alone. */}
         <section className="mx-auto w-full max-w-6xl px-5 md:px-8">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <Reveal className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <Photo
               src="/images/hero-lifting.jpg"
               alt="A coached lifting session"
@@ -165,7 +166,7 @@ export default function HomePage() {
                 and published by a coach certified by the American College of Sports Medicine.
               </p>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* ---------------------------------------------------------------- */}
@@ -173,14 +174,14 @@ export default function HomePage() {
         {/* ---------------------------------------------------------------- */}
         <section className="mx-auto w-full max-w-6xl px-5 py-16 md:px-8 md:py-28">
           <div className="grid gap-10 md:grid-cols-12 md:gap-16">
-            <div className="md:col-span-5">
+            <Reveal className="md:col-span-5">
               <p className="ft-eyebrow">What it is</p>
               <h2 className="ft-display mt-3 text-3xl text-ft-text md:text-5xl">
                 A coach&apos;s practice, <span className="ft-accentuate">not an app.</span>
               </h2>
-            </div>
+            </Reveal>
 
-            <div className="space-y-5 text-base leading-relaxed text-ft-muted md:col-span-7 md:text-lg">
+            <Reveal delay={120} className="space-y-5 text-base leading-relaxed text-ft-muted md:col-span-7 md:text-lg">
               <p>
                 Most fitness apps hand you a plan and leave. FitnessTracker is built the other way
                 round: a coach is at the centre of it, and the software exists to give them more
@@ -197,7 +198,7 @@ export default function HomePage() {
                 that names every set, tracks every personal best, and adapts as your coach watches
                 what you actually do.
               </p>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -212,9 +213,10 @@ export default function HomePage() {
             </h2>
 
             <ol className="mt-10 grid gap-4 md:mt-14 md:grid-cols-3 md:gap-6">
-              {STEPS.map(({ n, title, body }) => (
-                <li
+              {STEPS.map(({ n, title, body }, i) => (
+                <Reveal
                   key={n}
+                  delay={i * 90}
                   className="rounded-3xl border border-ft-border/70 bg-ft-surface p-6 md:p-7"
                 >
                   <span className="ft-display block text-4xl text-ft-border md:text-5xl">{n}</span>
@@ -222,7 +224,7 @@ export default function HomePage() {
                     {title}
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-ft-muted">{body}</p>
-                </li>
+                </Reveal>
               ))}
             </ol>
           </div>
@@ -236,16 +238,16 @@ export default function HomePage() {
           className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-16 md:px-8 md:py-28"
         >
           <div className="grid gap-8 md:grid-cols-12 md:gap-14">
-            <div className="md:col-span-5">
+            <Reveal className="md:col-span-5">
               <Photo
                 src="/images/coach-portrait.jpg"
                 alt="One of our coaches"
                 fallback={<PosterArt variant="portrait" />}
                 className="aspect-[4/5] rounded-3xl"
               />
-            </div>
+            </Reveal>
 
-            <div className="md:col-span-7">
+            <Reveal delay={120} className="md:col-span-7">
               <p className="ft-eyebrow">Who writes your programme</p>
               <h2 className="ft-display mt-3 text-3xl text-ft-text md:text-5xl">
                 Certified by the <span className="ft-accentuate">ACSM.</span>
@@ -290,7 +292,7 @@ export default function HomePage() {
                   </dd>
                 </div>
               </dl>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -311,9 +313,10 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 md:mt-14 md:gap-5">
-            {FEATURES.map(({ icon: Icon, title, body }) => (
-              <div
+            {FEATURES.map(({ icon: Icon, title, body }, i) => (
+              <Reveal
                 key={title}
+                delay={i * 80}
                 className="rounded-3xl border border-ft-border/70 bg-ft-surface p-6 md:p-7"
               >
                 <span className="flex size-10 items-center justify-center rounded-full bg-ft-ink text-white">
@@ -321,7 +324,7 @@ export default function HomePage() {
                 </span>
                 <h3 className="mt-5 text-lg font-semibold tracking-tight text-ft-text">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ft-muted">{body}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -366,7 +369,7 @@ export default function HomePage() {
         {/* Closing CTA                                                      */}
         {/* ---------------------------------------------------------------- */}
         <section className="mx-auto w-full max-w-6xl px-5 pb-16 md:px-8 md:pb-28">
-          <div className="rounded-3xl bg-ft-ink px-6 py-12 text-center md:px-16 md:py-20">
+          <Reveal className="rounded-3xl bg-ft-ink px-6 py-12 text-center md:px-16 md:py-20">
             <h2 className="ft-display mx-auto max-w-2xl text-3xl text-white md:text-5xl">
               Start with the assessment.{" "}
               <span className="ft-accentuate text-ft-highlight">The rest follows.</span>
@@ -390,7 +393,7 @@ export default function HomePage() {
                 <Link href="/auth/login">Log in</Link>
               </Button>
             </div>
-          </div>
+          </Reveal>
         </section>
       </main>
 

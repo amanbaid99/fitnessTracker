@@ -1,9 +1,19 @@
 name: Deploy to GitHub Pages
 
+# A repository gets one Pages site, so both builds go into a single artifact:
+# the default branch at the root, and the design branch under /preview.
+# Pushing to either branch republishes both, so neither can silently clobber
+# the other.
+#
+# This file must stay identical on both branches. GitHub reads workflow
+# triggers from the branch that was pushed, so a copy missing one of the
+# branches below simply won't fire for it.
+
 on:
   push:
     branches:
       - claude/workout-management-custom-plans-vhsdll
+      - claude/design-refresh
   workflow_dispatch:
 
 permissions:
@@ -15,11 +25,19 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  MAIN_BRANCH: claude/workout-management-custom-plans-vhsdll
+  PREVIEW_BRANCH: claude/design-refresh
+  REPO_PATH: /fitnessTracker
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # ---- the live site, at the root -------------------------------------
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.MAIN_BRANCH }}
 
       - uses: actions/setup-node@v4
         with:
@@ -34,11 +52,33 @@ jobs:
         env:
           GITHUB_PAGES: "true"
 
+      - name: Stash the live build
+        run: mv out "${{ runner.temp }}/site"
+
+      # ---- the design branch, under /preview ------------------------------
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PREVIEW_BRANCH }}
+          clean: true
+
+      - run: npm install
+
+      - run: npx prisma generate
+
+      - run: npm run build
+        env:
+          # Not GITHUB_PAGES — this build is served one level deeper, and the
+          # asset URLs have to match or every stylesheet 404s.
+          PAGES_BASE_PATH: ${{ env.REPO_PATH }}/preview
+
+      - name: Place the preview build
+        run: mv out "${{ runner.temp }}/site/preview"
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          path: ${{ runner.temp }}/site
 
   deploy:
     needs: build

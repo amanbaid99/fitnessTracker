@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { assetPath, cn } from "@/lib/utils";
 
 /**
  * A photo slot that looks deliberate before the photo exists.
@@ -43,7 +43,7 @@ export function Photo({
           broken-image glyph never shows through the placeholder. */}
       {state !== "missing" && (
         <Image
-          src={src}
+          src={assetPath(src)}
           alt={alt}
           fill
           priority={priority}

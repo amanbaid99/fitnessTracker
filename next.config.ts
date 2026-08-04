@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
   },
   basePath,
   assetPrefix: basePath ? `${basePath}/` : "",
+  // next/image leaves the src of an unoptimized image alone, so anything in
+  // /public referenced from client code has to prefix the base path itself.
+  // Exposing it here is what makes that possible — see assetPath().
+  env: { NEXT_PUBLIC_BASE_PATH: basePath },
 };
 
 export default nextConfig;

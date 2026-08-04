@@ -13,6 +13,7 @@ tonal blocks where photography should be.
 | `hero-lifting.jpg` | Landing hero, left | Portrait 3:4 | 900 × 1200 | Someone mid-lift, real gym, natural light. Effort on the face, not a posed smile. |
 | `hero-coach.jpg` | Landing hero, right | Portrait 3:4 | 900 × 1200 | A coach beside a client — hands-on, correcting or watching. This is the whole proposition in one image. |
 | `gym-detail.jpg` | Landing, trust row | Landscape 4:3 | 1200 × 900 | A quiet detail of the space: racks, chalk, a bench. Texture and calm, no people. |
+| `coach-portrait.jpg` | Landing, ACSM credentials section | Portrait 4:5 | 1000 × 1250 | A real coach of yours, looking at the camera. This section is a credentials claim — a stock model undercuts it more than no photo would. |
 | `auth-panel.jpg` | Sign-in and sign-up, right panel | Portrait, tall | 1200 × 1600 | Fills half a desktop screen. Calm and atmospheric — a caption sits over the bottom third, so keep that area uncluttered and darker. |
 
 ## Choosing them

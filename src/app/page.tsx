@@ -24,8 +24,8 @@ const STEPS = [
   },
   {
     n: "03",
-    title: "Your coach signs it off",
-    body: "A qualified coach reviews the draft, changes what they disagree with, and publishes it. Nothing reaches you until a human has approved it.",
+    title: "Your ACSM coach signs it off",
+    body: "An ACSM-certified coach reviews the draft, changes what they disagree with, and publishes it. Nothing reaches you until they have approved it.",
   },
 ];
 
@@ -65,6 +65,12 @@ export default function HomePage() {
           <nav className="hidden items-center gap-8 md:flex">
             <Link href="#how" className="text-sm text-ft-muted transition-colors hover:text-ft-text">
               How it works
+            </Link>
+            <Link
+              href="#coaches"
+              className="text-sm text-ft-muted transition-colors hover:text-ft-text"
+            >
+              Your coach
             </Link>
             <Link
               href="#inside"
@@ -150,12 +156,12 @@ export default function HomePage() {
               <div>
                 <p className="ft-display text-4xl text-ft-ink md:text-5xl">Every plan</p>
                 <p className="ft-display text-4xl text-ft-ink md:text-5xl">
-                  <span className="ft-accentuate">approved by a human.</span>
+                  <span className="ft-accentuate">approved by an ACSM coach.</span>
                 </p>
               </div>
               <p className="mt-6 max-w-sm text-sm leading-relaxed text-ft-ink/75">
                 AI drafts fast, but it doesn&apos;t know you. Every programme is read, corrected
-                and published by a qualified coach before it reaches you.
+                and published by a coach certified by the American College of Sports Medicine.
               </p>
             </div>
           </div>
@@ -222,6 +228,72 @@ export default function HomePage() {
         </section>
 
         {/* ---------------------------------------------------------------- */}
+        {/* Credentials                                                      */}
+        {/* ---------------------------------------------------------------- */}
+        <section
+          id="coaches"
+          className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-16 md:px-8 md:py-28"
+        >
+          <div className="grid gap-8 md:grid-cols-12 md:gap-14">
+            <div className="md:col-span-5">
+              <Photo
+                src="/images/coach-portrait.jpg"
+                alt="One of our coaches"
+                label="coach-portrait.jpg"
+                className="aspect-[4/5] rounded-3xl"
+              />
+            </div>
+
+            <div className="md:col-span-7">
+              <p className="ft-eyebrow">Who writes your programme</p>
+              <h2 className="ft-display mt-3 text-3xl text-ft-text md:text-5xl">
+                Certified by the <span className="ft-accentuate">ACSM.</span>
+              </h2>
+
+              <div className="mt-6 space-y-5 text-base leading-relaxed text-ft-muted md:text-lg">
+                <p>
+                  The American College of Sports Medicine has set the standards for exercise
+                  science since 1954. Its guidelines for exercise testing and prescription are the
+                  reference the wider industry works from — including the screening protocols that
+                  decide when training should be adjusted, or paused, around a medical condition.
+                </p>
+                <p>
+                  An ACSM certification is not a weekend course. It is an accredited examination
+                  covering exercise physiology, health screening, programme design and emergency
+                  response, and it has to be maintained through continuing education rather than
+                  earned once and kept forever.
+                </p>
+                <p className="text-ft-text">
+                  That is who reads your assessment, decides what the AI got wrong, and puts their
+                  name to your programme.
+                </p>
+              </div>
+
+              <dl className="mt-8 grid gap-4 border-t border-ft-border pt-6 sm:grid-cols-3">
+                <div>
+                  <dt className="ft-display text-3xl text-ft-text">1954</dt>
+                  <dd className="mt-1 text-xs leading-relaxed text-ft-muted">
+                    Setting exercise science standards since
+                  </dd>
+                </div>
+                <div>
+                  <dt className="ft-display text-3xl text-ft-text">Accredited</dt>
+                  <dd className="mt-1 text-xs leading-relaxed text-ft-muted">
+                    Examined and independently accredited, not self-certified
+                  </dd>
+                </div>
+                <div>
+                  <dt className="ft-display text-3xl text-ft-text">Ongoing</dt>
+                  <dd className="mt-1 text-xs leading-relaxed text-ft-muted">
+                    Maintained by continuing education, not earned once
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------------- */}
         {/* What you get                                                     */}
         {/* ---------------------------------------------------------------- */}
         <section id="inside" className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-16 md:px-8 md:py-28">
@@ -272,11 +344,11 @@ export default function HomePage() {
             <div className="rounded-3xl border border-ft-border/70 bg-ft-surface p-6 md:p-7">
               <Sparkles className="size-5 text-ft-text" />
               <h3 className="mt-4 text-base font-semibold tracking-tight text-ft-text">
-                AI drafts, humans decide
+                AI drafts, your coach decides
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-ft-muted">
-                The AI can only propose. Publishing a programme is something only your coach can
-                do.
+                The AI can only propose. Publishing a programme is something only your
+                ACSM-certified coach can do.
               </p>
             </div>
 

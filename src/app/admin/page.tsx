@@ -36,8 +36,6 @@ import {
   type WorkoutTemplate,
 } from "@/components/plan/TemplateWorkshop";
 
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin123";
 const ADMIN_SESSION_KEY = "ft_admin_session";
 
 interface PlanRow {
@@ -189,16 +187,44 @@ export default function AdminPage() {
     "pending",
   );
   const [generationMode, setGenerationMode] = useState<GenerationMode>("ai");
+  const [adminSubmitting, setAdminSubmitting] = useState(false);
   const [selectedForAssign, setSelectedForAssign] = useState<string[]>([]);
   const [bulkCoachId, setBulkCoachId] = useState("");
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
 
   useEffect(() => {
-    // localStorage only exists after mount — reading it during the static
-    // prerender would cause a hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsAdmin(localStorage.getItem(ADMIN_SESSION_KEY) === "true");
-    setCheckingSession(false);
+    let active = true;
+
+    // The localStorage flag is only a hint that we were signed in — the
+    // Supabase session is what the admin_* functions actually check, so a
+    // stale flag with an expired session must not open the panel.
+    async function restore() {
+      if (localStorage.getItem(ADMIN_SESSION_KEY) !== "true") return false;
+
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        localStorage.removeItem(ADMIN_SESSION_KEY);
+        return false;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, active")
+        .eq("id", data.session.user.id)
+        .single();
+
+      return profile?.role === "admin" && profile.active !== false;
+    }
+
+    restore().then((ok) => {
+      if (!active) return;
+      setIsAdmin(ok);
+      setCheckingSession(false);
+    });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -239,15 +265,52 @@ export default function AdminPage() {
     }
   }
 
-  function handleAdminSubmit(e: FormEvent) {
+  /**
+   * Admins sign in through Supabase Auth like everyone else. The credential
+   * lives in auth.users, never in this bundle, and the session is what lets
+   * the admin_* functions tell an admin from a stranger holding the anon key.
+   */
+  async function handleAdminSubmit(e: FormEvent) {
     e.preventDefault();
-    if (adminUsername === ADMIN_USERNAME && adminPassword === ADMIN_PASSWORD) {
-      localStorage.setItem(ADMIN_SESSION_KEY, "true");
-      setAdminError(null);
-      setIsAdmin(true);
-    } else {
-      setAdminError("Incorrect ID or password.");
+    setAdminError(null);
+    setAdminSubmitting(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: adminUsername.trim(),
+      password: adminPassword,
+    });
+
+    if (error || !data.session) {
+      setAdminSubmitting(false);
+      setAdminError(error?.message ?? "Could not sign in.");
+      return;
     }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, active")
+      .eq("id", data.session.user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin" || profile.active === false) {
+      await supabase.auth.signOut();
+      setAdminSubmitting(false);
+      setAdminError(
+        "That account isn't an admin. If this is the first admin, see " +
+          "migration 022 for how to claim it.",
+      );
+      return;
+    }
+
+    localStorage.setItem(ADMIN_SESSION_KEY, "true");
+    setAdminSubmitting(false);
+    setIsAdmin(true);
+  }
+
+  async function handleAdminSignOut() {
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    await supabase.auth.signOut();
+    setIsAdmin(false);
   }
 
   async function handleCoachSubmit(e: FormEvent) {
@@ -433,11 +496,6 @@ export default function AdminPage() {
     refreshLists();
   }
 
-  function handleAdminSignOut() {
-    localStorage.removeItem(ADMIN_SESSION_KEY);
-    setIsAdmin(false);
-  }
-
   const coachById = useMemo(
     () => new Map(coaches.map((coach) => [coach.id, coach])),
     [coaches],
@@ -565,12 +623,14 @@ export default function AdminPage() {
             <form onSubmit={handleAdminSubmit} className="space-y-4">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-ft-text">
-                  ID
+                  Email
                 </span>
                 <Input
+                  type="email"
+                  autoComplete="username"
                   value={adminUsername}
                   onChange={(e) => setAdminUsername(e.target.value)}
-                  placeholder="admin"
+                  placeholder="you@example.com"
                   required
                 />
               </label>
@@ -588,8 +648,8 @@ export default function AdminPage() {
               {adminError && (
                 <p className="text-sm text-ft-danger">{adminError}</p>
               )}
-              <Button type="submit" className="w-full">
-                Log in as admin
+              <Button type="submit" className="w-full" disabled={adminSubmitting}>
+                {adminSubmitting ? "Signing in…" : "Log in as admin"}
               </Button>
             </form>
           </TabsContent>

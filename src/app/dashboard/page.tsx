@@ -398,12 +398,12 @@ export default function ClientDashboardPage() {
       <BottomNav />
 
       <div className="mx-auto w-full max-w-[430px] flex-1 md:max-w-2xl lg:max-w-4xl">
-        <header className="flex items-center justify-between gap-3 px-5 pt-5 md:px-0 md:pt-10">
+        <header className="flex items-start justify-between gap-3 px-5 pt-6 md:px-0 md:pt-12">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-ft-text md:text-2xl">
-              Hello, {firstName} 👋
+            <p className="ft-eyebrow">{today}</p>
+            <h1 className="ft-display mt-1.5 truncate text-3xl text-ft-text md:text-4xl">
+              Hello, {firstName}
             </h1>
-            <p className="truncate text-xs text-ft-muted md:text-sm">{today}</p>
           </div>
           <button
             onClick={handleSignOut}
@@ -416,17 +416,17 @@ export default function ClientDashboardPage() {
 
         <main className="px-5 md:px-0">
           {plan.coach_notes && (
-            <div className="mt-3 rounded-xl border border-ft-accent/25 bg-ft-accent/[0.04] px-3 py-2.5">
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-ft-accent">
+            <div className="mt-5 rounded-2xl bg-ft-highlight-soft px-4 py-3.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-ft-ink uppercase">
                 <Sparkles className="size-3" />
-                Note from your coach
+                From your coach
               </p>
               <p className="mt-0.5 text-sm text-ft-text">{plan.coach_notes}</p>
             </div>
           )}
 
           {days.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-ft-border bg-ft-surface p-8 text-center">
+            <div className="mt-6 rounded-3xl border border-dashed border-ft-border bg-ft-surface p-8 text-center">
               <CalendarDays className="mx-auto size-6 text-ft-muted" />
               <p className="mt-2 text-sm font-medium text-ft-text">
                 Your coach is still putting this together
@@ -500,7 +500,7 @@ export default function ClientDashboardPage() {
               the week's summary is what you scroll to afterwards. */}
           <section className="mt-8">
             <h2 className="text-sm font-semibold text-ft-text">Your week</h2>
-            <div className="mt-2 rounded-2xl border border-ft-border/70 bg-ft-surface p-3.5 shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+            <div className="mt-2 rounded-2xl border border-ft-border/70 bg-ft-surface p-3.5">
               <WeekStrip completedDates={completedDates} />
               <div className="mt-3 grid grid-cols-3 divide-x divide-ft-border border-t border-ft-border pt-3">
                 <div className="px-1 text-center">

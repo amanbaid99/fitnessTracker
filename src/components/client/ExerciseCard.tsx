@@ -124,7 +124,7 @@ export function ExerciseCard({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors",
+        "overflow-hidden rounded-2xl border bg-ft-surface transition-colors",
         logged ? "border-ft-success/40" : "border-ft-border/70",
       )}
     >

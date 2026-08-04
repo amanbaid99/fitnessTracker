@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AuthShell } from "@/components/marketing/AuthShell";
 
 /**
  * Sign-up is deliberately four fields. Everything else — goals, measurements,
@@ -58,17 +59,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-      <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
-        FitnessTracker
-      </Link>
-
-      <h1 className="text-2xl font-semibold text-ft-text">Create your account</h1>
-      <p className="mt-2 text-sm text-ft-muted">
-        Then a short assessment, and your coach builds your programme around it.
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+    <AuthShell
+      title="Create your account"
+      intro="Four fields now. The assessment comes next, and it saves as you go — you can stop and come back to it."
+      aside={{
+        src: "/images/auth-panel.jpg",
+        label: "auth-panel.jpg",
+        quote: "A programme written around your body, not a template.",
+      }}
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link href="/auth/login" className="font-medium text-ft-text underline underline-offset-4">
+            Log in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-ft-text">First name</span>
@@ -125,12 +133,6 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-ft-muted">
-        Already have an account?{" "}
-        <Link href="/auth/login" className="font-medium text-ft-accent hover:underline">
-          Log in
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

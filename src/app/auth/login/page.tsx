@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { AuthShell } from "@/components/marketing/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -100,16 +101,16 @@ export default function LoginPage() {
 
   if (forcePasswordChange) {
     return (
-      <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-        <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
-          FitnessTracker
-        </Link>
-        <h1 className="text-2xl font-semibold text-ft-text">Set a new password</h1>
-        <p className="mt-2 text-sm text-ft-muted">
-          This is your first time logging in — choose a new password before continuing.
-        </p>
-
-        <form onSubmit={handleSetNewPassword} className="mt-8 space-y-4">
+      <AuthShell
+        title="Set a new password"
+        intro="This is your first time logging in — choose a password only you know before continuing."
+        aside={{
+          src: "/images/auth-panel.jpg",
+          label: "auth-panel.jpg",
+          quote: "Every programme here is read and approved by a real coach.",
+        }}
+      >
+        <form onSubmit={handleSetNewPassword} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-ft-text">
               New password
@@ -139,22 +140,24 @@ export default function LoginPage() {
             {passwordChangeSubmitting ? "Saving…" : "Set password & continue"}
           </Button>
         </form>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col justify-center px-6 py-12 md:max-w-md">
-      <Link href="/" className="mb-8 text-lg font-semibold tracking-tight text-ft-text">
-        FitnessTracker
-      </Link>
-
-      <h1 className="text-2xl font-semibold text-ft-text">Welcome back</h1>
-      <p className="mt-2 text-sm text-ft-muted">
-        Log in to see your plan and track today&apos;s workout.
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+    <AuthShell
+      title="Welcome back"
+      intro="Pick up where you left off — your plan, your numbers, your coach."
+      footer={
+        <>
+          New here?{" "}
+          <Link href="/auth/register" className="font-medium text-ft-text underline underline-offset-4">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ft-text">
             Email
@@ -190,12 +193,6 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-ft-muted">
-        New to FitnessTracker?{" "}
-        <Link href="/auth/register" className="font-medium text-ft-accent hover:underline">
-          Create an account
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

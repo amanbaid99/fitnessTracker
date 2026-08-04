@@ -209,7 +209,7 @@ export default function CoachDashboardPage() {
                     <Link
                       key={plan.id}
                       href={`/admin/coach/review?id=${plan.id}`}
-                      className="flex items-center justify-between rounded-2xl border-l-4 border-ft-warning bg-ft-surface p-4 shadow-[0_1px_2px_rgba(28,30,38,0.04)] transition-colors hover:bg-ft-accent/[0.03]"
+                      className="flex items-center justify-between rounded-2xl border-l-4 border-ft-warning bg-ft-surface p-4 transition-colors hover:bg-ft-accent/[0.03]"
                     >
                       <div>
                         <p className="text-sm font-medium text-ft-text">{plan.full_name}</p>
@@ -235,7 +235,7 @@ export default function CoachDashboardPage() {
                   <p className="mt-0.5 text-xs text-ft-muted">
                     Assigned to you, but no plan built yet.
                   </p>
-                  <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                  <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface">
                     {withoutPlan.map((client) => (
                       <div key={client.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-xs font-semibold text-ft-accent">
@@ -263,7 +263,7 @@ export default function CoachDashboardPage() {
                 <p className="mt-0.5 text-xs text-ft-muted">
                   Open a client to add workouts, swap exercises, or set alternates.
                 </p>
-                <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+                <div className="mt-3 divide-y divide-ft-border rounded-2xl border border-ft-border/70 bg-ft-surface">
                   {approved.length === 0 && (
                     <p className="px-4 py-3 text-sm text-ft-muted">No approved clients yet.</p>
                   )}

@@ -106,7 +106,7 @@ export function CoachClientsPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+    <section className="rounded-2xl border border-ft-border/70 bg-ft-surface">
       <div className="flex items-start justify-between gap-2 border-b border-ft-border/70 px-4 py-3.5">
         <div>
           <h2 className="text-sm font-semibold text-ft-text">My Clients</h2>
@@ -155,7 +155,7 @@ export function CoachClientsPanel({
                   className={cn(
                     "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                     client.active
-                      ? "bg-ft-accent/10 text-ft-accent"
+                      ? "bg-ft-ink text-white"
                       : "bg-ft-bg text-ft-muted",
                   )}
                 >

@@ -33,7 +33,7 @@ export function CoachRow({ coach, clientCount, onChanged, onToggleActive }: Coac
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            coach.active ? "bg-ft-accent/10 text-ft-accent" : "bg-ft-bg text-ft-muted",
+            coach.active ? "bg-ft-ink text-white" : "bg-ft-bg text-ft-muted",
           )}
         >
           {initials(coach.full_name)}

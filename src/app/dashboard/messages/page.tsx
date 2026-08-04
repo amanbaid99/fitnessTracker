@@ -67,7 +67,7 @@ export default function MessagesPage() {
 
       <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col px-5 md:max-w-2xl md:px-0">
         <header className="flex items-center gap-3 py-4 md:pt-8">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ft-accent/10 text-ft-accent">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ft-ink text-white">
             {coachName ? <ShieldCheck className="size-5" /> : <MessageCircle className="size-5" />}
           </span>
           <div className="min-w-0">
@@ -93,7 +93,7 @@ export default function MessagesPage() {
           </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-ft-accent/10 text-ft-accent">
+            <div className="flex size-12 items-center justify-center rounded-full bg-ft-ink text-white">
               <MessageCircle className="size-6" />
             </div>
             <h2 className="mt-4 text-base font-semibold text-ft-text">

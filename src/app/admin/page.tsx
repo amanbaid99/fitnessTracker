@@ -123,7 +123,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+    <section className="rounded-2xl border border-ft-border/70 bg-ft-surface">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-ft-border/70 px-4 py-3.5">
         <div>
           <h2 className="text-sm font-semibold text-ft-text">{title}</h2>
@@ -683,7 +683,7 @@ export default function AdminPage() {
                     className={cn(
                       "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                       active
-                        ? "bg-ft-accent/10 text-ft-accent"
+                        ? "bg-ft-ink text-white"
                         : "text-ft-muted hover:bg-ft-surface hover:text-ft-text",
                     )}
                   >

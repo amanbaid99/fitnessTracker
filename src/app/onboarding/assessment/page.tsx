@@ -65,9 +65,9 @@ function Field({
               onClick={() => onChange(option.value)}
               aria-pressed={value === option.value}
               className={cn(
-                "rounded-xl border bg-ft-surface px-3 py-2.5 text-left text-sm transition-colors",
+                "rounded-xl border bg-ft-surface px-3.5 py-3 text-left text-sm transition-colors",
                 value === option.value
-                  ? "border-ft-accent text-ft-text ring-1 ring-ft-accent"
+                  ? "border-ft-ink text-ft-text ring-1 ring-ft-ink"
                   : "border-ft-border/70 text-ft-muted hover:text-ft-text",
               )}
             >
@@ -105,7 +105,7 @@ function Field({
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-sm transition-colors",
                   on
-                    ? "border-ft-accent bg-ft-accent/[0.06] text-ft-accent"
+                    ? "border-ft-ink bg-ft-ink text-white"
                     : "border-ft-border/70 bg-ft-surface text-ft-muted hover:text-ft-text",
                 )}
               >
@@ -135,7 +135,7 @@ function Field({
               className={cn(
                 "h-11 flex-1 rounded-xl border text-sm font-medium transition-colors",
                 value === n
-                  ? "border-ft-accent bg-ft-accent text-white"
+                  ? "border-ft-ink bg-ft-ink text-white"
                   : "border-ft-border/70 bg-ft-surface text-ft-muted hover:text-ft-text",
               )}
             >
@@ -510,9 +510,9 @@ export default function AssessmentPage() {
           </span>
           <span>{progress}% complete</span>
         </div>
-        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ft-border">
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ft-border">
           <div
-            className="h-full rounded-full bg-ft-accent transition-all"
+            className="h-full rounded-full bg-ft-highlight transition-all duration-300"
             style={{ width: `${Math.max(4, progress)}%` }}
           />
         </div>

@@ -76,7 +76,7 @@ export function ExerciseEditorCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-ft-border/70 bg-ft-surface shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
+    <div className="overflow-hidden rounded-2xl border border-ft-border/70 bg-ft-surface">
       <div className="flex items-center gap-3 p-3">
         <ExerciseArt name={exercise.name} exerciseId={exercise.exerciseId} size="md" />
 

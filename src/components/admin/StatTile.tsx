@@ -30,7 +30,7 @@ export function StatTile({
     <Wrapper
       {...(onClick ? { type: "button" as const, onClick } : {})}
       className={cn(
-        "flex items-center gap-3 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-left shadow-[0_1px_2px_rgba(28,30,38,0.04)]",
+        "flex items-center gap-3 rounded-2xl border border-ft-border/70 bg-ft-surface p-4 text-left",
         onClick && "transition-colors hover:border-ft-accent/40 hover:bg-ft-accent/[0.03]",
       )}
     >

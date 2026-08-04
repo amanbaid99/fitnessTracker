@@ -28,8 +28,8 @@ export function PlanProcessing({
   error?: string | null;
 }) {
   return (
-    <section className="mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-6 text-center shadow-[0_1px_2px_rgba(28,30,38,0.04)]">
-      <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-ft-accent/10 text-ft-accent">
+    <section className="mt-4 rounded-2xl border border-ft-border/70 bg-ft-surface p-6 text-center">
+      <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-ft-ink text-white">
         {retrying ? (
           <Loader2 className="size-6 animate-spin" />
         ) : (

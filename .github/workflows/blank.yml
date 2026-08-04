@@ -4,11 +4,11 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "claude/workout-management-custom-plans-vhsdll" branch
+  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "claude/workout-management-custom-plans-vhsdll" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "claude/workout-management-custom-plans-vhsdll" ]
+    branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

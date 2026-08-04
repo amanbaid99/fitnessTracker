@@ -95,7 +95,9 @@ exercise or a preset changes.
 ## Deploying
 
 `.github/workflows/deploy-pages.yml` builds a static export and publishes it to
-GitHub Pages on every push to the default branch. The Supabase URL and anon key
+GitHub Pages on every push to `main`. The trigger is read from the branch that
+was pushed, so if the default branch is ever renamed, that list has to be
+updated in the same commit or deploys stop silently. The Supabase URL and anon key
 come from `.env.production`; both are public values by design, with row-level
 security doing the actual protecting.
 

@@ -4,11 +4,11 @@ const isGithubPages = process.env.GITHUB_PAGES === "true";
 const repoName = "fitnessTracker";
 
 /**
- * Where this build will be served from.
+ * Where this build will be served from — the repo root on GitHub Pages.
  *
- * Normally the repo root on GitHub Pages. The deploy workflow also builds the
- * design branch into a sub-path so both can be live on the one Pages site a
- * repository gets — that build sets PAGES_BASE_PATH explicitly.
+ * PAGES_BASE_PATH overrides it, for serving a build from a sub-path (a
+ * preview deploy, say). Asset URLs are baked in at build time, so this has to
+ * match wherever the files actually end up or every stylesheet 404s.
  */
 const basePath =
   process.env.PAGES_BASE_PATH ?? (isGithubPages ? `/${repoName}` : "");

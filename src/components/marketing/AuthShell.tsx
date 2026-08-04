@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Photo } from "@/components/marketing/Photo";
+import { PosterArt } from "@/components/marketing/PosterArt";
 
 /**
  * The frame around sign-in and sign-up.
@@ -16,15 +17,14 @@ export function AuthShell({
   footer,
   aside = {
     src: "/images/auth-panel.jpg",
-    label: "auth-panel.jpg",
-    quote: "Every programme here is read and approved by a real coach.",
+    quote: "Every programme here is read and approved by an ACSM-certified coach.",
   },
 }: {
   title: string;
   intro?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  aside?: { src: string; label: string; quote: string };
+  aside?: { src: string; quote: string };
 }) {
   return (
     <div className="flex min-h-dvh w-full">
@@ -50,7 +50,7 @@ export function AuthShell({
         <Photo
           src={aside.src}
           alt=""
-          label={aside.label}
+          fallback={<PosterArt variant="figure" />}
           className="absolute inset-0 h-full w-full"
         />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ft-ink/85 to-transparent p-12 pt-32">

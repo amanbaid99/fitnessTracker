@@ -21,16 +21,20 @@ interface Palette {
   accent: string;
 }
 
+// Warm neutrals throughout, so a plan full of these reads as one set rather
+// than a bag of pastel stickers. Muscle groups are separated by how warm the
+// field is and how much yellow the moving part carries — enough to tell them
+// apart at a glance, not enough to fight the page.
 const PALETTES: Record<MuscleGroup, Palette> = {
-  chest: { from: "#eef0ff", to: "#dde2ff", ink: "#4338ca", accent: "#6366f1" },
-  back: { from: "#e7f4ff", to: "#d2ebff", ink: "#0369a1", accent: "#0ea5e9" },
-  legs: { from: "#e7f8ef", to: "#d1f2e1", ink: "#15803d", accent: "#16a34a" },
-  shoulders: { from: "#fff4e3", to: "#ffe7c2", ink: "#b45309", accent: "#f59e0b" },
-  arms: { from: "#ffeaf0", to: "#ffd8e3", ink: "#be123c", accent: "#f43f5e" },
-  core: { from: "#f4ecff", to: "#e7dbff", ink: "#6d28d9", accent: "#8b5cf6" },
-  cardio: { from: "#ffefe6", to: "#ffdccb", ink: "#c2410c", accent: "#f97316" },
-  mobility: { from: "#e4f7f6", to: "#ccefed", ink: "#0f766e", accent: "#14b8a6" },
-  "full-body": { from: "#eff1f6", to: "#e0e5ee", ink: "#334155", accent: "#64748b" },
+  chest: { from: "#f3efe6", to: "#e6dfd0", ink: "#191713", accent: "#f2d24b" },
+  back: { from: "#f1eee8", to: "#e2ded3", ink: "#191713", accent: "#e0b93c" },
+  legs: { from: "#f4efe3", to: "#e8dfc9", ink: "#191713", accent: "#f2d24b" },
+  shoulders: { from: "#f6f0e2", to: "#ece0c4", ink: "#191713", accent: "#e0b93c" },
+  arms: { from: "#f2eee7", to: "#e4ddd1", ink: "#191713", accent: "#f2d24b" },
+  core: { from: "#f0ece5", to: "#e0dacd", ink: "#191713", accent: "#cfa93a" },
+  cardio: { from: "#f6ede2", to: "#ecdcc6", ink: "#191713", accent: "#f2d24b" },
+  mobility: { from: "#eff0ea", to: "#dfe1d6", ink: "#191713", accent: "#cfa93a" },
+  "full-body": { from: "#f1efeb", to: "#e2ded6", ink: "#191713", accent: "#e0b93c" },
 };
 
 const SIZES = {

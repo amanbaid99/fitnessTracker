@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Photo } from "@/components/marketing/Photo";
+import { PosterArt } from "@/components/marketing/PosterArt";
 
 const STEPS = [
   {
@@ -141,14 +142,14 @@ export default function HomePage() {
             <Photo
               src="/images/hero-lifting.jpg"
               alt="A coached lifting session"
-              label="hero-lifting.jpg"
+              fallback={<PosterArt variant="figure" />}
               priority
               className="aspect-[3/4] rounded-2xl md:rounded-3xl"
             />
             <Photo
               src="/images/hero-coach.jpg"
               alt="A coach working with a client"
-              label="hero-coach.jpg"
+              fallback={<PosterArt variant="barbell" tone="yellow" />}
               className="aspect-[3/4] rounded-2xl md:rounded-3xl"
             />
 
@@ -239,7 +240,7 @@ export default function HomePage() {
               <Photo
                 src="/images/coach-portrait.jpg"
                 alt="One of our coaches"
-                label="coach-portrait.jpg"
+                fallback={<PosterArt variant="portrait" />}
                 className="aspect-[4/5] rounded-3xl"
               />
             </div>
@@ -355,7 +356,7 @@ export default function HomePage() {
             <Photo
               src="/images/gym-detail.jpg"
               alt="Detail of a training space"
-              label="gym-detail.jpg"
+              fallback={<PosterArt variant="arcs" />}
               className="aspect-[4/3] rounded-3xl md:aspect-auto"
             />
           </div>

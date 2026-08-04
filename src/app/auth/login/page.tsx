@@ -106,8 +106,7 @@ export default function LoginPage() {
         intro="This is your first time logging in — choose a password only you know before continuing."
         aside={{
           src: "/images/auth-panel.jpg",
-          label: "auth-panel.jpg",
-          quote: "Every programme here is read and approved by a real coach.",
+          quote: "Every programme here is read and approved by an ACSM-certified coach.",
         }}
       >
         <form onSubmit={handleSetNewPassword} className="space-y-4">

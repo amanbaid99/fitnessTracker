@@ -64,7 +64,6 @@ export default function RegisterPage() {
       intro="Four fields now. The assessment comes next, and it saves as you go — you can stop and come back to it."
       aside={{
         src: "/images/auth-panel.jpg",
-        label: "auth-panel.jpg",
         quote: "A programme written around your body, not a template.",
       }}
       footer={

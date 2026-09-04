@@ -9,8 +9,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Photo } from "@/components/marketing/Photo";
-import { PosterArt } from "@/components/marketing/PosterArt";
 import { Reveal } from "@/components/marketing/Reveal";
 
 const STEPS = [
@@ -137,31 +135,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Photo band — the emotional register the copy can't carry alone. */}
+        {/* The claim that separates this from every other fitness app, given
+            the full width now that no photography competes with it. */}
         <section className="mx-auto w-full max-w-6xl px-5 md:px-8">
-          <Reveal className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-            <Photo
-              src="/images/hero-lifting.jpg"
-              alt="A coached lifting session"
-              fallback={<PosterArt variant="figure" />}
-              priority
-              className="aspect-[3/4] rounded-2xl md:rounded-3xl"
-            />
-            <Photo
-              src="/images/hero-coach.jpg"
-              alt="A coach working with a client"
-              fallback={<PosterArt variant="barbell" tone="yellow" />}
-              className="aspect-[3/4] rounded-2xl md:rounded-3xl"
-            />
-
-            <div className="col-span-2 flex flex-col justify-between rounded-2xl bg-ft-highlight p-5 md:rounded-3xl md:p-7">
-              <div>
-                <p className="ft-display text-4xl text-ft-ink md:text-5xl">Every plan</p>
-                <p className="ft-display text-4xl text-ft-ink md:text-5xl">
-                  <span className="ft-accentuate">approved by an ACSM coach.</span>
-                </p>
-              </div>
-              <p className="mt-6 max-w-sm text-sm leading-relaxed text-ft-ink/75">
+          <Reveal className="rounded-3xl bg-ft-highlight px-6 py-10 md:px-12 md:py-14">
+            <div className="grid gap-6 md:grid-cols-12 md:items-end md:gap-12">
+              <p className="ft-display text-4xl text-ft-ink md:col-span-7 md:text-6xl">
+                Every plan{" "}
+                <span className="ft-accentuate">approved by an ACSM coach.</span>
+              </p>
+              <p className="text-sm leading-relaxed text-ft-ink/75 md:col-span-5 md:text-base">
                 AI drafts fast, but it doesn&apos;t know you. Every programme is read, corrected
                 and published by a coach certified by the American College of Sports Medicine.
               </p>
@@ -239,21 +222,14 @@ export default function HomePage() {
         >
           <div className="grid gap-8 md:grid-cols-12 md:gap-14">
             <Reveal className="md:col-span-5">
-              <Photo
-                src="/images/coach-portrait.jpg"
-                alt="One of our coaches"
-                fallback={<PosterArt variant="portrait" />}
-                className="aspect-[4/5] rounded-3xl"
-              />
-            </Reveal>
-
-            <Reveal delay={120} className="md:col-span-7">
               <p className="ft-eyebrow">Who writes your programme</p>
               <h2 className="ft-display mt-3 text-3xl text-ft-text md:text-5xl">
                 Certified by the <span className="ft-accentuate">ACSM.</span>
               </h2>
+            </Reveal>
 
-              <div className="mt-6 space-y-5 text-base leading-relaxed text-ft-muted md:text-lg">
+            <Reveal delay={120} className="md:col-span-7">
+              <div className="space-y-5 text-base leading-relaxed text-ft-muted md:text-lg">
                 <p>
                   The American College of Sports Medicine has set the standards for exercise
                   science since 1954. Its guidelines for exercise testing and prescription are the
@@ -356,12 +332,16 @@ export default function HomePage() {
               </p>
             </div>
 
-            <Photo
-              src="/images/gym-detail.jpg"
-              alt="Detail of a training space"
-              fallback={<PosterArt variant="arcs" />}
-              className="aspect-[4/3] rounded-3xl md:aspect-auto"
-            />
+            <div className="rounded-3xl border border-ft-border/70 bg-ft-surface p-6 md:p-7">
+              <MessageCircle className="size-5 text-ft-text" />
+              <h3 className="mt-4 text-base font-semibold tracking-tight text-ft-text">
+                One coach, start to finish
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-ft-muted">
+                The coach who reads your assessment is the one who writes your programme and
+                answers your messages. You are not passed around.
+              </p>
+            </div>
           </div>
         </section>
 

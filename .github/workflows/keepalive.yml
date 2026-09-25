@@ -1,0 +1,54 @@
+name: Keep Supabase awake
+
+# Supabase pauses a free-tier project after about a week of inactivity, and
+# waking it is a manual step in the dashboard. This calls ping() once a day,
+# which leaves several days of margin if GitHub skips or delays a run.
+#
+# The URL and anon key come from .env.production, which is committed on
+# purpose — the anon key is a public value, and row-level security is what
+# protects the data. Nothing here needs a repository secret.
+
+on:
+  schedule:
+    # 06:17 UTC. Deliberately not on the hour: GitHub queues scheduled jobs
+    # and the busiest minutes are the most likely to be delayed or dropped.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+# A run already in flight is doing the same job; no reason to stack another.
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ping the database
+        run: |
+          set -euo pipefail
+
+          # shellcheck disable=SC2046
+          export $(grep -E '^NEXT_PUBLIC_SUPABASE_(URL|ANON_KEY)=' .env.production | xargs)
+
+          if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ] || [ -z "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Supabase URL or anon key missing from .env.production"
+            exit 1
+          fi
+
+          # -f makes curl exit non-zero on a 4xx/5xx, so a project that has
+          # already paused, or a missing ping(), fails the run loudly instead
+          # of passing silently — the whole point is to notice.
+          response=$(curl -sS -f -X POST \
+            "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/ping" \
+            -H "apikey: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            --retry 3 --retry-delay 10 --retry-all-errors \
+            --max-time 30 \
+            -d '{}')
+
+          echo "Database responded: ${response}"
+          echo "### Supabase pinged — \`${response}\`" >> "$GITHUB_STEP_SUMMARY"
